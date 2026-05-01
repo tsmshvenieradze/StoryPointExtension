@@ -101,14 +101,23 @@ If everything else fails, this must work: open work item → click button → an
 | Unit tests for calc logic only | Manual QA covers UI per company standard; calc logic is pure function and worth automating | — Pending |
 | Parse audit comment for pre-fill (not separate storage) | Closes the loop with the audit trail; no schema migration risk | — Pending |
 | Toolbar button (not inline form group) | Modal is the right UX for question-answer flow; toolbar is the standard ADO pattern for actions | — Pending |
+| **Apply ordering: comment-first → field-write** | Audit comment is the canonical source of truth for calc intent. Successful comment + failed field write is recoverable (parser pre-fills, user retries). Successful field write + failed comment loses provenance and breaks pre-fill. Decided in Phase 0 CONTEXT.md (D-01). | — Pending |
+| Always post a new comment per Apply (no de-dup, no edit) | Multiple retry comments are an audit feature, not a bug; parser takes the most recent sentinel. Avoids a comparison/edit code path. Decided in Phase 0 CONTEXT.md (D-03). | — Pending |
+| Marketplace publisher: `TsezariMshvenieradzeExtensions` (personal, already verified) | Personal publisher rather than GPIH-branded; no internal review chain to gate publishes. Decided in Phase 0 (D-08). | — Pending |
+| Extension ID: `story-point-calculator`; Display: "Story Point Calculator"; License: MIT | One-way decisions locked before any publish. Decided in Phase 0 (D-09–D-11). | — Pending |
+| Flat `src/` with subfolders (single package, single tsconfig) | Simplest layout for a single-purpose extension; reject npm workspaces/project references for v1. Decided in Phase 0 (D-05–D-07). | — Pending |
 
 **Open questions / risks:**
 
-- **Marketplace publisher account** — User unsure if GPIH already has a Marketplace publisher. Must be resolved as a Phase 0 prerequisite, not at publish time (24h verification round-trip if missing).
-- **Write atomicity ordering (comment-first vs field-first)** — Research surfaced two well-reasoned but contradictory positions. ARCHITECTURE.md prefers comment-first (orphan comment is recoverable; orphan field write loses provenance). PITFALLS.md prefers field-first (orphan comment "lies" if field write failed; SP value is the primary outcome). Must be resolved during Phase 1 planning before the ADO bridge is implemented.
 - **Process-customized SP field rename** — Some orgs rename the SP field via process customization. v1 supports the two standard fields (StoryPoints/Size); custom-renamed fields are out of scope. Revisit if reported by users post-launch.
 - **npm version verification** — Phase 0 must run `npm view` for `azure-devops-extension-sdk`, `azure-devops-extension-api`, `azure-devops-ui`, `tfx-cli` before pinning `package.json` (research versions are training-data floors).
 - **Sentinel comment round-trip** — Verify `<!-- ... -->` survives ADO comment renderer in both markdown-mode and HTML-mode comments before locking the format (30-min validation in Phase 1).
+
+**Resolved during Phase 0 discussion:**
+
+- ~~Marketplace publisher account~~ — Resolved: `TsezariMshvenieradzeExtensions` already exists at https://marketplace.visualstudio.com/manage/publishers/tsezarimshvenieradzeextensions
+- ~~Write atomicity ordering~~ — Resolved: comment-first → field-write (see Key Decisions row above; full rationale in `.planning/phases/00-bootstrap-prerequisites/00-CONTEXT.md` D-01–D-04)
+- ~~Dev ADO org for Phase 2 testing~~ — Resolved: `cezari.visualstudio.com/Cezari` already exists
 
 ## Evolution
 
