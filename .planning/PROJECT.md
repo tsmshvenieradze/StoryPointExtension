@@ -14,7 +14,8 @@ If everything else fails, this must work: open work item → click button → an
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ **Build foundation** — pinned npm versions (SDK 4.2.0, API 4.270.0, UI 2.272.0, tfx-cli 0.23.1), `tsconfig.json` strict, `webpack.config.cjs` two-entry, `vitest.config.ts`, MIT `LICENSE`, `.npmrc` save-exact, fresh-clone `npm ci && typecheck && test` exits 0 — Phase 0
+- ✓ **Manifest skeleton (PKG-01)** — `vss-extension.json` with publisher `TsezariMshvenieradzeExtensions`, id `story-point-calculator`, version `0.1.0`, scope locked at `["vso.work_write"]`, toolbar action contribution targeting `ms.vss-work-web.work-item-toolbar-menu`, modal `ms.vss-web.external-content` contribution, 128×128 placeholder icon — Phase 0
 
 ### Active
 
@@ -137,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-01 after research synthesis (corrected contribution IDs, added FieldResolver to v1, locked sentinel comment format, surfaced atomicity decision)*
+*Last updated: 2026-05-01 after Phase 0 completion (build foundation + manifest skeleton validated)*
