@@ -17,7 +17,7 @@ The journey ships a public Marketplace Azure DevOps work item extension that let
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 0: Bootstrap & Prerequisites** - Unblock the build: pin versions, verify Marketplace publisher, lock manifest scope, decide write atomicity ordering (completed 2026-05-01)
-- [ ] **Phase 1: Calc Engine & Audit Parser** - Pure functions matching the Excel calculator and the sentinel-format comment serializer/parser, both fully unit-tested with zero ADO dependencies
+- [x] **Phase 1: Calc Engine & Audit Parser** - Pure functions matching the Excel calculator and the sentinel-format comment serializer/parser, both fully unit-tested with zero ADO dependencies (completed 2026-05-01)
 - [ ] **Phase 2: Manifest Shell & SDK Integration** - Toolbar button appears in a dev org, click opens a themed "Hello" dialog — the highest-risk integration point fails fast here
 - [ ] **Phase 3: Modal UI & Read Path** - Full React calculator modal with FieldResolver, intermediate values, current SP read, and pre-fill from prior sentinel comment
 - [ ] **Phase 4: Write Path & Edge Cases** - Apply writes the field and posts the audit comment using the chosen atomicity order, with permission checks, overwrite confirmation, and friendly error handling
@@ -57,7 +57,7 @@ Plans:
 - [x] 01-01-PLAN.md — Calc engine: levels, fibonacci, engine, index + 125-case + threshold-boundary table-driven tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-02-PLAN.md — Audit module: types, serialize, parse, parseLatest, index + edge-case + round-trip suites; 100% coverage thresholds; smoke test retired
+- [x] 01-02-PLAN.md — Audit module: types, serialize, parse, parseLatest, index + edge-case + round-trip suites; 100% coverage thresholds; smoke test retired
 
 ### Phase 2: Manifest Shell & SDK Integration
 **Goal**: Prove the iframe + contribution + dialog + theme integration end-to-end on a real ADO dev org with a "Hello" payload, so the highest-risk step fails fast before any React UI investment
@@ -117,7 +117,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
-| 1. Calc Engine & Audit Parser | 1/2 | In Progress|  |
+| 1. Calc Engine & Audit Parser | 2/2 | Complete   | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 0/TBD | Not started | - |
 | 3. Modal UI & Read Path | 0/TBD | Not started | - |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
