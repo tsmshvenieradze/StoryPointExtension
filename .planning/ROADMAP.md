@@ -16,7 +16,7 @@ The journey ships a public Marketplace Azure DevOps work item extension that let
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 0: Bootstrap & Prerequisites** - Unblock the build: pin versions, verify Marketplace publisher, lock manifest scope, decide write atomicity ordering
+- [x] **Phase 0: Bootstrap & Prerequisites** - Unblock the build: pin versions, verify Marketplace publisher, lock manifest scope, decide write atomicity ordering (completed 2026-05-01)
 - [ ] **Phase 1: Calc Engine & Audit Parser** - Pure functions matching the Excel calculator and the sentinel-format comment serializer/parser, both fully unit-tested with zero ADO dependencies
 - [ ] **Phase 2: Manifest Shell & SDK Integration** - Toolbar button appears in a dev org, click opens a themed "Hello" dialog — the highest-risk integration point fails fast here
 - [ ] **Phase 3: Modal UI & Read Path** - Full React calculator modal with FieldResolver, intermediate values, current SP read, and pre-fill from prior sentinel comment
@@ -38,7 +38,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 1 plan
 
 Plans:
-- [ ] 00-01-PLAN.md — Bootstrap: pin versions, write configs (tsconfig/webpack/vitest/manifest), scaffold src/, run smoke loop, verify publisher access
+- [x] 00-01-PLAN.md — Bootstrap: pin versions, write configs (tsconfig/webpack/vitest/manifest), scaffold src/, run smoke loop, verify publisher access
 
 ### Phase 1: Calc Engine & Audit Parser
 **Goal**: Lock the wire formats — calculation behavior matching the Excel source of truth, and the sentinel comment format that survives ADO's renderer — before any ADO surface is touched
@@ -109,7 +109,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Bootstrap & Prerequisites | 0/TBD | Not started | - |
+| 0. Bootstrap & Prerequisites | 1/1 | Complete   | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 0/TBD | Not started | - |
 | 2. Manifest Shell & SDK Integration | 0/TBD | Not started | - |
 | 3. Modal UI & Read Path | 0/TBD | Not started | - |
