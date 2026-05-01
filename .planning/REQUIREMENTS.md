@@ -9,21 +9,21 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 
 ### Calc — Calculation Engine
 
-- [ ] **CALC-01**: Pure function maps a 5-level dropdown selection (Very Easy / Easy / Medium / Hard / Very Hard) to its 1–5 numeric score
-- [ ] **CALC-02**: Pure function computes the weighted sum `W = 0.4·C + 0.4·U + 0.2·E` from three numeric scores
-- [ ] **CALC-03**: Pure function computes Raw SP using `0.5 × 26^((W−1)/4)`
-- [ ] **CALC-04**: Pure function rounds Raw SP to the nearest Fibonacci value in `{0.5, 1, 2, 3, 5, 8, 13}` using the same threshold table as `sp_calculator.xlsx` (≤0.75→0.5, ≤1.5→1, ≤2.5→2, ≤4→3, ≤6.5→5, ≤10.5→8, else→13)
-- [ ] **CALC-05**: Calc engine module has zero ADO SDK dependencies and is unit-tested with at least one assertion per Fibonacci bucket plus boundary cases at every threshold
+- [x] **CALC-01**: Pure function maps a 5-level dropdown selection (Very Easy / Easy / Medium / Hard / Very Hard) to its 1–5 numeric score
+- [x] **CALC-02**: Pure function computes the weighted sum `W = 0.4·C + 0.4·U + 0.2·E` from three numeric scores
+- [x] **CALC-03**: Pure function computes Raw SP using `0.5 × 26^((W−1)/4)`
+- [x] **CALC-04**: Pure function rounds Raw SP to the nearest Fibonacci value in `{0.5, 1, 2, 3, 5, 8, 13}` using the same threshold table as `sp_calculator.xlsx` (≤0.75→0.5, ≤1.5→1, ≤2.5→2, ≤4→3, ≤6.5→5, ≤10.5→8, else→13)
+- [x] **CALC-05**: Calc engine module has zero ADO SDK dependencies and is unit-tested with at least one assertion per Fibonacci bucket plus boundary cases at every threshold
 
 ### Audit — Comment Format & Pre-fill
 
-- [ ] **AUDIT-01**: Audit comment format is `<!-- sp-calc:v1 {"sp":N,"c":"...","u":"...","e":"...","schemaVersion":1} -->\nStory Points: N (Complexity=..., Uncertainty=..., Effort=...)`
-- [ ] **AUDIT-02**: Serializer produces deterministic output for a given calculation input (stable key order, no extra whitespace inside the sentinel block)
-- [ ] **AUDIT-03**: Parser extracts the JSON payload from a sentinel HTML comment in raw HTML, NBSP-substituted text, and ADO-renderer-wrapped output
-- [ ] **AUDIT-04**: Parser ignores comments without the sentinel, comments marked `isDeleted: true`, and malformed JSON; never throws on user input
-- [ ] **AUDIT-05**: When multiple sentinel comments exist on a work item, parser returns the most recent one (by comment `createdDate`)
-- [ ] **AUDIT-06**: Parser is unit-tested for: HTML-wrapped, mid-comment user edit to the human-readable line, NBSP substitution, deleted comment, multiple comments, malformed JSON
-- [ ] **AUDIT-07**: Round-trip property: `parse(serialize(input)) === input` holds for all valid inputs
+- [x] **AUDIT-01**: Audit comment format is `<!-- sp-calc:v1 {"sp":N,"c":"...","u":"...","e":"...","schemaVersion":1} -->\nStory Points: N (Complexity=..., Uncertainty=..., Effort=...)`
+- [x] **AUDIT-02**: Serializer produces deterministic output for a given calculation input (stable key order, no extra whitespace inside the sentinel block)
+- [x] **AUDIT-03**: Parser extracts the JSON payload from a sentinel HTML comment in raw HTML, NBSP-substituted text, and ADO-renderer-wrapped output
+- [x] **AUDIT-04**: Parser ignores comments without the sentinel, comments marked `isDeleted: true`, and malformed JSON; never throws on user input
+- [x] **AUDIT-05**: When multiple sentinel comments exist on a work item, parser returns the most recent one (by comment `createdDate`)
+- [x] **AUDIT-06**: Parser is unit-tested for: HTML-wrapped, mid-comment user edit to the human-readable line, NBSP substitution, deleted comment, multiple comments, malformed JSON
+- [x] **AUDIT-07**: Round-trip property: `parse(serialize(input)) === input` holds for all valid inputs
 
 ### Field — Cross-Process Field Resolver
 
@@ -105,18 +105,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CALC-01 | Phase 1 | Pending |
-| CALC-02 | Phase 1 | Pending |
-| CALC-03 | Phase 1 | Pending |
-| CALC-04 | Phase 1 | Pending |
-| CALC-05 | Phase 1 | Pending |
-| AUDIT-01 | Phase 1 | Pending |
-| AUDIT-02 | Phase 1 | Pending |
-| AUDIT-03 | Phase 1 | Pending |
-| AUDIT-04 | Phase 1 | Pending |
-| AUDIT-05 | Phase 1 | Pending |
-| AUDIT-06 | Phase 1 | Pending |
-| AUDIT-07 | Phase 1 | Pending |
+| CALC-01 | Phase 1 | Complete |
+| CALC-02 | Phase 1 | Complete |
+| CALC-03 | Phase 1 | Complete |
+| CALC-04 | Phase 1 | Complete |
+| CALC-05 | Phase 1 | Complete |
+| AUDIT-01 | Phase 1 | Complete |
+| AUDIT-02 | Phase 1 | Complete |
+| AUDIT-03 | Phase 1 | Complete |
+| AUDIT-04 | Phase 1 | Complete |
+| AUDIT-05 | Phase 1 | Complete |
+| AUDIT-06 | Phase 1 | Complete |
+| AUDIT-07 | Phase 1 | Complete |
 | FIELD-01 | Phase 3 | Pending |
 | FIELD-02 | Phase 3 | Pending |
 | FIELD-03 | Phase 3 | Pending |
