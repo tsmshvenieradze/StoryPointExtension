@@ -1,8 +1,9 @@
 // tests/calc/calcEngine.test.ts — Source: D-20, D-22, D-24; replaces tests/smoke.test.ts (D-27 — deleted in this same commit)
 import { describe, it, expect } from 'vitest';
-import { LEVELS, levelToScore } from '../../src/calc/levels';
+import { LEVELS, levelToScore, scoreToLevel } from '../../src/calc/levels';
 import { roundFib } from '../../src/calc/fibonacci';
 import { weightedSum, rawSp, calculate } from '../../src/calc/engine';
+import * as calcBarrel from '../../src/calc/index';
 import { ALL_CASES } from './fixtures/all-cases';
 
 describe('levelToScore: every label maps correctly (CALC-01)', () => {
@@ -18,6 +19,33 @@ describe('levelToScore: every label maps correctly (CALC-01)', () => {
 
   it('LEVELS contains exactly the five canonical labels in dropdown order', () => {
     expect(LEVELS).toEqual(['Very Easy', 'Easy', 'Medium', 'Hard', 'Very Hard']);
+  });
+});
+
+describe('scoreToLevel: reverse mapping (CALC-01)', () => {
+  it.each([
+    { score: 1 as const, expected: 'Very Easy' as const },
+    { score: 2 as const, expected: 'Easy'      as const },
+    { score: 3 as const, expected: 'Medium'    as const },
+    { score: 4 as const, expected: 'Hard'      as const },
+    { score: 5 as const, expected: 'Very Hard' as const },
+  ])('scoreToLevel($score) = $expected', ({ score, expected }) => {
+    expect(scoreToLevel(score)).toBe(expected);
+  });
+});
+
+describe('public API barrel (D-15, D-17)', () => {
+  it('src/calc/index.ts re-exports the documented surface', () => {
+    expect(calcBarrel.LEVELS).toBeDefined();
+    expect(calcBarrel.LEVEL_TO_SCORE).toBeDefined();
+    expect(calcBarrel.SCORE_TO_LEVEL).toBeDefined();
+    expect(typeof calcBarrel.levelToScore).toBe('function');
+    expect(typeof calcBarrel.scoreToLevel).toBe('function');
+    expect(typeof calcBarrel.roundFib).toBe('function');
+    expect(calcBarrel.FIB_THRESHOLDS).toBeDefined();
+    expect(typeof calcBarrel.calculate).toBe('function');
+    expect(typeof calcBarrel.weightedSum).toBe('function');
+    expect(typeof calcBarrel.rawSp).toBe('function');
   });
 });
 
