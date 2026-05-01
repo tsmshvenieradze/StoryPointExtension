@@ -1,0 +1,48 @@
+{
+  "manifestVersion": 1,
+  "id": "story-point-calculator",
+  "version": "0.1.0",
+  "name": "Story Point Calculator",
+  "publisher": "TsezariMshvenieradzeExtensions",
+  "public": false,
+  "targets": [
+    { "id": "Microsoft.VisualStudio.Services" }
+  ],
+  "categories": ["Azure Boards"],
+  "tags": ["story points", "estimation", "scrum", "agile"],
+  "description": "Structured Story Point estimation using Complexity, Uncertainty, Effort.",
+  "icons": {
+    "default": "images/icon.png"
+  },
+  "scopes": [
+    "vso.work_write"
+  ],
+  "files": [
+    { "path": "dist", "addressable": true },
+    { "path": "images", "addressable": true }
+  ],
+  "contributions": [
+    {
+      "id": "calc-sp-action",
+      "type": "ms.vss-web.action",
+      "description": "Toolbar action that opens the Story Point calculator modal.",
+      "targets": ["ms.vss-work-web.work-item-toolbar-menu"],
+      "properties": {
+        "text": "Calculate Story Points",
+        "title": "Open the Story Point calculator",
+        "toolbarText": "Calculate SP",
+        "icon": "images/icon.png",
+        "uri": "dist/toolbar.html",
+        "registeredObjectId": "calc-sp-action"
+      }
+    },
+    {
+      "id": "calc-sp-modal",
+      "type": "ms.vss-web.external-content",
+      "description": "Modal contents loaded into a host-managed dialog.",
+      "properties": {
+        "uri": "dist/modal.html"
+      }
+    }
+  ]
+}

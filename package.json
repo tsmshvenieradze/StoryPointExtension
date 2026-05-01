@@ -1,0 +1,55 @@
+{
+  "name": "story-point-calculator",
+  "version": "0.1.0",
+  "description": "Azure DevOps work item extension: structured Story Point estimation using Complexity, Uncertainty, Effort.",
+  "private": true,
+  "license": "MIT",
+  "author": "Tsezari Mshvenieradze",
+  "engines": {
+    "node": ">=20.10.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "clean": "rimraf dist coverage",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development",
+    "dev": "webpack --mode development --watch",
+    "package": "tfx extension create --manifest-globs vss-extension.json --output-path dist/"
+  },
+  "dependencies": {
+    "azure-devops-extension-api": "4.270.0",
+    "azure-devops-extension-sdk": "4.2.0",
+    "azure-devops-ui": "2.272.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "copy-webpack-plugin": "^12.0.0",
+    "css-loader": "^7.1.0",
+    "html-webpack-plugin": "^5.6.0",
+    "rimraf": "^6.0.0",
+    "sass": "^1.79.0",
+    "sass-loader": "^16.0.0",
+    "style-loader": "^4.0.0",
+    "tfx-cli": "0.23.1",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "webpack": "^5.97.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "overrides": {
+    "azure-devops-ui": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  }
+}
