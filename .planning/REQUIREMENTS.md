@@ -57,7 +57,7 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 
 ### Pkg — Marketplace Package & Publish
 
-- [ ] **PKG-01**: `vss-extension.json` manifest is valid against current schema, contains exactly the `vso.work_write` scope, declares the toolbar action and modal external-content contributions, and includes a 128×128 icon
+- [x] **PKG-01**: `vss-extension.json` manifest is valid against current schema, contains exactly the `vso.work_write` scope, declares the toolbar action and modal external-content contributions, and includes a 128×128 icon
 - [ ] **PKG-02**: Build pipeline produces a `.vsix` via `tfx-cli` with the bundled `dist/toolbar.html` (toolbar shim) and `dist/modal.html` (lazy-loaded modal) bundles
 - [ ] **PKG-03**: Total bundle size is ≤ 250 KB gzipped across all entries; CI fails the build above this threshold
 - [ ] **PKG-04**: Extension is installable on a fresh Azure DevOps trial organization, and a Contributor (non-admin) user can complete the full open-modal → Apply flow without permission errors
@@ -138,7 +138,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APPLY-07 | Phase 4 | Pending |
 | APPLY-08 | Phase 4 | Pending |
 | APPLY-09 | Phase 4 | Pending |
-| PKG-01 | Phase 0 | Pending |
+| PKG-01 | Phase 0 | Complete |
 | PKG-02 | Phase 5 | Pending |
 | PKG-03 | Phase 5 | Pending |
 | PKG-04 | Phase 5 | Pending |
