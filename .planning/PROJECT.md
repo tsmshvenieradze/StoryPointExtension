@@ -23,12 +23,17 @@ If everything else fails, this must work: open work item → click button → an
 - [ ] Toolbar button "Calculate Story Points" appears on work item form for User Story, Bug, Task, Feature/Epic
 - [ ] Modal with 3 dropdowns: Complexity, Uncertainty, Effort — each with 5 levels (Very Easy → Very Hard)
 - [ ] Modal displays intermediate values: weighted sum W, Raw SP, Final Fibonacci SP, and the formula itself
-- [ ] Apply writes Story Points field on the work item via ADO REST API
-- [ ] Apply adds an audit comment in the form `SP=5 (C=Hard, U=Medium, E=Easy)`
+- [ ] Apply writes Story Points field on the work item via `IWorkItemFormService.setFieldValue()` + `.save()`
+- [ ] Apply adds a sentinel-format audit comment via `WorkItemTrackingRestClient.addComment()`
+- [ ] Audit comment format: `<!-- sp-calc:v1 {"sp":5,"c":"Hard","u":"Medium","e":"Easy","schemaVersion":1} -->` plus a human-readable line; parser unit-tested for edited/HTML-wrapped/NBSP/multi-comment cases
+- [ ] **FieldResolver** detects the SP field reference name per work item type (Agile: `Microsoft.VSTS.Scheduling.StoryPoints`, CMMI: `Microsoft.VSTS.Scheduling.Size`); button disabled with tooltip when no SP-equivalent field exists
+- [ ] Pre-flight permission check: button disabled when user lacks write permission on the work item
 - [ ] If SP already exists, modal warns and shows "Current: X / New: Y" before overwrite
-- [ ] If a prior SP audit comment exists, modal pre-fills the dropdowns from it
+- [ ] If a prior sentinel SP audit comment exists, modal pre-fills the dropdowns from it
 - [ ] Calculation logic matches `sp_calculator.xlsx` exactly (W = 0.4·C + 0.4·U + 0.2·E; SP = 0.5 × 26^((W−1)/4); rounded to Fibonacci 0.5/1/2/3/5/8/13)
-- [ ] Unit tests cover the calculation pipeline (level→score, weighted sum, raw SP, Fibonacci rounding)
+- [ ] Unit tests cover calc pipeline (level→score, weighted sum, raw SP, Fibonacci rounding) AND audit-comment serializer/parser
+- [ ] Bundle size ≤ 250 KB gzipped (toolbar shim + lazy-loaded modal)
+- [ ] Browser parity: Chrome, Edge, Firefox, Safari
 - [ ] Published as a public extension on Visual Studio Marketplace (English-only UI)
 
 **v2 — Customization:**
@@ -45,7 +50,7 @@ If everything else fails, this must work: open work item → click button → an
 
 - **Backend service / .NET API** — Extension Data Service handles all storage; no infra needed
 - **Localization beyond English (Georgian, Russian)** — User explicitly chose English-only; Georgian rendering in ADO has known quality issues
-- **Custom Story Points field** — Always writes the standard `Microsoft.VSTS.Scheduling.StoryPoints` field; no support for org-specific custom fields in v1/v2
+- **Process-customized SP field rename** — v1 supports the two standard Microsoft fields (`Microsoft.VSTS.Scheduling.StoryPoints` for Agile/Scrum, `Microsoft.VSTS.Scheduling.Size` for CMMI) via FieldResolver. Orgs that have *renamed* these fields via process customization are not supported in v1; revisit if reported by users post-launch
 - **Bulk calculation across multiple items** — Single-item modal only; bulk estimation is a different UX
 - **Estimation history/timeline UI** — Audit info lives in comments; no dedicated history panel
 - **Approval workflow** — User confirmation only; no PO/Scrum Master approval gate
@@ -57,7 +62,7 @@ If everything else fails, this must work: open work item → click button → an
 
 **Existing artifact:** `sp_calculator.xlsx` defines the formula and is the source of truth for v1 calculation logic. Excel structure: 3 dropdowns (Complexity, Uncertainty, Effort), each with 5 weighted levels, computing a weighted sum that maps to a Fibonacci scale.
 
-**Domain:** Azure DevOps web extensions are SPA-style React apps loaded into Azure Boards via the VSS Web Extension SDK. They authenticate using the host's session and access work item data through the official `azure-devops-extension-api` client. Work item form contributions can be `ms.vss-work-web.work-item-form-toolbar-button` (button) or `ms.vss-work-web.work-item-form-group` (inline panel). Settings hubs use `ms.vss-web.hub` contributions targeting `ms.vss-admin-web.collection-admin-hub` (Org Settings) or `ms.vss-admin-web.project-admin-hub` (Project Settings).
+**Domain:** Azure DevOps web extensions are React-based SPAs loaded into Azure Boards inside sandboxed iframes via the modern `azure-devops-extension-sdk` v4 + `azure-devops-extension-api` v4. Work item toolbar contributions register as `ms.vss-web.action` targeting `ms.vss-work-web.work-item-toolbar-menu`; the dialog is registered as `ms.vss-web.external-content` and opened via `HostPageLayoutService.openCustomDialog`. (Initial PROJECT.md draft used outdated contribution IDs; corrected against Microsoft Learn 2026-04 — see `.planning/research/SUMMARY.md`.) v2 settings hubs use `ms.vss-web.hub` targeting `ms.vss-web.collection-admin-hub-group` (Org Settings) and `ms.vss-web.project-admin-hub-group` (Project Settings).
 
 **Multi-tenancy:** Because this ships to Marketplace publicly, no GPIH-specific assumptions can leak into code (no hardcoded org names, project names, custom fields, or color schemes). Settings live in Extension Data Service per org/project.
 
@@ -85,18 +90,25 @@ If everything else fails, this must work: open work item → click button → an
 | Public Marketplace distribution | Reach beyond GPIH; future internal use is one tenant of many | — Pending |
 | English-only UI | User-chosen; Georgian rendering quality is poor in ADO; reduces i18n complexity for v1 | — Pending |
 | Apply button (not auto-write) | User reviews intermediate values + warning before mutation; explicit consent on overwrite | — Pending |
+| `IWorkItemFormService.setFieldValue()` + `.save()` (not REST PATCH) | The work item form is open and dirty — REST PATCH while form is open causes revision conflicts and silent overwrites | — Pending |
+| Sentinel HTML-comment + JSON payload + `schemaVersion` for audit format | Naive `SP=5 (...)` is too fragile (HTML wrapping, NBSP, user edits); sentinel survives ADO renderer and is round-trip parseable; `schemaVersion` enables v2 dimension expansion without breaking v1 parsing | — Pending |
 | Audit comment as both audit log AND pre-fill source | Avoids extra storage layer; single source of truth for calculation history | — Pending |
+| FieldResolver in v1 (not v2) for SP field reference name | CMMI processes use `Microsoft.VSTS.Scheduling.Size`, not `StoryPoints` — without this, v1 breaks on first CMMI customer; ~2hr implementation | — Pending |
+| Manifest scope locked at `vso.work_write` only | Adding scopes post-publish forces re-consent across every install; lock minimum scope before first public publish | — Pending |
 | v1 ships fixed formula, v2 adds customization | De-risks v1 launch; validates core flow before paying customization complexity | — Pending |
 | ADO Extension Data Service for v2 settings | Zero infra; built-in multi-tenancy; aligns with marketplace install-and-go expectation | — Pending |
-| Org Settings + Project Settings hubs (v2) | Mirrors how ADO settings work for other features; project override is standard ADO pattern | — Pending |
+| Org Settings + Project Settings hubs (v2) — project isolation via key prefix | EDS only has `Default` and `User` scopes; project-level scoping must be implemented as `sp-config-proj-<projectId>` key prefix | — Pending |
 | Unit tests for calc logic only | Manual QA covers UI per company standard; calc logic is pure function and worth automating | — Pending |
 | Parse audit comment for pre-fill (not separate storage) | Closes the loop with the audit trail; no schema migration risk | — Pending |
 | Toolbar button (not inline form group) | Modal is the right UX for question-answer flow; toolbar is the standard ADO pattern for actions | — Pending |
 
 **Open questions / risks:**
 
-- **Marketplace publisher account** — User unsure if GPIH already has a Marketplace publisher. Must be resolved before publish phase. (Free, ~1 day verification if missing.)
-- **Custom Story Points field handling** — Some orgs rename `Microsoft.VSTS.Scheduling.StoryPoints` or use a different field via process customization. v1 assumes standard field; revisit if reported by users post-launch.
+- **Marketplace publisher account** — User unsure if GPIH already has a Marketplace publisher. Must be resolved as a Phase 0 prerequisite, not at publish time (24h verification round-trip if missing).
+- **Write atomicity ordering (comment-first vs field-first)** — Research surfaced two well-reasoned but contradictory positions. ARCHITECTURE.md prefers comment-first (orphan comment is recoverable; orphan field write loses provenance). PITFALLS.md prefers field-first (orphan comment "lies" if field write failed; SP value is the primary outcome). Must be resolved during Phase 1 planning before the ADO bridge is implemented.
+- **Process-customized SP field rename** — Some orgs rename the SP field via process customization. v1 supports the two standard fields (StoryPoints/Size); custom-renamed fields are out of scope. Revisit if reported by users post-launch.
+- **npm version verification** — Phase 0 must run `npm view` for `azure-devops-extension-sdk`, `azure-devops-extension-api`, `azure-devops-ui`, `tfx-cli` before pinning `package.json` (research versions are training-data floors).
+- **Sentinel comment round-trip** — Verify `<!-- ... -->` survives ADO comment renderer in both markdown-mode and HTML-mode comments before locking the format (30-min validation in Phase 1).
 
 ## Evolution
 
@@ -116,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-01 after initialization*
+*Last updated: 2026-05-01 after research synthesis (corrected contribution IDs, added FieldResolver to v1, locked sentinel comment format, surfaced atomicity decision)*
