@@ -1432,24 +1432,28 @@ export default defineConfig({
 
 **Confirmation needed before Phase 1 execution:** None of A1–A8 block Phase 1 execution. A8 is the only one with material schedule risk (Phase 2 might find the format needs adjustment), but Phase 1 can ship as-specified and Phase 2 will surface the issue if it exists. The parser pattern is robust enough that adding an `&lt;!--` alternative is a 5-line change.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the 125-case fixture be hand-curated or generated?**
+   **RESOLVED:** hybrid — calc fixture is hand-curated for boundary cases (per-bucket sample) and exhaustively generated for all 125 combinations; audit round-trip uses generated 125-case input from calc.
    - What we know: D-21 says "for every (c, u, e) combination, assert ..." — 125 cases. The planner could either: (a) hand-write all 125 rows in a `tests/calc/fixtures/all-cases.ts` file, or (b) compute them at test-time from `LEVELS × LEVELS × LEVELS` and the calc engine itself.
    - What's unclear: Option (b) makes the test partially self-referential — the engine generates its own expectations. This is fine for the round-trip test (which only checks that `parse(serialize(x)) === x`, not that `sp` is a specific value), but it's NOT acceptable for the calc engine test where the SP value must be independently verifiable against the xlsx.
    - Recommendation: **Hybrid.** For `tests/calc/calcEngine.test.ts`, hand-curate the 125 expected `sp` values in a fixture file, with a header comment explaining how the values were derived (formula + xlsx F22). For `tests/audit/serialize.test.ts` round-trip, generate cases from `LEVELS × LEVELS × LEVELS` programmatically and use `calculate()` to derive `sp` (the round-trip property doesn't need an independent source of truth — it only needs the same value to come back out).
 
 2. **Should the placeholder smoke test be removed in the FIRST commit of Phase 1 or the LAST?**
+   **RESOLVED:** first commit (Plan 01-01 Task 5). D-27 says "same commit as first real test"; `tests/calc/calcEngine.test.ts` is unambiguously the first real test, so deletion bundles with that commit.
    - What we know: D-27 says "removed in same commit as the first real test." That implies the deletion is sequenced with the first test file added.
    - What's unclear: Should the planner sequence `levels.ts` + `levels` test (deleting smoke test) as task 1, or wait until all of `src/calc/` is done?
    - Recommendation: **First commit.** The first real test file is `tests/calc/calcEngine.test.ts` (assuming the planner sequences calc before audit) or `tests/audit/serialize.test.ts`. Either way, the deletion happens in that single commit. The smoke test exists only to satisfy Phase 0's `npm test` exit-0 requirement; once a real test is in place, it's redundant.
 
 3. **Should `LEVELS` be wrapped in `Object.freeze` at runtime?**
+   **RESOLVED:** yes — apply both `Object.freeze` AND TypeScript `as const` for belt-and-suspenders runtime + compile-time immutability. Negligible cost; eliminates an entire class of "don't mutate this" review comments.
    - What we know: Phase 0 CONTEXT.md left this to Claude's discretion. `as const` provides compile-time immutability; `Object.freeze` provides runtime immutability.
    - What's unclear: Whether runtime mutation is a real risk — the modules are pure-function and never mutate; but a future bug in Phase 3 modal could try to push to `LEVELS` if it's not frozen.
    - Recommendation: **Use `Object.freeze` AND `as const`.** Belt-and-suspenders; runtime cost is negligible (one freeze per module load), error message at mutation attempt is clear (`TypeError: Cannot add property X, object is not extensible`).
 
 4. **Should `parse` accept a `string | undefined | null` input instead of just `string`?**
+   **RESOLVED:** keep strict `string`. Callers must pass a string; passing `undefined`/`null` is a programming error and TypeScript catches it. `parseLatest` already filters and only passes valid string bodies.
    - What we know: D-19 doesn't specify; the function signature is `parse(commentBody: string): AuditPayload | null`. ADO's REST client returns `Comment.text` as `string` (not nullable), so callers should never pass `undefined`.
    - What's unclear: Defensive code might guard against `undefined` anyway.
    - Recommendation: **Keep the signature strict (`commentBody: string`).** Phase 4's ADO bridge maps the real ADO type to `AdoComment`; if ADO's `text` is ever `undefined` in practice (it shouldn't be), the bridge handles it. The internal guard `if (commentBody.length === 0)` covers the empty-string case.
