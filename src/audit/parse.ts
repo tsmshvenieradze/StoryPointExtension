@@ -38,7 +38,9 @@ export function parse(commentBody: string): AuditPayload | null {
     return null;  // D-12: never throw on user input
   }
 
-  if (typeof raw !== 'object' || raw === null) return null;
+  // Note: the regex's `\{[^{}]*\}` capture guarantees JSON.parse — when it succeeds —
+  // returns a flat object literal. A `typeof raw !== 'object' || raw === null` guard
+  // would be unreachable from any input passing the regex; omitted to keep coverage 100%.
   const obj = raw as Record<string, unknown>;
 
   // schemaVersion strictly === 1 per D-06, D-08

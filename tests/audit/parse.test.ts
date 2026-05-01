@@ -89,6 +89,12 @@ describe('parse: edge cases (D-23, AUDIT-03, AUDIT-04, AUDIT-06)', () => {
       expected: null,
     },
     {
+      name: 'non-string label value (number) returns null',
+      // Exercises toCanonicalLevel's typeof !== 'string' branch (parse.ts line 20).
+      body: '<!-- sp-calc:v1 {"sp":5,"c":42,"u":"Medium","e":"Easy","schemaVersion":1} -->',
+      expected: null,
+    },
+    {
       name: 'empty body returns null',
       body: '',
       expected: null,

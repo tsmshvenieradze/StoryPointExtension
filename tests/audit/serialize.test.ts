@@ -5,6 +5,15 @@ import { calculate } from '../../src/calc/engine';
 import { serialize } from '../../src/audit/serialize';
 import { parse } from '../../src/audit/parse';
 import type { AuditPayload } from '../../src/audit/types';
+import * as auditBarrel from '../../src/audit/index';
+
+describe('public API barrel (D-18, D-19)', () => {
+  it('src/audit/index.ts re-exports the documented surface', () => {
+    expect(typeof auditBarrel.serialize).toBe('function');
+    expect(typeof auditBarrel.parse).toBe('function');
+    expect(typeof auditBarrel.parseLatest).toBe('function');
+  });
+});
 
 describe('serialize: deterministic stable key order (AUDIT-02)', () => {
   it('produces canonical sentinel format', () => {
