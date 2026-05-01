@@ -54,7 +54,7 @@ Plans:
 
 Plans:
 **Wave 1**
-- [ ] 01-01-PLAN.md — Calc engine: levels, fibonacci, engine, index + 125-case + threshold-boundary table-driven tests
+- [x] 01-01-PLAN.md — Calc engine: levels, fibonacci, engine, index + 125-case + threshold-boundary table-driven tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — Audit module: types, serialize, parse, parseLatest, index + edge-case + round-trip suites; 100% coverage thresholds; smoke test retired
@@ -117,7 +117,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
-| 1. Calc Engine & Audit Parser | 0/2 | Not started | - |
+| 1. Calc Engine & Audit Parser | 1/2 | In Progress|  |
 | 2. Manifest Shell & SDK Integration | 0/TBD | Not started | - |
 | 3. Modal UI & Read Path | 0/TBD | Not started | - |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
