@@ -1,11 +1,11 @@
 // src/calc/levels.ts — Source: D-03, D-05, D-17; verified xlsx D5..D9 score values
-export const LEVELS = [
+export const LEVELS = Object.freeze([
   'Very Easy',
   'Easy',
   'Medium',
   'Hard',
   'Very Hard',
-] as const;
+] as const);
 
 export type Level = (typeof LEVELS)[number];
 export type Score = 1 | 2 | 3 | 4 | 5;

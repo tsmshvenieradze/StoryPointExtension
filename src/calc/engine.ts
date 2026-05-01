@@ -30,6 +30,6 @@ export function calculate(input: CalcInput): CalcResult {
     w,
     rawSp: r,
     sp: roundFib(r),
-    input,
+    input: { c: input.c, u: input.u, e: input.e },
   };
 }
