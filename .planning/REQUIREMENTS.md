@@ -105,52 +105,60 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CALC-01 | TBD | Pending |
-| CALC-02 | TBD | Pending |
-| CALC-03 | TBD | Pending |
-| CALC-04 | TBD | Pending |
-| CALC-05 | TBD | Pending |
-| AUDIT-01 | TBD | Pending |
-| AUDIT-02 | TBD | Pending |
-| AUDIT-03 | TBD | Pending |
-| AUDIT-04 | TBD | Pending |
-| AUDIT-05 | TBD | Pending |
-| AUDIT-06 | TBD | Pending |
-| AUDIT-07 | TBD | Pending |
-| FIELD-01 | TBD | Pending |
-| FIELD-02 | TBD | Pending |
-| FIELD-03 | TBD | Pending |
-| FIELD-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| UI-07 | TBD | Pending |
-| UI-08 | TBD | Pending |
-| APPLY-01 | TBD | Pending |
-| APPLY-02 | TBD | Pending |
-| APPLY-03 | TBD | Pending |
-| APPLY-04 | TBD | Pending |
-| APPLY-05 | TBD | Pending |
-| APPLY-06 | TBD | Pending |
-| APPLY-07 | TBD | Pending |
-| APPLY-08 | TBD | Pending |
-| APPLY-09 | TBD | Pending |
-| PKG-01 | TBD | Pending |
-| PKG-02 | TBD | Pending |
-| PKG-03 | TBD | Pending |
-| PKG-04 | TBD | Pending |
-| PKG-05 | TBD | Pending |
-| PKG-06 | TBD | Pending |
-| PKG-07 | TBD | Pending |
+| CALC-01 | Phase 1 | Pending |
+| CALC-02 | Phase 1 | Pending |
+| CALC-03 | Phase 1 | Pending |
+| CALC-04 | Phase 1 | Pending |
+| CALC-05 | Phase 1 | Pending |
+| AUDIT-01 | Phase 1 | Pending |
+| AUDIT-02 | Phase 1 | Pending |
+| AUDIT-03 | Phase 1 | Pending |
+| AUDIT-04 | Phase 1 | Pending |
+| AUDIT-05 | Phase 1 | Pending |
+| AUDIT-06 | Phase 1 | Pending |
+| AUDIT-07 | Phase 1 | Pending |
+| FIELD-01 | Phase 3 | Pending |
+| FIELD-02 | Phase 3 | Pending |
+| FIELD-03 | Phase 3 | Pending |
+| FIELD-04 | Phase 3 | Pending |
+| UI-01 | Phase 2 | Pending |
+| UI-02 | Phase 2 | Pending |
+| UI-03 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Pending |
+| UI-05 | Phase 3 | Pending |
+| UI-06 | Phase 2 | Pending |
+| UI-07 | Phase 3 | Pending |
+| UI-08 | Phase 3 | Pending |
+| APPLY-01 | Phase 3 | Pending |
+| APPLY-02 | Phase 3 | Pending |
+| APPLY-03 | Phase 3 | Pending |
+| APPLY-04 | Phase 4 | Pending |
+| APPLY-05 | Phase 4 | Pending |
+| APPLY-06 | Phase 4 | Pending |
+| APPLY-07 | Phase 4 | Pending |
+| APPLY-08 | Phase 4 | Pending |
+| APPLY-09 | Phase 4 | Pending |
+| PKG-01 | Phase 0 | Pending |
+| PKG-02 | Phase 5 | Pending |
+| PKG-03 | Phase 5 | Pending |
+| PKG-04 | Phase 5 | Pending |
+| PKG-05 | Phase 5 | Pending |
+| PKG-06 | Phase 5 | Pending |
+| PKG-07 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
-- Mapped to phases: 0 (filled by roadmapper)
-- Unmapped: 40 (will be 0 after ROADMAP.md creation)
+- Mapped to phases: 40
+- Unmapped: 0
+
+**Per-phase distribution:**
+- Phase 0 (Bootstrap): 1 requirement (PKG-01)
+- Phase 1 (Calc Engine & Audit Parser): 12 requirements (CALC-01..05, AUDIT-01..07)
+- Phase 2 (Manifest Shell & SDK Integration): 3 requirements (UI-01, UI-02, UI-06)
+- Phase 3 (Modal UI & Read Path): 12 requirements (UI-03, UI-04, UI-05, UI-07, UI-08, FIELD-01..04, APPLY-01, APPLY-02, APPLY-03)
+- Phase 4 (Write Path & Edge Cases): 6 requirements (APPLY-04..09)
+- Phase 5 (Polish & Marketplace Publish): 6 requirements (PKG-02..07)
 
 ---
 *Requirements defined: 2026-05-01*
-*Last updated: 2026-05-01 after research synthesis*
+*Last updated: 2026-05-01 — traceability filled by roadmapper; 40/40 v1 requirements mapped to 6 phases*
