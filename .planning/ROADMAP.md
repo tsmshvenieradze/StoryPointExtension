@@ -35,7 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The repo is scaffolded with `tsconfig.json`, `vitest.config.ts`, `webpack.config.*`, and a `vss-extension.json` skeleton declaring exactly the `vso.work_write` scope plus the `ms.vss-web.action` toolbar contribution and `ms.vss-web.external-content` modal contribution stubs (no implementation yet)
   4. The write atomicity ordering decision (comment-first vs field-first) is documented in PROJECT.md Key Decisions with the rationale, and is referenced from Phase 4's plan when it is created
   5. Running `npm ci && npm run typecheck && npm test` on a fresh clone exits 0 even though the only test is a placeholder
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 00-01-PLAN.md — Bootstrap: pin versions, write configs (tsconfig/webpack/vitest/manifest), scaffold src/, run smoke loop, verify publisher access
 
 ### Phase 1: Calc Engine & Audit Parser
 **Goal**: Lock the wire formats — calculation behavior matching the Excel source of truth, and the sentinel comment format that survives ADO's renderer — before any ADO surface is touched
