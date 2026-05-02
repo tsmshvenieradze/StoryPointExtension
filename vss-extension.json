@@ -3,7 +3,7 @@
   "id": "story-point-calculator",
   "version": "1.0.0",
   "name": "Story Point Calculator",
-  "publisher": "TsezariMshvenieradzeExtensions",
+  "publisher": "TsezariMshvenieradzeTfsAiReviewTask",
   "public": true,
   "targets": [
     { "id": "Microsoft.VisualStudio.Services" }
@@ -20,11 +20,11 @@
   "files": [
     { "path": "dist", "addressable": true },
     { "path": "images", "addressable": true },
-    { "path": "marketplace" }
+    { "path": "overview.md", "addressable": true }
   ],
   "content": {
     "details": {
-      "path": "marketplace/overview.md"
+      "path": "overview.md"
     }
   },
   "links": {
