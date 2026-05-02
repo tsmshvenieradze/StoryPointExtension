@@ -62,19 +62,37 @@ export function friendlyMessageForStatus(status: number | null): string {
 export function mapSdkErrorToStatus(
   err: unknown,
 ): { status: number | null; sdkErrorClass?: string } {
+  // Plan 04-06 fix-back (Scenario 1 cezari, 2026-05-02): the ADO Web SDK's
+  // form-service rejects with PLAIN OBJECTS that have `.name` and `.message`
+  // properties but whose prototype is NOT Error — `instanceof Error` is
+  // FALSE in that case. Widen the discriminator to handle both shapes.
+  // Empirical example: `{ name: "Error", message: "Work item can not be
+  // saved in its current state. Its either not changed or has errors." }`.
+  let name = "";
+  let msg = "";
   if (err instanceof Error) {
-    const name = err.name;
-    const msg = err.message ?? "";
-    if (name === "RuleValidationException") {
-      return { status: 412, sdkErrorClass: name };
+    name = err.name;
+    msg = err.message ?? "";
+  } else if (err !== null && typeof err === "object") {
+    const errObj = err as { name?: unknown; message?: unknown };
+    if (typeof errObj.name === "string") name = errObj.name;
+    if (typeof errObj.message === "string") msg = errObj.message;
+    // If neither field is a string, we can't classify — fall through to null.
+    if (name === "" && msg === "") {
+      return { status: null };
     }
-    if (/permission|denied|forbidden|stakeholder|read[\s-]?only/i.test(msg)) {
-      return { status: 403, sdkErrorClass: name };
-    }
-    if (/not found|deleted/i.test(msg)) {
-      return { status: 404, sdkErrorClass: name };
-    }
-    return { status: null, sdkErrorClass: name };
+  } else {
+    return { status: null };
   }
-  return { status: null };
+
+  if (name === "RuleValidationException") {
+    return { status: 412, sdkErrorClass: name };
+  }
+  if (/permission|denied|forbidden|stakeholder|read[\s-]?only/i.test(msg)) {
+    return { status: 403, sdkErrorClass: name };
+  }
+  if (/not found|deleted/i.test(msg)) {
+    return { status: 404, sdkErrorClass: name };
+  }
+  return { status: null, sdkErrorClass: name };
 }

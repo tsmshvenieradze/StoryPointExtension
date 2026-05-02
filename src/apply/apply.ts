@@ -161,6 +161,30 @@ export async function applyToWorkItem(
       };
       throw applyError;
     }
+
+    // Plan 04-06 fix-back (Scenario 1 cezari, 2026-05-02): if the user
+    // applies a value identical to the field's current value, setFieldValue
+    // returns true but doesn't dirty the form. Calling .save() on a clean
+    // work item rejects with "Work item can not be saved in its current
+    // state. Its either not changed or has errors." Probe isDirty() first
+    // and skip save() in the no-op case — the audit comment is already in,
+    // so the user's intent (re-affirm the SP value) is recorded.
+    //
+    // Defensive probe: try/catch handles both sync throws (isDirty missing
+    // on the form-service mock) and async rejections. Default to dirty=true
+    // on probe failure so we still attempt save (preserves original
+    // behavior on hosts where isDirty isn't exposed).
+    let isDirty = true;
+    try {
+      isDirty = await formService.isDirty();
+    } catch {
+      isDirty = true;
+    }
+    if (!isDirty) {
+      console.log(`${LOG_PREFIX} no-op apply: form not dirty after setFieldValue (same value); skipping save()`);
+      return;
+    }
+
     await formService.save();
     console.log(`${LOG_PREFIX} both writes succeeded`);
   } catch (err) {

@@ -26,11 +26,16 @@ import {
 } from "../../src/apply";
 
 // IWorkItemFormService mock — only the methods apply.ts touches.
+// isDirty mocked to resolve true by default (the apply orchestrator probes
+// it before save() to skip the no-op same-value path; a missing function
+// throws sync TypeError which the defensive try/catch handles, but most
+// tests want save() to be called → return true).
 function makeFormServiceMock() {
   return {
     setFieldValue: vi.fn(),
     save: vi.fn(),
     getInvalidFields: vi.fn().mockResolvedValue([]),
+    isDirty: vi.fn().mockResolvedValue(true),
   };
 }
 
@@ -191,6 +196,51 @@ describe("applyToWorkItem failure paths (D-08, D-09, D-11, D-20)", () => {
       message: "Could not save.",
     });
     expect(fs.setFieldValue).not.toHaveBeenCalled();
+  });
+
+  it("no-op apply: setFieldValue true but isDirty false → skip save() → resolve void (Plan 04-06 Scenario 1 fix-back)", async () => {
+    vi.mocked(postComment).mockResolvedValue({
+      id: 1,
+      workItemId: 42,
+      text: "...",
+      createdDate: "2026-05-02T00:00:00Z",
+      isDeleted: false,
+    } as never);
+    const fs = makeFormServiceMock();
+    fs.setFieldValue.mockResolvedValue(true);
+    fs.isDirty.mockResolvedValue(false); // form clean — same value as current
+
+    await expect(
+      applyToWorkItem(VALID_INPUT, 42, "proj", fs as never),
+    ).resolves.toBeUndefined();
+
+    expect(fs.setFieldValue).toHaveBeenCalled();
+    expect(fs.isDirty).toHaveBeenCalled();
+    expect(fs.save).not.toHaveBeenCalled();
+  });
+
+  it("isDirty probe missing on form-service (sync TypeError) → defaults to dirty=true → save attempted", async () => {
+    vi.mocked(postComment).mockResolvedValue({
+      id: 1,
+      workItemId: 42,
+      text: "...",
+      createdDate: "2026-05-02T00:00:00Z",
+      isDeleted: false,
+    } as never);
+    // Build a partial mock missing `isDirty` to simulate a host where the
+    // SDK doesn't expose it. apply.ts's try/catch defaults to dirty=true.
+    const fs = {
+      setFieldValue: vi.fn().mockResolvedValue(true),
+      save: vi.fn().mockResolvedValue(undefined),
+      getInvalidFields: vi.fn().mockResolvedValue([]),
+      // isDirty intentionally absent
+    };
+
+    await expect(
+      applyToWorkItem(VALID_INPUT, 42, "proj", fs as never),
+    ).resolves.toBeUndefined();
+
+    expect(fs.save).toHaveBeenCalled();
   });
 
   it("field leg: setFieldValue returns false (Pitfall 6 → 412 bucket) → reject with leg='field', status=412; .save() NOT called", async () => {

@@ -132,4 +132,36 @@ describe("mapSdkErrorToStatus: D-20 SDK-error discriminator", () => {
       sdkErrorClass: "WorkItemUpdateException",
     });
   });
+
+  // Plan 04-06 fix-back: ADO Web SDK rejects with plain objects (NOT Error
+  // instances) whose .name and .message are present. Empirical example
+  // from cezari Scenario 1: `{ name: "Error", message: "Work item can not
+  // be saved in its current state. Its either not changed or has errors." }`.
+  it("plain object with name + message (not Error instance) → classified by message", () => {
+    const plainPermission = { name: "Error", message: "permission denied" };
+    expect(mapSdkErrorToStatus(plainPermission)).toEqual({
+      status: 403,
+      sdkErrorClass: "Error",
+    });
+
+    const plainNotFound = { name: "Error", message: "Work item deleted" };
+    expect(mapSdkErrorToStatus(plainNotFound)).toEqual({
+      status: 404,
+      sdkErrorClass: "Error",
+    });
+
+    const plainOpaque = {
+      name: "Error",
+      message: "Work item can not be saved in its current state.",
+    };
+    expect(mapSdkErrorToStatus(plainOpaque)).toEqual({
+      status: null,
+      sdkErrorClass: "Error",
+    });
+  });
+
+  it("plain object with NO name and NO message → returns { status: null } (no sdkErrorClass)", () => {
+    expect(mapSdkErrorToStatus({})).toEqual({ status: null });
+    expect(mapSdkErrorToStatus({ foo: 1 })).toEqual({ status: null });
+  });
 });
