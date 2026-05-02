@@ -142,7 +142,7 @@ Plans:
 Plans:
 **Wave 1**
 - [ ] 05-01-PLAN.md — Publisher verification gate (PKG-06): user confirms publisher status at the Marketplace portal; 05-VERIFICATION.md skeleton with Publisher Verification Gate section
-- [ ] 05-02-PLAN.md — Build infrastructure trio: GitHub Actions ci.yml + scripts/check-bundle-size.cjs (250 KB gzipped gate) + scripts/publish-cezari.cjs replacing scripts/dev-publish.cjs (Windows spawnSync .cmd fix)
+- [x] 05-02-PLAN.md — Build infrastructure trio: GitHub Actions ci.yml + scripts/check-bundle-size.cjs (250 KB gzipped gate) + scripts/publish-cezari.cjs replacing scripts/dev-publish.cjs (Windows spawnSync .cmd fix) (completed 2026-05-02)
 - [ ] 05-03-PLAN.md — Listing-asset bundle: vss-extension.json content/links/repository/screenshots delta + marketplace/overview.md (D-9/D-10/D-11 + privacy) + README v1 (engineer-audience formula math) + light + dark screenshots + private re-publish to cezari for Marketplace render confirmation
 
 **Wave 2** *(blocked on Wave 1 completion)*
