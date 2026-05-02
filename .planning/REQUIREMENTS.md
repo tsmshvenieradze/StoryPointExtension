@@ -48,12 +48,12 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 - [ ] **APPLY-01**: On modal open, the read path fetches the current value of the resolved SP field via `IWorkItemFormService.getFieldValue()`
 - [ ] **APPLY-02**: On modal open, the read path fetches all comments on the work item via `WorkItemTrackingRestClient.getComments()` and runs the AUDIT parser to find the most recent sentinel comment
 - [ ] **APPLY-03**: When a prior sentinel comment is found, the modal pre-fills the three dropdowns from its payload
-- [ ] **APPLY-04**: When the current SP field already has a value, Apply shows an in-modal confirmation panel with "Current: X / New: Y" before performing the write
-- [ ] **APPLY-05**: Apply writes the new SP value via `IWorkItemFormService.setFieldValue()` followed by `.save()` on the work item form service
-- [ ] **APPLY-06**: Apply posts the audit comment via `WorkItemTrackingRestClient.addComment()` (API version `7.0-preview.3`)
-- [ ] **APPLY-07**: Write atomicity ordering (comment-first vs field-first) is decided in Phase 1 planning, documented in the plan, and consistently applied across the codebase
-- [ ] **APPLY-08**: When the field write fails, the user sees a clear error toast and no comment is posted (or posted comment is marked accordingly per APPLY-07 decision); when the comment fails, the user sees a clear error toast and the field write is left in place
-- [ ] **APPLY-09**: When the user lacks write permission on the work item (isReadOnly=true), the modal opens and replaces the calculator UI with a clear message explaining the work item is read-only. The toolbar button remains enabled. The current Story Points value is still shown via the context line for inspection.
+- [x] **APPLY-04**: When the current SP field already has a value, Apply shows an in-modal confirmation panel with "Current: X / New: Y" before performing the write *(Verified Phase 4 cezari 2026-05-02)*
+- [x] **APPLY-05**: Apply writes the new SP value via `IWorkItemFormService.setFieldValue()` followed by `.save()` on the work item form service *(Verified Phase 4 cezari 2026-05-02)*
+- [x] **APPLY-06**: Apply posts the audit comment via `WorkItemTrackingRestClient.addComment()` (API version `7.0-preview.3`) *(Verified Phase 4 cezari 2026-05-02)*
+- [x] **APPLY-07**: Write atomicity ordering (comment-first vs field-first) is decided in Phase 1 planning, documented in the plan, and consistently applied across the codebase *(Verified Phase 4 cezari 2026-05-02 — comment-first → field-write per Phase 0 D-01, language-level proof via vitest mock.invocationCallOrder + production-confirmed via cezari console transcripts)*
+- [x] **APPLY-08**: When the field write fails, the user sees a clear error toast and no comment is posted (or posted comment is marked accordingly per APPLY-07 decision); when the comment fails, the user sees a clear error toast and the field write is left in place *(Verified Phase 4 cezari 2026-05-02 + 398/398 unit tests)*
+- [x] **APPLY-09**: When the user lacks write permission on the work item (isReadOnly=true), the modal opens and replaces the calculator UI with a clear message explaining the work item is read-only. The toolbar button remains enabled. The current Story Points value is still shown via the context line for inspection. *(Verified Phase 4 cezari 2026-05-02 — read-only-replacement UX surfaces reactively per spike A3 LAZY-FALLBACK-ONLY)*
 
 ### Pkg — Marketplace Package & Publish
 
@@ -132,12 +132,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APPLY-01 | Phase 3 | Pending |
 | APPLY-02 | Phase 3 | Pending |
 | APPLY-03 | Phase 3 | Pending |
-| APPLY-04 | Phase 4 | Pending |
-| APPLY-05 | Phase 4 | Pending |
-| APPLY-06 | Phase 4 | Pending |
-| APPLY-07 | Phase 4 | Pending |
-| APPLY-08 | Phase 4 | Pending |
-| APPLY-09 | Phase 4 | Pending |
+| APPLY-04 | Phase 4 | Complete |
+| APPLY-05 | Phase 4 | Complete |
+| APPLY-06 | Phase 4 | Complete |
+| APPLY-07 | Phase 4 | Complete |
+| APPLY-08 | Phase 4 | Complete |
+| APPLY-09 | Phase 4 | Complete |
 | PKG-01 | Phase 0 | Complete |
 | PKG-02 | Phase 5 | Pending |
 | PKG-03 | Phase 5 | Pending |
