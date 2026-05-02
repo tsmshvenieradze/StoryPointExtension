@@ -9,7 +9,7 @@
     { "id": "Microsoft.VisualStudio.Services" }
   ],
   "categories": ["Azure Boards"],
-  "tags": ["story points", "estimation", "scrum", "agile"],
+  "tags": ["story points", "estimation", "scrum", "agile", "cmmi", "fibonacci"],
   "description": "Structured Story Point estimation using Complexity, Uncertainty, Effort.",
   "icons": {
     "default": "images/icon.png"
@@ -19,7 +19,32 @@
   ],
   "files": [
     { "path": "dist", "addressable": true },
-    { "path": "images", "addressable": true }
+    { "path": "images", "addressable": true },
+    { "path": "marketplace" }
+  ],
+  "content": {
+    "details": {
+      "path": "marketplace/overview.md"
+    }
+  },
+  "links": {
+    "getstarted": {
+      "uri": "https://github.com/tsmshvenieradze/StoryPointExtension#usage"
+    },
+    "support": {
+      "uri": "https://github.com/tsmshvenieradze/StoryPointExtension/issues"
+    },
+    "license": {
+      "uri": "https://github.com/tsmshvenieradze/StoryPointExtension/blob/master/LICENSE"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "uri": "https://github.com/tsmshvenieradze/StoryPointExtension"
+  },
+  "screenshots": [
+    { "path": "images/screenshots/screenshot-calculator-light.png" },
+    { "path": "images/screenshots/screenshot-calculator-dark.png" }
   ],
   "contributions": [
     {
