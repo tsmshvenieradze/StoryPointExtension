@@ -1,4 +1,4 @@
-// src/entries/modal.tsx — Phase 2 implementation
+// src/entries/modal.tsx — Phase 3 implementation
 // Source: https://github.com/microsoft/azure-devops-extension-sample/blob/master/src/Samples/panel-content/panel-content.tsx
 // Modernized: React 18 createRoot; loaded:false discipline per D-12.
 //
@@ -8,8 +8,9 @@
 //   theme CSS variables flow into our iframe automatically and azure-devops-ui
 //   Surface+Page consume them — no theme-detection code (D-13, RESEARCH §Pitfall 4).
 //
-// Phase 2 boundary: workItemId echo only. NO field reads (D-21, D-22),
-// NO writes (D-23), NO imports of src/calc/ or src/audit/ (D-24).
+// Phase 3: replace Phase 2's <Hello> with the full <CalcModal> — same workItemId
+//   prop contract, same SDK lifecycle bootstrap. The actual calculator UI,
+//   read path, and stub Apply live in src/ui/CalcModal.tsx.
 
 import * as React from "react";
 import { createRoot } from "react-dom/client";
@@ -35,12 +36,9 @@ const Page = PageRaw as unknown as React.FC<
 import "azure-devops-ui/Core/override.css";
 
 import type { CalcSpModalConfig } from "../ado/types";
+import { CalcModal } from "../ui/CalcModal";
 
 const LOG_PREFIX = "[sp-calc/modal]";
-
-interface HelloProps {
-  workItemId: number;
-}
 
 const ConfigError: React.FC<{ received: unknown }> = ({ received }) => (
   <Surface background={SurfaceBackground.neutral}>
@@ -55,26 +53,6 @@ const ConfigError: React.FC<{ received: unknown }> = ({ received }) => (
     </Page>
   </Surface>
 );
-
-const Hello: React.FC<HelloProps> = ({ workItemId }) => {
-  return (
-    <Surface background={SurfaceBackground.neutral}>
-      <Page className="flex-grow">
-        <Header
-          title="Story Point Calculator"
-          titleSize={TitleSize.Large}
-        />
-        <div className="page-content page-content-top">
-          <p>Hello from Work Item #{workItemId}</p>
-          <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "16px" }}>
-            Press <kbd>Esc</kbd> or click outside the dialog to close.
-            Real Apply / Cancel controls land in Phase 3.
-          </p>
-        </div>
-      </Page>
-    </Surface>
-  );
-};
 
 async function bootstrap() {
   // Lifecycle: init → ready → read config → render → notifyLoadSucceeded.
@@ -96,15 +74,18 @@ async function bootstrap() {
 
   const root = createRoot(rootEl);
 
-  // Fail loud, not silent: rendering a "Hello from Work Item #0" when the
-  // config is missing masks plumbing bugs in Phase 3 (toolbar→modal handoff).
-  // Surface a configuration-error UI instead so failures are immediately
-  // visible during development.
+  // Fail loud, not silent: rendering a placeholder for missing config
+  // masks plumbing bugs in the toolbar→modal handoff. Surface a
+  // configuration-error UI instead so failures are immediately visible
+  // during development.
   if (typeof config?.workItemId !== "number") {
     console.error(`${LOG_PREFIX} workItemId missing from configuration`, config);
     root.render(<ConfigError received={config} />);
   } else {
-    root.render(<Hello workItemId={config.workItemId} />);
+    // Phase 3 swap: the Hello echo becomes the full calculator UI.
+    // CalcModal owns the read path (FieldResolver, getFieldValue,
+    // getCommentsModern, parseLatest pre-fill) and the stub Apply.
+    root.render(<CalcModal workItemId={config.workItemId} />);
   }
 
   // Tell the host to remove its loading spinner. Without this call the
