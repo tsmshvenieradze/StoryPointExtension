@@ -172,8 +172,14 @@ export async function applyToWorkItem(
     // Otherwise, it's an SDK rejection from setFieldValue or .save().
     const { status, sdkErrorClass } = mapSdkErrorToStatus(err);
     const message = friendlyMessageForStatus(status);
+    // Diagnostic dump (Plan 04-06 fix-back): when status === null + sdkClass
+    // === undefined, the SDK rejected with something we can't classify. Log
+    // the raw err so cezari runs surface what ADO is actually throwing —
+    // future regex updates to mapSdkErrorToStatus can target the empirical
+    // shape rather than guess.
     console.log(
       `${LOG_PREFIX} setFieldValue/save failed sdkClass=${sdkErrorClass} status=${status} message=${message}`,
+      { rawError: err, errType: typeof err, errIsError: err instanceof Error, errName: (err as { name?: string })?.name, errMessage: (err as { message?: string })?.message },
     );
     const applyError: ApplyError = {
       leg: "field",
