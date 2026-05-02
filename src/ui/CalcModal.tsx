@@ -82,14 +82,21 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
   // updates after unmount (RESEARCH §Loading & State Sequence).
   React.useEffect(() => {
     let cancelled = false;
+    console.log(`${LOG_PREFIX} read path: effect started`);
     (async () => {
       let fieldsRejected = false;
       let commentsRejected = false;
 
       try {
+        console.log(`${LOG_PREFIX} read path: requesting work-item-form service`);
         const formService = await getFormService();
+        console.log(`${LOG_PREFIX} read path: form service acquired`);
+
         const projectId = getProjectId();
+        console.log(`${LOG_PREFIX} read path: projectId=${projectId}`);
+
         const workItemTypeName = await getWorkItemTypeName(formService);
+        console.log(`${LOG_PREFIX} read path: workItemTypeName=${workItemTypeName}`);
 
         // FieldResolver — never rejects (D-20 default to StoryPoints
         // is internal). To surface the failure flag for the
@@ -98,6 +105,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
         // second call O(1).
         try {
           await formService.getFields();
+          console.log(`${LOG_PREFIX} read path: getFields probe ok`);
         } catch (err) {
           console.warn(`${LOG_PREFIX} getFields probe failed`, err);
           fieldsRejected = true;
@@ -108,6 +116,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
           projectId,
           workItemTypeName,
         });
+        console.log(`${LOG_PREFIX} read path: resolved field`, resolvedField);
 
         // If neither field is present, render the no-field UI; skip the
         // rest of the read path (we can't show a current SP for a
@@ -126,21 +135,45 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
           return;
         }
 
-        // Parallel reads for the remaining values.
-        const [title, currentSp, comments] = await Promise.all([
-          getWorkItemTitle(formService),
-          getCurrentSpValue(formService, resolvedField),
-          fetchCommentsForRead(workItemId, projectId).catch((err) => {
+        // Parallel reads for the remaining values. Per-promise logging
+        // pinpoints which leg hangs when verification stalls (03-04 finding).
+        console.log(`${LOG_PREFIX} read path: starting parallel reads`);
+        const titleP = getWorkItemTitle(formService).then((v) => {
+          console.log(`${LOG_PREFIX} read path: title done`, v);
+          return v;
+        });
+        const spP = getCurrentSpValue(formService, resolvedField).then((v) => {
+          console.log(`${LOG_PREFIX} read path: currentSp done`, v);
+          return v;
+        });
+        const commentsP = fetchCommentsForRead(workItemId, projectId)
+          .then((v) => {
+            console.log(`${LOG_PREFIX} read path: comments done`, v.length);
+            return v;
+          })
+          .catch((err) => {
             console.warn(`${LOG_PREFIX} getCommentsModern failed`, err);
             commentsRejected = true;
             return [] as Awaited<ReturnType<typeof fetchCommentsForRead>>;
-          }),
-        ]);
+          });
+        const [title, currentSp, comments] = await Promise.all([titleP, spP, commentsP]);
+        console.log(`${LOG_PREFIX} read path: parallel reads done`, { title, currentSp, commentCount: comments.length });
 
         if (cancelled) return;
 
         // Pre-fill probe (APPLY-03). parseLatest never throws (AUDIT-04).
+        // Diagnostic dump (03-04 cezari): show raw comment payload + parseLatest
+        // result so we can see whether ADO stripped the HTML sentinel comment.
+        console.log(`${LOG_PREFIX} read path: comment dump`,
+          comments.map((c) => ({
+            id: c.id,
+            isDeleted: c.isDeleted,
+            createdDate: c.createdDate,
+            textPreview: typeof c.text === "string" ? c.text.slice(0, 240) : c.text,
+          })),
+        );
         const prefill = parseLatest(comments);
+        console.log(`${LOG_PREFIX} read path: parseLatest result`, prefill);
         const validPrefill =
           prefill !== null &&
           isValidLevel(prefill.c) &&
