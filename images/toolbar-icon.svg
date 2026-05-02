@@ -1,0 +1,15 @@
+<!-- images/toolbar-icon.svg — Phase 2 placeholder calculator glyph.
+     Phase 5 (PKG-05) replaces with the final branded icon if needed.
+     viewBox="0 0 16 16" matches the toolbar size. Single-color paths,
+     fill="currentColor" inherits the ADO toolbar foreground color. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true">
+  <!-- Calculator outline -->
+  <path fill-rule="evenodd" d="M3 1.5A1.5 1.5 0 0 1 4.5 0h7A1.5 1.5 0 0 1 13 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 14.5v-13Zm1.5-.5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5h-7Z"/>
+  <!-- Display strip -->
+  <path d="M5 3h6v2H5V3Z"/>
+  <!-- Buttons (4 dots in a 2x2 grid) -->
+  <circle cx="6" cy="8" r="0.75"/>
+  <circle cx="10" cy="8" r="0.75"/>
+  <circle cx="6" cy="11" r="0.75"/>
+  <circle cx="10" cy="11" r="0.75"/>
+</svg>
