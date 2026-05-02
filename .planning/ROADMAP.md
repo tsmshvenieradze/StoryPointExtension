@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Calc Engine & Audit Parser** - Pure functions matching the Excel calculator and the sentinel-format comment serializer/parser, both fully unit-tested with zero ADO dependencies (completed 2026-05-01)
 - [x] **Phase 2: Manifest Shell & SDK Integration** - Toolbar button appears in a dev org, click opens a themed "Hello" dialog — the highest-risk integration point fails fast here (completed 2026-05-02)
 - [x] **Phase 3: Modal UI & Read Path** - Full React calculator modal with FieldResolver, intermediate values, current SP read, and pre-fill from prior sentinel comment (completed 2026-05-02)
-- [ ] **Phase 4: Write Path & Edge Cases** - Apply writes the field and posts the audit comment using the chosen atomicity order, with permission checks, overwrite confirmation, and friendly error handling
+- [x] **Phase 4: Write Path & Edge Cases** - Apply writes the field and posts the audit comment using the chosen atomicity order, with permission checks, overwrite confirmation, and friendly error handling (completed 2026-05-02)
 - [ ] **Phase 5: Polish & Marketplace Publish** - Bundle size gate, listing assets, private smoke install, then public publish on Visual Studio Marketplace verified on Agile and CMMI orgs
 
 ## Phase Details
@@ -125,7 +125,7 @@ Plans:
 - [x] 04-05-PLAN.md — apply.ts two-leg orchestrator + CalcModal 9-mode state machine + toolbar lightDismiss=false (completed 2026-05-02)
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 04-06-PLAN.md — Manual cezari verification (D-17 8-scenario checklist) + 04-VERIFICATION.md write-up + REQUIREMENTS/ROADMAP/STATE close commits
+- [x] 04-06-PLAN.md — Manual cezari verification (D-17 8-scenario checklist) + 04-VERIFICATION.md write-up + REQUIREMENTS/ROADMAP/STATE close commits (completed 2026-05-02; PARTIAL PASS verdict, 3 fix-backs back-ported to Plan 04-05)
 
 ### Phase 5: Polish & Marketplace Publish
 **Goal**: Ship a public Marketplace listing that installs cleanly on a fresh ADO trial org and a Contributor (non-admin) user can complete the full flow on both Agile and CMMI processes
@@ -150,5 +150,5 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
 | 3. Modal UI & Read Path | 4/4 | Complete    | 2026-05-02 |
-| 4. Write Path & Edge Cases | 4/6 | Wave 2 complete; Wave 3 unblocked | - |
+| 4. Write Path & Edge Cases | 6/6 | Complete    | 2026-05-02 |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Plan 04-05 complete — Phase 4 implementation surface ready for Plan 04-06 cezari publish
-last_updated: "2026-05-02T16:27:41.648Z"
+stopped_at: Phase 4 closed; Phase 5 (Polish & Marketplace Publish) ready
+last_updated: "2026-05-02T20:55:00.000Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 83
 ---
 
 # Project State
@@ -21,24 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** Phase 04 — write-path-edge-cases
+**Current focus:** Phase 4 closed; Phase 5 (Polish & Marketplace Publish) ready
 
 ## Current Position
 
-Phase: 04 (write-path-edge-cases) — EXECUTING
-Plan: 5 of 6 (next: 04-03 — adoFetch + postComment + bridge.getIsReadOnly)
-Status: Ready to execute
+Phase: 05 (polish-marketplace-publish) — NOT STARTED
+Plan: 0 of TBD (next: `/gsd-discuss-phase 5`)
+Status: Phase 4 complete; Phase 5 ready to plan
 Last activity: 2026-05-02
 
-Progress: [███████░░░] 71% (10 of 14 plans complete; 4 of 6 phases complete)
+Progress: [████████░░] 83% (14 of 14 phase-1..4 plans complete; 5 of 6 phases complete; Phase 5 plans TBD)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 14 (Phase 0..4 fully closed)
 - Average duration: —
-- Total execution time: ~4 days (calendar) across 8 plans
+- Total execution time: ~4 days (calendar) across 14 plans
 
 **By Phase:**
 
@@ -48,15 +48,16 @@ Progress: [███████░░░] 71% (10 of 14 plans complete; 4 of 6 
 | 1 | 2 | - | - |
 | 2 | 1 | - | - |
 | 3 | 4 | - | - |
-| 4 | 2/6 | - | - |
+| 4 | 6/6 | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: 03-04 (verification with 6 fix-back commits), Phase 3 close, Phase 4 context gathered, 04-02 (errorMessages + APPLY-09 rewrite), 04-01 (cezari empirical spike: D-01 FALSIFIED → audit comment human-readable-only; D-05 FALSIFIED → lazy-fallback-only; D-10 REDEFINED → no programmatic close; D-13 CONFIRMED)
-- Trend: spike-evidence-first pattern shifted Phase 4 implementation from training-data assumptions to verified facts before any production file is written. D-02 fallback adopted, D-07 reactive-only read-only handling locked.
+- Last 5 plans: 04-02 (errorMessages + APPLY-09 rewrite), 04-01 (cezari empirical spike: D-01/D-05/D-10 falsified/redefined), 04-03 (adoFetch + postComment + bridge.getIsReadOnly), 04-04 (7 leaf components), 04-05 (apply.ts two-leg orchestrator + 9-mode CalcModal + lightDismiss=false), 04-06 (cezari D-17 verification + 3 fix-backs + Phase 4 close)
+- Trend: spike-evidence-first pattern shifted Phase 4 implementation from training-data assumptions to verified facts before any production file is written. Plan 04-06 surfaced 2 real-world bugs (no-op save + plain-object SDK rejection) and 1 UX dismissal regression — all back-ported atomically per Phase 03-04 fix-back pattern. Phase 4 closed via 6 plans (1 spike + 1 pure module + 1 ADO surface + 1 UI components + 1 orchestrator + 1 manual verify); 3 real-world corrections back-ported.
 
 *Updated after each plan completion*
 | Phase 04 P05 | 14m | 3 tasks | 8 files |
+| Phase 04 P06 | 3h55m | 5 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,12 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 04 Plan 05: CalcModal extended to 9-mode state machine (loading/calculator/confirm/saving/saved/readonly/noField/commentFail/fieldFail) with 4-leg parallel read path; banner stack ordering enforced via 4 BANNER-STACK-N structural markers
 - [Phase ?]: Phase 04 Plan 05: PermissionWarnBanner SUPPRESSED on the spike-A3 baseline path (probeFailed=true && isReadOnly=false) — slot reserved structurally for future probe-validated failure modes
 - [Phase ?]: Phase 04 Plan 05: toolbar.tsx lightDismiss=false (D-15) + manifest 0.2.0; Phase 4 implementation surface complete and Plan 04-06 cezari publish unblocked
+- Phase 04 Plan 06: cezari D-17 verification — 5 PASS / 0 FAIL / 3 PARTIAL/DEFERRED (offline, Stakeholder, slow-3G); Phase 4 verdict PARTIAL PASS with 4 known limitations carried into Phase 5 polish queue
+- Phase 04 Plan 06 Fix-back 1 (`d616330`): drop lightDismiss=false in `src/entries/toolbar.tsx`; revert to host-default true. Plan 04-01 Probe 4 evidence supports the trade — iframe survives lightDismiss; SavingOverlay handles in-modal interaction guard
+- Phase 04 Plan 06 Fix-back 3 (`4ca2f69`): structured diagnostic dump on unclassified setFieldValue/save rejection (`rawError`, `errType`, `errIsError`, `errName`, `errMessage`) — bridge to Fix-back 4
+- Phase 04 Plan 06 Fix-back 4 (`c536926`): two real-world bug fixes — (a) no-op same-value save handled by `isDirty()` probe + skip `.save()` when clean; (b) plain-object SDK rejections classified by widening `mapSdkErrorToStatus` to handle `{name, message}` shape (ADO rejects with prototype !== Error). +5 vitest cases (398/398 total)
+- Phase 04 known limitations (carried into Phase 5 polish queue): (1) Esc dismissal does not work from iframe — SDK v4 has no programmatic close; workaround is outside-click + X button; (2) reopen-pre-fill from sentinel comment permanently deferred per spike A1 STRIPPED-FALLBACK; pre-fill from current-SP via Phase 3 read path remains operational; (3) eager read-only probe is unreliable per spike A3 LAZY-FALLBACK-ONLY; reactive read-only via FieldFailBanner is the production baseline; (4) network-failure scenarios (3, 5, 7) deferred — orchestrator code paths unit-test-covered (398/398)
+- Phase 04 closed 2026-05-02 — APPLY-04..09 all met; ROADMAP Phase 4 row Complete; Plan 04-06 SUMMARY captures the 4-stage fix-back loop and Phase 5 readiness checklist
 
 ### Pending Todos
 
@@ -109,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-02T16:27:41.645Z
-Stopped at: Plan 04-05 complete — Phase 4 implementation surface ready for Plan 04-06 cezari publish
-Resume file: .planning/phases/04-write-path-edge-cases/04-06-PLAN.md
+Last session: 2026-05-02T20:55:00.000Z
+Stopped at: Phase 4 closed; Phase 5 (Polish & Marketplace Publish) ready
+Resume file: .planning/ROADMAP.md (Phase 5 needs `/gsd-discuss-phase 5` to plan; CMMI verification + listing assets + bundle gate per PKG-02..07)
