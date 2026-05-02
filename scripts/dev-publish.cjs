@@ -92,10 +92,14 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
   ];
 
   console.log(`${LOG_PREFIX} attempt ${attempt}/${MAX_ATTEMPTS}: publishing version ${attemptVersion} (token redacted)`);
-  const r = spawnSync("npx", args, {
+  // Avoid shell:true so the PAT does not appear on argv visible in OS process
+  // tables (Task Manager / `ps`). Use the full npx executable path resolution
+  // — Windows requires npx.cmd, POSIX uses plain npx.
+  const npxBin = process.platform === "win32" ? "npx.cmd" : "npx";
+  const r = spawnSync(npxBin, args, {
     cwd: REPO_ROOT,
     stdio: ["inherit", "pipe", "pipe"],
-    shell: true,
+    shell: false,
     encoding: "utf8",
   });
 

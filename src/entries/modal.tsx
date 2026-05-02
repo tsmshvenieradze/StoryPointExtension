@@ -42,6 +42,20 @@ interface HelloProps {
   workItemId: number;
 }
 
+const ConfigError: React.FC<{ received: unknown }> = ({ received }) => (
+  <Surface background={SurfaceBackground.neutral}>
+    <Page className="flex-grow">
+      <Header title="Story Point Calculator — Configuration Error" titleSize={TitleSize.Large} />
+      <div className="page-content page-content-top">
+        <p>The dialog opened without a valid <code>workItemId</code> configuration. This is a plumbing bug between the toolbar action and the modal contribution.</p>
+        <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "16px" }}>
+          Received configuration: <code>{JSON.stringify(received) ?? "undefined"}</code>
+        </p>
+      </div>
+    </Page>
+  </Surface>
+);
+
 const Hello: React.FC<HelloProps> = ({ workItemId }) => {
   return (
     <Surface background={SurfaceBackground.neutral}>
@@ -72,16 +86,8 @@ async function bootstrap() {
   await SDK.ready();
   console.log(`${LOG_PREFIX} ready() resolved`);
 
-  const config = SDK.getConfiguration() as CalcSpModalConfig;
+  const config = SDK.getConfiguration() as CalcSpModalConfig | undefined;
   console.log(`${LOG_PREFIX} SDK ready`, { config });
-
-  // Defensive: if configuration is missing (shouldn't happen in normal flow,
-  // but openCustomDialog without options would yield undefined), default to 0
-  // and log loudly so debugging doesn't waste time.
-  const workItemId = typeof config?.workItemId === "number" ? config.workItemId : 0;
-  if (workItemId === 0) {
-    console.error(`${LOG_PREFIX} workItemId missing from configuration`, config);
-  }
 
   const rootEl = document.getElementById("root");
   if (!rootEl) {
@@ -89,7 +95,17 @@ async function bootstrap() {
   }
 
   const root = createRoot(rootEl);
-  root.render(<Hello workItemId={workItemId} />);
+
+  // Fail loud, not silent: rendering a "Hello from Work Item #0" when the
+  // config is missing masks plumbing bugs in Phase 3 (toolbar→modal handoff).
+  // Surface a configuration-error UI instead so failures are immediately
+  // visible during development.
+  if (typeof config?.workItemId !== "number") {
+    console.error(`${LOG_PREFIX} workItemId missing from configuration`, config);
+    root.render(<ConfigError received={config} />);
+  } else {
+    root.render(<Hello workItemId={config.workItemId} />);
+  }
 
   // Tell the host to remove its loading spinner. Without this call the
   // host shows a permanent spinner over the dialog content (RESEARCH §Pitfall 3).
