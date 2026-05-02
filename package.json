@@ -18,7 +18,8 @@
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "dev": "webpack --mode development --watch",
-    "package": "tfx extension create --manifest-globs vss-extension.json --output-path dist/"
+    "package": "tfx extension create --manifest-globs vss-extension.json --output-path dist/",
+    "dev:publish": "node scripts/dev-publish.cjs"
   },
   "dependencies": {
     "azure-devops-extension-api": "4.270.0",
