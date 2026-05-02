@@ -56,40 +56,81 @@ if (!pat) {
 
 // 3. Snapshot vss-extension.json BEFORE tfx mutates it.
 const manifestSnapshot = fs.readFileSync(MANIFEST, "utf8");
-const beforeVersion = JSON.parse(manifestSnapshot).version;
+const snapshotJson = JSON.parse(manifestSnapshot);
+const beforeVersion = snapshotJson.version;
 console.log(`${LOG_PREFIX} snapshot taken (version ${beforeVersion})`);
 
-// 4. Run tfx extension publish with --rev-version and --share-with cezari.
-const args = [
-  "tfx",
-  "extension", "publish",
-  "--manifest-globs", "vss-extension.json",
-  "--share-with", "cezari",
-  "--rev-version",
-  "--token", pat,
-  ...process.argv.slice(2),
-];
-
-console.log(`${LOG_PREFIX} npx tfx extension publish --share-with cezari --rev-version (token redacted)`);
-const r = spawnSync("npx", args, {
-  cwd: REPO_ROOT,
-  stdio: "inherit",
-  shell: true,
-});
-
-// 5. Read post-publish version (so the developer sees what was published)
-//    BEFORE restoring the snapshot.
-let publishedVersion = "(unknown — restore continues)";
-try {
-  const after = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
-  publishedVersion = after.version;
-} catch {
-  /* if tfx left the file in a bad state, just log */
+function bumpPatch(version) {
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (!m) throw new Error(`Cannot parse version ${version}`);
+  return `${m[1]}.${m[2]}.${Number(m[3]) + 1}`;
 }
 
-// 6. Restore vss-extension.json from snapshot regardless of tfx exit code,
-//    so a failed publish does not leave a partial mutation (D-03).
-fs.writeFileSync(MANIFEST, manifestSnapshot, "utf8");
-console.log(`${LOG_PREFIX} manifest restored to version ${beforeVersion} (was bumped to ${publishedVersion} during publish)`);
+// 4. Run tfx extension publish, retrying on version-conflict by bumping the
+//    patch and trying again. Marketplace registers every version on validation
+//    attempt (even failed validations), so --rev-version's "snapshot+1" can
+//    collide on retries; we retry up to MAX_ATTEMPTS times.
+const MAX_ATTEMPTS = 8;
+let attemptVersion = bumpPatch(beforeVersion);
+let publishedVersion = "(unknown)";
+let exitCode = 1;
+let lastStdout = "";
 
-process.exit(r.status ?? 1);
+for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  // Write the candidate version to the manifest in-memory copy on disk.
+  const candidateJson = { ...snapshotJson, version: attemptVersion };
+  fs.writeFileSync(MANIFEST, JSON.stringify(candidateJson, null, 2), "utf8");
+
+  const args = [
+    "tfx",
+    "extension", "publish",
+    "--manifest-globs", "vss-extension.json",
+    "--share-with", "cezari",
+    "--token", pat,
+    ...process.argv.slice(2),
+  ];
+
+  console.log(`${LOG_PREFIX} attempt ${attempt}/${MAX_ATTEMPTS}: publishing version ${attemptVersion} (token redacted)`);
+  const r = spawnSync("npx", args, {
+    cwd: REPO_ROOT,
+    stdio: ["inherit", "pipe", "pipe"],
+    shell: true,
+    encoding: "utf8",
+  });
+
+  // Mirror tfx output to the user.
+  if (r.stdout) process.stdout.write(r.stdout);
+  if (r.stderr) process.stderr.write(r.stderr);
+  lastStdout = `${r.stdout ?? ""}\n${r.stderr ?? ""}`;
+
+  if (r.status === 0) {
+    publishedVersion = attemptVersion;
+    exitCode = 0;
+    break;
+  }
+
+  // Version-collision detection. tfx prints "Version number must increase
+  // each time an extension is published. ... Current version: X.Y.Z".
+  const collision = /Version number must increase[\s\S]*?Current version:\s*(\d+\.\d+\.\d+)/i.exec(lastStdout);
+  if (!collision) {
+    // Different failure (auth, validation, network, etc.). Don't retry.
+    exitCode = r.status ?? 1;
+    break;
+  }
+
+  const marketplaceVersion = collision[1];
+  attemptVersion = bumpPatch(marketplaceVersion);
+  console.log(`${LOG_PREFIX} version ${candidateJson.version} already on Marketplace (current: ${marketplaceVersion}); retrying with ${attemptVersion}`);
+}
+
+// 5. Restore vss-extension.json from snapshot regardless of outcome, so the
+//    on-disk version mutation does not pollute git (D-03).
+fs.writeFileSync(MANIFEST, manifestSnapshot, "utf8");
+
+if (exitCode === 0) {
+  console.log(`${LOG_PREFIX} published version ${publishedVersion}; manifest restored to ${beforeVersion}`);
+} else {
+  console.error(`${LOG_PREFIX} publish failed; manifest restored to ${beforeVersion}`);
+}
+
+process.exit(exitCode);
