@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 function baseConfig(entryName, mode) {
   return {
     mode,
-    entry: `./src/entries/${entryName}.tsx`,
+    entry: { [entryName]: `./src/entries/${entryName}.tsx` },
     output: {
       filename: `${entryName}.js`,
       path: path.resolve(__dirname, 'dist'),
