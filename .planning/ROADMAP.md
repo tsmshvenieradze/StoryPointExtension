@@ -90,8 +90,8 @@ Plans:
 
 Plans:
 **Wave 1**
-- [ ] 03-01-PLAN.md — ADO bridge layer (ModernCommentsClient subclass for 7.1-preview.4 comments + IWorkItemFormService wrappers + read-path types) and REQUIREMENTS.md FIELD-04 rewrite per D-17
-- [ ] 03-02-PLAN.md — FieldResolver pure module + vitest D-30 suite (StoryPoints/Size priority, cache, D-20 fallback, isDeleted filter)
+- [x] 03-01-PLAN.md — ADO bridge layer (ModernCommentsClient subclass for 7.1-preview.4 comments + IWorkItemFormService wrappers + read-path types) and REQUIREMENTS.md FIELD-04 rewrite per D-17
+- [x] 03-02-PLAN.md — FieldResolver pure module + vitest D-30 suite (StoryPoints/Size priority, cache, D-20 fallback, isDeleted filter)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 03-03-PLAN.md — Calculator UI components (Dropdown3, CalcPanel, banners, NoFieldMessage), CalcModal orchestrator, stub Apply (D-27), and src/entries/modal.tsx rewrite
