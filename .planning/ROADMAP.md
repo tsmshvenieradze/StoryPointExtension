@@ -114,8 +114,8 @@ Plans:
 
 Plans:
 **Wave 1**
-- [ ] 04-01-PLAN.md — Empirical spike on cezari (D-01/D-05/D-10 assumptions resolved into 04-VERIFICATION.md ## Spike Results)
-- [ ] 04-02-PLAN.md — errorMessages.ts pure module (D-11 + D-20) + REQUIREMENTS.md APPLY-09 rewrite per D-06
+- [x] 04-01-PLAN.md — Empirical spike on cezari (D-01/D-05/D-10 assumptions resolved into 04-VERIFICATION.md ## Spike Results) (completed 2026-05-02)
+- [x] 04-02-PLAN.md — errorMessages.ts pure module (D-11 + D-20) + REQUIREMENTS.md APPLY-09 rewrite per D-06 (completed 2026-05-02)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 04-03-PLAN.md — adoFetch helper + postComment writer + comments refactor + bridge.getIsReadOnly + types extension
@@ -150,5 +150,5 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
 | 3. Modal UI & Read Path | 4/4 | Complete    | 2026-05-02 |
-| 4. Write Path & Edge Cases | 0/TBD | Not started | - |
+| 4. Write Path & Edge Cases | 2/6 | Wave 1 complete; Wave 2 unblocked | - |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
