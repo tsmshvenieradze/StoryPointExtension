@@ -1,10 +1,10 @@
 {
   "manifestVersion": 1,
   "id": "story-point-calculator",
-  "version": "0.2.5",
+  "version": "1.0.0",
   "name": "Story Point Calculator",
   "publisher": "TsezariMshvenieradzeExtensions",
-  "public": false,
+  "public": true,
   "targets": [
     { "id": "Microsoft.VisualStudio.Services" }
   ],
@@ -42,10 +42,6 @@
     "type": "git",
     "uri": "https://github.com/tsmshvenieradze/StoryPointExtension"
   },
-  "screenshots": [
-    { "path": "images/screenshots/screenshot-calculator-light.png" },
-    { "path": "images/screenshots/screenshot-calculator-dark.png" }
-  ],
   "contributions": [
     {
       "id": "calc-sp-action",
