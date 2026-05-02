@@ -721,32 +721,37 @@ See `## Common Pitfalls` section for the eight Phase-4-specific pitfalls. These 
 | A6 | `vso.work_write` scope covers BOTH addComment POST AND setFieldValue + .save() | implicit in CONTEXT D-13, APPLY-06, APPLY-07 | If scopes diverged: cezari Apply fails with 401/403; planner must either add scope (forcing re-consent across installs per PITFALLS Pitfall 3) or split. Verified: Microsoft Learn 2026-04 Comments - Add 7.0-preview.3 scope row says "vso.work_write — Grants the ability to read, create, and update work items and queries… [comments and] receive notifications about work item events"; setFieldValue is on the open form and uses the SDK's session, not REST — same scope sufficiency |
 | A7 | The cezari Discussion view in the work item form actually HIDES `<!-- -->` HTML comments when posted via format=1 | Pitfall 2, Validation Architecture | Visible-sentinel UX still broken despite format=1; fall back to invisible-div carrier; D-02 spike resolves |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Which api-version to use for addComment? 7.0-preview.3 (CONTEXT D-13) or 7.1-preview.4 (read path's already-used version)?**
    - What we know: both are documented at Microsoft Learn 2026-04; both accept `vso.work_write`; both have identical request body schemas; the read path (Phase 03-04) already uses 7.1-preview.4.
    - What's unclear: whether the `format` body field is accepted by either or only one.
    - Recommendation: D-02 spike posts to BOTH versions to compare behavior; pick the one that preserves the sentinel cleanly. Default to CONTEXT D-13 (7.0-preview.3) unless spike contradicts.
+   - **RESOLVED:** Plan 04-01 Spike A5 — the spike posts to both api-versions and writes the verdict to `04-VERIFICATION.md` `## Spike Results` Section A5 (`7.0-preview.3 WORKS` / `ONLY 7.1-preview.4 WORKS` / `BOTH WORK`). Plan 04-03 Task 2 consumes the verdict to lock the api-version literal in `src/ado/postComment.ts`. Default per CONTEXT D-13 unless spike forces escalation.
 
 2. **What does `IWorkItemFormService.save()` actually throw on permission failure?**
    - What we know: signature is `save(): Promise<void>`; "rejected if it fails" per JSDoc; PITFALLS mentions `RuleValidationException`.
    - What's unclear: the exact `Error.name` string at runtime; whether 403/permission is wrapped as a specific class or surfaces as a plain Error with a message string.
    - Recommendation: D-17 scenario 4 (force a 412) and scenario 5 (Stakeholder license) BOTH log the rejection's `.name` and `.message` to console; refine `mapSdkErrorToStatus` regex with empirical evidence.
+   - **RESOLVED:** Plan 04-01 Spike A2 + D-17 manual scenarios 4 (412 RuleValidation) and 5 (read-only/Stakeholder). Spike A2 logs the rejection class shape from a forced `.save()` failure on cezari into `04-VERIFICATION.md` `## Spike Results` Section A2; D-17 scenarios 4 + 5 (Plan 04-06 manual checklist) capture additional empirical rejection shapes. Plan 04-02 `mapSdkErrorToStatus` regex tuned to match the captured `Error.name` / `Error.message` patterns.
 
 3. **Does `getDirtyFields` or `getInvalidFields` give actionable diagnostic info on field-write failure?**
    - What we know: both methods exist (`WorkItemTrackingServices.d.ts:195, 202`).
    - What's unclear: whether their results include the SP field's reference name when SP rejection blocks save.
    - Recommendation: log `getInvalidFields()` output in D-17 scenario 4; if useful, surface in the D-09 fail banner copy alongside the friendly message.
+   - **RESOLVED (DEFERRED to Phase 5 Polish):** Not blocking Phase 4. Plan 04-05 `apply.ts` already calls `getInvalidFields()` on the Pitfall 6 `!ok` branch and concatenates the field reference name into the 412 banner copy as best-effort diagnostic; whether the data is consistently actionable across ADO process templates (Scrum vs CMMI vs Agile) is a polish-tier refinement. Phase 5 may sharpen the banner copy if Phase 4 D-17 scenario 4 reveals the field list is regularly empty or misleading. Phase 4 closes without depending on this signal.
 
 4. **Will the cezari work item form auto-refresh after `setFieldValue + .save()` so the user sees the new SP value, or is a manual refresh needed?**
    - What we know: PROJECT.md Key Decisions row "use IWorkItemFormService.setFieldValue() + .save() (not REST PATCH)" reasoning includes "REST PATCH while form is open causes revision conflicts and silent overwrites" — implying the form-service path is integrated.
    - What's unclear: empirical confirmation on cezari that the SP cell in the work item form re-renders without page reload (ROADMAP criterion 5).
    - Recommendation: D-17 scenario 1 explicitly verifies this — Network tab clean, SP field visible-updates without F5.
+   - **RESOLVED:** D-17 manual scenario 1 (happy path) — Plan 04-06 Task 2 captures the SP-cell-updates-without-F5 evidence into `04-VERIFICATION.md` `## Manual Verification Checklist` scenario 1, ROADMAP success criterion 5 verdict.
 
 5. **What happens if the work item form is dirty (user typed in Description) when our modal calls `.save()`?**
    - What we know: PITFALLS Pitfall 4 / 15 warns that `.save()` saves ALL dirty fields, not just our SP — which is potentially surprising.
    - What's unclear: whether cezari auto-saves combined edits cleanly or shows a save-conflict dialog.
    - Recommendation: D-17 should add an optional scenario 9: open work item form, type in Description (without saving), open modal, Apply — verify both SP and Description persist together. If problematic, surface a "Form has unsaved changes" warning in confirm panel (PITFALLS Pitfall 15 mitigation). Defer to Phase 5 if behavior is acceptable.
+   - **RESOLVED (DEFERRED to Phase 5 Polish):** Not blocking Phase 4. Documented as a known limitation: `.save()` persists ALL dirty fields on the form, not just SP. The risk is bounded — combined edits typically persist cleanly per PROJECT.md (the form-service path is the documented integration point), and the fail mode (a save-conflict dialog) is recoverable. Phase 5 may add the optional D-17 scenario 9 + the `getDirtyFields()`-driven warning in the confirm panel if Phase 4 verification surfaces user-visible regressions; otherwise this is the expected ADO behavior and no extension change is needed.
 
 ## Environment Availability
 
