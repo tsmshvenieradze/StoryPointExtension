@@ -70,16 +70,23 @@ SDK.register(REGISTERED_ID, () => {
       console.log(`${LOG_PREFIX} opening dialog`, { fullModalId, config });
 
       // openCustomDialog returns void (verified type signature).
-      // The dialog has a host-managed close button (X). Phase 4 D-15 (Probe 4)
-      // verdict: lightDismiss does NOT abort in-flight writes (the iframe is
-      // not destroyed; deferred fetches continue), but the UX surprise is
-      // unacceptable — `lightDismiss: false` hardens against outside-click
-      // force-close during the saving window. onClose fires when the host
-      // closes the dialog.
+      // Phase 4 D-15 (Probe 4 verdict): lightDismiss does NOT abort in-flight
+      // writes — the iframe is not destroyed on outside-click; deferred fetches
+      // continue and `setFieldValue + .save()` completes. Plan 04-06 cezari
+      // verification (Scenario 1, 2026-05-02) found that `lightDismiss: false`
+      // ALSO blocks Esc dismissal at the host level, leaving the user with no
+      // escape hatch other than the title-bar X — confusing UX.
+      //
+      // Resolution: leave lightDismiss at the host default (true). In-modal
+      // interaction during `saving` is already blocked by the 3-pronged
+      // mitigation (SavingOverlay pointer-events, body aria-hidden, Dropdown
+      // disabled). If the user clicks outside mid-saving, the write still
+      // completes — only the saved-state ✓ flash is missed. Acceptable trade.
+      // onClose fires when the host closes the dialog.
       layoutSvc.openCustomDialog<undefined>(fullModalId, {
         title: "Calculate Story Points",
         configuration: config,
-        lightDismiss: false,    // D-15: block outside-click during in-flight saves
+        // lightDismiss intentionally omitted — host default (true). See header.
         onClose: () => {
           console.log(`${LOG_PREFIX} dialog closed`);
         },

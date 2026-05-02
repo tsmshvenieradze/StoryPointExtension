@@ -27,9 +27,14 @@
 //   from saved mode. SavedIndicator handles 200ms ✓ flash → persistent
 //   "Press Esc to close." hint; user dismisses via host close affordance.
 //
-// Plan 04-01 Probe 4 (D-15): lightDismiss does not abort in-flight writes,
-//   but the UX surprise is unacceptable. Toolbar passes `lightDismiss: false`
-//   (Task 3); SavingOverlay blocks close affordances during saving mode.
+// Plan 04-01 Probe 4 (D-15): lightDismiss does NOT abort in-flight writes
+//   (the iframe survives outside-click; deferred fetches continue). Plan 04-06
+//   cezari verification (Scenario 1, 2026-05-02) showed `lightDismiss: false`
+//   ALSO blocks Esc, leaving the user with no escape hatch — toolbar.tsx now
+//   uses host default (true). In-modal interaction during `saving` is still
+//   blocked by the 3-pronged Pitfall 7 mitigation below; if the user clicks
+//   outside mid-saving the write still completes (only the saved-state ✓ is
+//   missed — acceptable per Probe 4 evidence).
 //
 // RESEARCH Pitfall 7 mitigation (immutability guard during saving):
 //   1. Dropdown3 receives `disabled={mode === "saving"}` (keyboard guard)
