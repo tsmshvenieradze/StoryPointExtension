@@ -43,7 +43,8 @@ describe("postComment payload shape (D-01, D-13; spike A1 STRIPPED-FALLBACK)", (
   it("body.text === plain human-readable Story Points line (no sentinel)", async () => {
     await postComment(42, "proj-id-123", PAYLOAD);
     const callArgs = vi.mocked(adoFetch).mock.calls[0];
-    const body = callArgs[3] as { text: string };
+    expect(callArgs).toBeDefined();
+    const body = callArgs![3] as { text: string };
     expect(body.text).toBe(EXPECTED_TEXT);
     // Per spike A1: NO `<!--` sentinel — ADO storage strips it.
     expect(body.text).not.toContain("<!--");
@@ -53,7 +54,8 @@ describe("postComment payload shape (D-01, D-13; spike A1 STRIPPED-FALLBACK)", (
   it("body has NO `format` field (per spike A1 — format:1 has zero effect on storage)", async () => {
     await postComment(42, "proj-id-123", PAYLOAD);
     const callArgs = vi.mocked(adoFetch).mock.calls[0];
-    const body = callArgs[3] as Record<string, unknown>;
+    expect(callArgs).toBeDefined();
+    const body = callArgs![3] as Record<string, unknown>;
     expect(body).not.toHaveProperty("format");
     expect(Object.keys(body)).toEqual(["text"]);
   });
@@ -61,7 +63,8 @@ describe("postComment payload shape (D-01, D-13; spike A1 STRIPPED-FALLBACK)", (
   it("path is /<encodeURIComponent(projectId)>/_apis/wit/workItems/<wid>/comments", async () => {
     await postComment(7, "my proj", PAYLOAD);
     const callArgs = vi.mocked(adoFetch).mock.calls[0];
-    expect(callArgs[1]).toBe("/my%20proj/_apis/wit/workItems/7/comments");
+    expect(callArgs).toBeDefined();
+    expect(callArgs![1]).toBe("/my%20proj/_apis/wit/workItems/7/comments");
   });
 
   it("returns adoFetch result unchanged", async () => {
@@ -95,6 +98,7 @@ describe("postComment payload shape (D-01, D-13; spike A1 STRIPPED-FALLBACK)", (
     } as never);
     await postComment(1, "p", payload);
     const callArgs = vi.mocked(adoFetch).mock.calls[0];
-    expect((callArgs[3] as { text: string }).text).toBe(expected);
+    expect(callArgs).toBeDefined();
+    expect((callArgs![3] as { text: string }).text).toBe(expected);
   });
 });
