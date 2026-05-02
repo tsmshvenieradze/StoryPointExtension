@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: write-path-edge-cases
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-02
+reviewed_at: 2026-05-02
 extends: .planning/phases/03-modal-ui-read-path/03-UI-SPEC.md
 ---
 
