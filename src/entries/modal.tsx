@@ -17,8 +17,6 @@ import * as SDK from "azure-devops-extension-sdk";
 import { Surface, SurfaceBackground } from "azure-devops-ui/Surface";
 import { Page as PageRaw } from "azure-devops-ui/Page";
 import { Header, TitleSize } from "azure-devops-ui/Header";
-import { Button } from "azure-devops-ui/Button";
-import { ButtonGroup } from "azure-devops-ui/ButtonGroup";
 
 // Upstream azure-devops-ui's Page IPageProps does not declare a `children`
 // prop, even though Page is a React.Component<IPageProps> that renders its
@@ -54,20 +52,10 @@ const Hello: React.FC<HelloProps> = ({ workItemId }) => {
         />
         <div className="page-content page-content-top">
           <p>Hello from Work Item #{workItemId}</p>
-        </div>
-        <div className="page-content page-content-bottom">
-          <ButtonGroup>
-            <Button
-              text="Close"
-              primary={true}
-              onClick={() => {
-                // Phase 2 (D-06): decorative Close — host's X button and
-                // lightDismiss:true are the canonical close paths.
-                // Phase 3 may wire programmatic close if needed.
-                console.log(`${LOG_PREFIX} Close clicked (host X is canonical)`);
-              }}
-            />
-          </ButtonGroup>
+          <p style={{ fontSize: "12px", opacity: 0.7, marginTop: "16px" }}>
+            Press <kbd>Esc</kbd> or click outside the dialog to close.
+            Real Apply / Cancel controls land in Phase 3.
+          </p>
         </div>
       </Page>
     </Surface>
