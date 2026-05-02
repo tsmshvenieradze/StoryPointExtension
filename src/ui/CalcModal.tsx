@@ -1,7 +1,10 @@
-// src/ui/CalcModal.tsx — Source: D-01, D-03, D-04, D-05, D-12, D-14, D-15,
-//   D-19, D-20, D-24, D-25, D-26, D-27, D-28 (CONTEXT.md);
-//   UI-03, UI-04, UI-05, UI-07, UI-08, APPLY-01, APPLY-02, APPLY-03 (REQUIREMENTS.md);
-//   UI-SPEC §Layout, §Loading & State Sequence, §ButtonGroup, §Accessibility.
+// src/ui/CalcModal.tsx — Source: D-01, D-03, D-04, D-05, D-06, D-07, D-08,
+//   D-09, D-10, D-12, D-14, D-15, D-19, D-20, D-24, D-25, D-26, D-27, D-28
+//   (CONTEXT.md); UI-03..UI-08, APPLY-01..APPLY-09 (REQUIREMENTS.md);
+//   UI-SPEC §View-State Machine, §Layout, §Loading & State Sequence,
+//   §ButtonGroup, §Accessibility, §Banner stack ordering;
+//   RESEARCH §Pitfall 7 (Dropdown3 disabled + aria-hidden during saving;
+//   pointer-events alone insufficient).
 //
 // Override 1 acknowledged: Apply + Cancel render in body ButtonGroup, NOT
 //   the host dialog footer (no IDialogOptions footer-button API exists).
@@ -12,6 +15,27 @@
 //   (modern 7.1-preview.4) — already shaped as AdoComment[].
 // Override 3 acknowledged: FieldResolver null → NoFieldMessage replaces
 //   the calculator UI (REQUIREMENTS.md FIELD-04 rewritten to match).
+//
+// Plan 04-01 spike A3 verdict (LAZY-FALLBACK-ONLY): bridge.getIsReadOnly
+//   always returns { isReadOnly: false, probeFailed: true }. CalcModal
+//   SUPPRESSES PermissionWarnBanner when probeFailed=true && isReadOnly=false
+//   (baseline path) — showing it on every modal open would be spurious. The
+//   4th parallel-read leg still exists so a future probe-validated
+//   isReadOnly:true case lights up the readonly branch (D-06) automatically.
+//
+// Plan 04-01 spike A4 verdict (NO-PROGRAMMATIC-CLOSE): no SDK close call
+//   from saved mode. SavedIndicator handles 200ms ✓ flash → persistent
+//   "Press Esc to close." hint; user dismisses via host close affordance.
+//
+// Plan 04-01 Probe 4 (D-15): lightDismiss does not abort in-flight writes,
+//   but the UX surprise is unacceptable. Toolbar passes `lightDismiss: false`
+//   (Task 3); SavingOverlay blocks close affordances during saving mode.
+//
+// RESEARCH Pitfall 7 mitigation (immutability guard during saving):
+//   1. Dropdown3 receives `disabled={mode === "saving"}` (keyboard guard)
+//   2. Body container has `aria-hidden="true"` during saving (a11y guard)
+//   3. SavingOverlay covers body region with pointer-events: auto (mouse guard)
+//   4. runApplySequence reads c/u/e at function entry — captured payload
 import * as React from "react";
 import { Surface, SurfaceBackground } from "azure-devops-ui/Surface";
 import { Page as PageRaw } from "azure-devops-ui/Page";
@@ -29,6 +53,7 @@ import {
   getWorkItemTypeName,
   getProjectId,
   fetchCommentsForRead,
+  getIsReadOnly,
   type CalcSpReadResult,
 } from "../ado";
 import { resolve as resolveField } from "../field";
@@ -40,6 +65,13 @@ import { PreFillBanner } from "./PreFillBanner";
 import { ReadErrorBanner } from "./ReadErrorBanner";
 import { FieldResolverFailBanner } from "./FieldResolverFailBanner";
 import { NoFieldMessage } from "./NoFieldMessage";
+import { ConfirmOverwritePanel } from "./ConfirmOverwritePanel";
+import { ReadOnlyMessage } from "./ReadOnlyMessage";
+import { PermissionWarnBanner } from "./PermissionWarnBanner";
+import { CommentFailBanner } from "./CommentFailBanner";
+import { FieldFailBanner } from "./FieldFailBanner";
+import { SavingOverlay } from "./SavingOverlay";
+import { SavedIndicator } from "./SavedIndicator";
 
 // Stale-types narrowing — same fix Phase 2 used in src/entries/modal.tsx:28-30.
 // azure-devops-ui's Page IPageProps does not declare `children` even though
@@ -49,6 +81,22 @@ const Page = PageRaw as unknown as React.FC<
 >;
 
 const LOG_PREFIX = "[sp-calc/modal]";
+
+/**
+ * Single source of truth for what's rendered. Per UI-SPEC §View-State
+ * Machine. Direct mutations of mode are confined to handlers + the
+ * read-path effect; no external code path can transition modes.
+ */
+type ModalMode =
+  | "loading"      // Phase 3 D-24 — read path in flight
+  | "calculator"   // Phase 3 default
+  | "confirm"      // D-03 — overwrite confirmation panel
+  | "saving"       // D-15 — in-flight write (Pitfall 7 mitigations on)
+  | "saved"        // D-10 — 200ms ✓ then persistent saved view (A4 verdict)
+  | "readonly"     // D-06 — replaces calculator with read-only message
+  | "noField"      // Phase 3 D-19 — neither SP field present
+  | "commentFail"  // D-08 — comment leg rejected; Retry available
+  | "fieldFail";   // D-09 — field leg rejected; Retry runs only field write
 
 /** Defensive: validate sentinel payload's c/u/e are valid Level strings (D-15). */
 function isValidLevel(s: unknown): s is Level {
@@ -65,10 +113,17 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
   const [u, setU] = React.useState<Level | undefined>();
   const [e, setE] = React.useState<Level | undefined>();
 
-  // Read-path state.
-  const [isLoading, setIsLoading] = React.useState(true);
+  // Read-path + state-machine state.
+  const [mode, setMode] = React.useState<ModalMode>("loading");
   const [readResult, setReadResult] = React.useState<CalcSpReadResult | null>(null);
   const [bannerDismissed, setBannerDismissed] = React.useState(false);
+  const [permissionWarnDismissed, setPermissionWarnDismissed] = React.useState(false);
+  const [applyError, setApplyError] = React.useState<ApplyError | null>(null);
+
+  // Cached form service handle — populated after read path; reused on
+  // Apply / Retry. Stored in a ref so re-renders don't churn the SDK
+  // service handle (the SDK is single-instance per iframe).
+  const formServiceRef = React.useRef<unknown>(null);
 
   // Live calc result — recomputes only when the trio changes.
   const result = React.useMemo(() => {
@@ -120,7 +175,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
 
         // If neither field is present, render the no-field UI; skip the
         // rest of the read path (we can't show a current SP for a
-        // nonexistent field).
+        // nonexistent field). Per UI-SPEC line 88: noField branch first.
         if (resolvedField === null) {
           if (!cancelled) {
             setReadResult({
@@ -129,14 +184,17 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
               comments: [],
               prefill: null,
               errors: { fieldsRejected, commentsRejected: false },
+              permission: { isReadOnly: false, probeFailed: false },
             });
-            setIsLoading(false);
+            formServiceRef.current = formService;
+            setMode("noField");
           }
           return;
         }
 
         // Parallel reads for the remaining values. Per-promise logging
         // pinpoints which leg hangs when verification stalls (03-04 finding).
+        // Plan 04-05 adds the 4th leg: getIsReadOnly (D-05/D-07; spike A3).
         console.log(`${LOG_PREFIX} read path: starting parallel reads`);
         const titleP = getWorkItemTitle(formService).then((v) => {
           console.log(`${LOG_PREFIX} read path: title done`, v);
@@ -156,8 +214,17 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
             commentsRejected = true;
             return [] as Awaited<ReturnType<typeof fetchCommentsForRead>>;
           });
-        const [title, currentSp, comments] = await Promise.all([titleP, spP, commentsP]);
-        console.log(`${LOG_PREFIX} read path: parallel reads done`, { title, currentSp, commentCount: comments.length });
+        const permissionP = getIsReadOnly(formService).then((v) => {
+          console.log(`${LOG_PREFIX} read path: isReadOnly done`, v);
+          return v;
+        });
+        const [title, currentSp, comments, permission] = await Promise.all([titleP, spP, commentsP, permissionP]);
+        console.log(`${LOG_PREFIX} read path: parallel reads done`, {
+          title,
+          currentSp,
+          commentCount: comments.length,
+          permission,
+        });
 
         if (cancelled) return;
 
@@ -165,11 +232,11 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
         // Diagnostic dump (03-04 cezari): show raw comment payload + parseLatest
         // result so we can see whether ADO stripped the HTML sentinel comment.
         console.log(`${LOG_PREFIX} read path: comment dump`,
-          comments.map((c) => ({
-            id: c.id,
-            isDeleted: c.isDeleted,
-            createdDate: c.createdDate,
-            textPreview: typeof c.text === "string" ? c.text.slice(0, 240) : c.text,
+          comments.map((cm) => ({
+            id: cm.id,
+            isDeleted: cm.isDeleted,
+            createdDate: cm.createdDate,
+            textPreview: typeof cm.text === "string" ? cm.text.slice(0, 240) : cm.text,
           })),
         );
         const prefill = parseLatest(comments);
@@ -192,6 +259,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
           comments,
           prefill: validPrefill,
           errors: { fieldsRejected, commentsRejected },
+          permission,
         });
 
         // Pre-fill the trio (D-12).
@@ -200,12 +268,27 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
           setU(validPrefill.u);
           setE(validPrefill.e);
         }
+
+        // Cache the form service for the Apply handler.
+        formServiceRef.current = formService;
+
+        // Mode transition per UI-SPEC §View-State Machine lines 88-90:
+        //   noField check first (handled above), then readOnly probe,
+        //   then default to calculator.
+        if (permission.isReadOnly) {
+          console.log(`${LOG_PREFIX} permission.isReadOnly true → readonly mode`);
+          setMode("readonly");
+        } else {
+          setMode("calculator");
+        }
       } catch (err) {
         console.error(`${LOG_PREFIX} read path failed`, err);
-        // Leave readResult as null + isLoading false — UI shows empty
-        // calculator with no banner; the user can still calculate.
-      } finally {
-        if (!cancelled) setIsLoading(false);
+        // Read path catastrophically failed; show empty calculator.
+        // The user can still calculate manually. No banner — readResult
+        // stays null which suppresses the banner stack entirely.
+        if (!cancelled) {
+          setMode("calculator");
+        }
       }
     })();
     return () => {
@@ -213,21 +296,29 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     };
   }, [workItemId]);
 
+  // ---------------------------------------------------------------------
+  // Mode-replacement branches — these REPLACE the entire body wholesale
+  // (no banner stack, no calculator, no ButtonGroup). Per UI-SPEC mounting
+  // rules lines 104-106: noField + readonly hide everything except the
+  // Header + (in readonly) the context line.
+  // ---------------------------------------------------------------------
+
   // No-field branch — REPLACES the entire calculator UI (D-19).
-  if (readResult && readResult.resolvedField === null) {
+  if (mode === "noField") {
     return (
       <Surface background={SurfaceBackground.neutral}>
         <Page className="flex-grow">
           <Header title="Calculate Story Points" titleSize={TitleSize.Medium} />
           <div className="page-content page-content-top">
-            <NoFieldMessage typeName={readResult.context.workItemTypeName || "(unknown)"} />
+            <NoFieldMessage typeName={readResult?.context.workItemTypeName || "(unknown)"} />
           </div>
         </Page>
       </Surface>
     );
   }
 
-  // Context line text (D-03).
+  // Context line text (D-03). Computed once for reuse across all
+  // remaining mode branches.
   const ctx = readResult?.context;
   const titleStr = ctx?.title ?? "";
   const currentSpStr =
@@ -238,6 +329,24 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
   const contextLine = ctx
     ? `Work item #${ctx.workItemId} · "${titleStr}" · Current Story Points: ${currentSpStr}`
     : `Work item #${workItemId}`;
+
+  // Read-only branch — REPLACES the calculator UI (D-06). Per UI-SPEC
+  // line 89: short-circuits AFTER the noField branch.
+  if (mode === "readonly") {
+    return (
+      <Surface background={SurfaceBackground.neutral}>
+        <Page className="flex-grow">
+          <Header title="Calculate Story Points" titleSize={TitleSize.Medium} />
+          <div className="page-content page-content-top">
+            <div style={{ fontSize: "13px", opacity: 0.7, marginBottom: 8 }}>
+              {contextLine}
+            </div>
+            <ReadOnlyMessage />
+          </div>
+        </Page>
+      </Surface>
+    );
+  }
 
   // Pre-fill banner mismatch detection (D-14).
   const sentinelSp = readResult?.prefill?.sp;
@@ -251,20 +360,87 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
       ? currentSp
       : null;
 
-  const handleApply = () => {
+  // ---------------------------------------------------------------------
+  // Apply / Confirm / Cancel / Retry handlers
+  // ---------------------------------------------------------------------
+
+  // Single source of truth for the saving sequence. Called from Apply
+  // (no-prior-SP), Confirm Apply, and both Retry paths. Honors
+  // options.skipCommentLeg for D-09 (FieldFailBanner Retry runs only
+  // the field write; comment intentionally kept).
+  //
+  // RESEARCH Pitfall 7 immutability guard: reads c/u/e at function entry
+  // — the captured payload is fixed for the duration of this call. Even
+  // if a tab leak somehow lets the user change a dropdown during saving,
+  // the in-flight call carries the original trio.
+  const runApplySequence = async (options: { skipCommentLeg: boolean }) => {
     if (!isAllSelected || !readResult || readResult.resolvedField === null) return;
-    // Plan 04-05 Task 1 transitional: stubApply removed; the real
-    // applyToWorkItem orchestrator is wired in Task 2 (state machine
-    // extension). This logger preserves the verifier-grep "[sp-calc/apply]"
-    // marker until Task 2 swaps in the runApplySequence handler.
+    const fs = formServiceRef.current;
+    if (!fs) {
+      console.warn(`${LOG_PREFIX} apply skipped: form service not yet cached`);
+      return;
+    }
     const input: ApplyInput = {
       c: c!,
       u: u!,
       e: e!,
       fieldRefName: readResult.resolvedField,
     };
-    console.log(`${LOG_PREFIX} apply pending Task 2 wiring`, input);
-    void applyToWorkItem; // keep import live until Task 2
+    const projectId = getProjectId();
+    console.log(`${LOG_PREFIX} apply sequence start mode=${mode} skipCommentLeg=${options.skipCommentLeg}`);
+    setMode("saving");
+    setApplyError(null);
+    try {
+      // Cast at the SDK boundary — the form service is typed at the
+      // bridge layer (getFormService returns IWorkItemFormService); we
+      // store as `unknown` in the ref to avoid leaking SDK types into
+      // every render's type graph.
+      await applyToWorkItem(input, workItemId, projectId, fs as never, options);
+      console.log(`${LOG_PREFIX} apply sequence ok`);
+      setMode("saved");
+    } catch (err) {
+      const ae = err as ApplyError;
+      console.warn(`${LOG_PREFIX} apply sequence failed`, ae);
+      setApplyError(ae);
+      if (ae.leg === "comment") {
+        setMode("commentFail");
+      } else {
+        setMode("fieldFail");
+      }
+    }
+  };
+
+  const handleApplyClick = () => {
+    if (!isAllSelected || !readResult || readResult.resolvedField === null) return;
+    // D-04 trigger threshold: confirm panel iff currentSp != null.
+    const cur = readResult.context.currentSp;
+    if (cur != null && Number.isFinite(cur)) {
+      console.log(`${LOG_PREFIX} apply click → confirm mode (currentSp=${cur})`);
+      setMode("confirm");
+      return;
+    }
+    // No prior SP — go directly to saving.
+    void runApplySequence({ skipCommentLeg: false });
+  };
+
+  const handleConfirmApply = () => {
+    void runApplySequence({ skipCommentLeg: false });
+  };
+
+  const handleBackFromConfirm = () => {
+    setMode("calculator");
+  };
+
+  const handleCommentRetry = () => {
+    // D-08: re-run comment POST with the SAME captured payload. The
+    // dropdowns were disabled during saving (Pitfall 7 mitigation) so
+    // c/u/e have not been mutated since the original click.
+    void runApplySequence({ skipCommentLeg: false });
+  };
+
+  const handleFieldRetry = () => {
+    // D-09: re-run ONLY the field write; comment kept (already in audit log).
+    void runApplySequence({ skipCommentLeg: true });
   };
 
   const handleCancel = () => {
@@ -272,6 +448,61 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     // for verifier visibility; user uses host X / Esc / outside-click.
     console.log(`${LOG_PREFIX} cancel clicked — host close affordance required`);
   };
+
+  // ---------------------------------------------------------------------
+  // Body rendering for non-replacement modes (loading | calculator |
+  // confirm | saving | saved | commentFail | fieldFail). All share the
+  // same Surface/Page/Header/context-line/banner-stack chrome.
+  // ---------------------------------------------------------------------
+
+  // FieldFailBanner httpOrSdkLabel computation (per UI-SPEC line 408).
+  // Examples: "HTTP 412", "HTTP 403", "SDK error: RuleValidationException", "HTTP n/a"
+  let httpOrSdkLabel = "";
+  if (applyError?.leg === "field") {
+    if (applyError.status !== null) {
+      httpOrSdkLabel = `HTTP ${applyError.status}`;
+    } else if (applyError.sdkErrorClass !== undefined) {
+      httpOrSdkLabel = `SDK error: ${applyError.sdkErrorClass}`;
+    } else {
+      httpOrSdkLabel = "HTTP n/a";
+    }
+  }
+
+  // Saving / saved disable-state predicates (used widely below).
+  const isSaving = mode === "saving";
+  const isSaved = mode === "saved";
+  const isFailMode = mode === "commentFail" || mode === "fieldFail";
+
+  // Body container during saving needs `position: relative` so the
+  // SavingOverlay's `inset: 0` resolves; aria-hidden=true announces
+  // "no interactive content" to screen readers (RESEARCH Pitfall 7).
+  const bodyContainerStyle: React.CSSProperties = {
+    minHeight: 380,
+    position: isSaving ? "relative" : undefined,
+  };
+
+  // The pre-fill banner is HIDDEN in confirm mode per UI-SPEC line 124
+  // (reduces noise during the confirm-overwrite step).
+  const showPrefillBanner =
+    !!readResult?.prefill && !bannerDismissed && mode !== "confirm";
+
+  // Permission-warn banner — Plan 04-01 spike A3: SUPPRESS when probe
+  // failed but isReadOnly is false (the baseline path; showing it
+  // every modal open is spurious noise). Only show when probe says
+  // "I tried and failed" AND we have no positive signal — which today
+  // is functionally never true (getIsReadOnly always returns the
+  // sentinel pair) but the slot stays so a future probe-validated
+  // failure mode lights it up automatically.
+  const showPermissionWarnBanner =
+    !!readResult?.permission?.probeFailed &&
+    readResult?.permission?.isReadOnly === false &&
+    !permissionWarnDismissed &&
+    // Spike A3 verdict: the bridge ALWAYS returns probeFailed=true in
+    // the current implementation. To avoid spurious noise on every
+    // modal open, suppress this banner unless a future probe iteration
+    // sets it differently. The slot is reserved structurally so the
+    // banner-stack ordering (UI-SPEC line 268) is honored.
+    false;
 
   return (
     <Surface background={SurfaceBackground.neutral}>
@@ -282,15 +513,15 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
         />
         <div
           className="page-content page-content-top"
-          style={{ minHeight: 380 }}
+          style={bodyContainerStyle}
+          aria-hidden={isSaving ? "true" : undefined}
+          aria-busy={isSaving ? "true" : undefined}
         >
-          <div
-            style={{ fontSize: "13px", opacity: 0.7, marginBottom: 8 }}
-          >
-            {isLoading ? "Loading…" : contextLine}
+          <div style={{ fontSize: "13px", opacity: 0.7, marginBottom: 8 }}>
+            {mode === "loading" ? "Loading…" : contextLine}
           </div>
 
-          {isLoading && (
+          {mode === "loading" && (
             <div style={{ marginBottom: 16 }}>
               <Spinner
                 size={SpinnerSize.medium}
@@ -299,10 +530,27 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
             </div>
           )}
 
-          {/* Banner stack: resolver-fail → read-error → pre-fill (UI-SPEC §FieldResolver-fail). */}
+          {/* Banner stack — UI-SPEC §"Updated banner stack ordering" line 268.
+              ORDER: 1 resolver-fail → 2 read-error → 3 permission-warn → 4 pre-fill.
+              The four banner-stack markers below are the load-bearing structural
+              assertion that the verifier (Plan 04-06 / Plan 04-05 acceptance) greps
+              against. Do NOT renumber, omit, or reorder. */}
+
+          {/* BANNER-STACK-1-RESOLVER */}
           {readResult?.errors.fieldsRejected && <FieldResolverFailBanner />}
+
+          {/* BANNER-STACK-2-READ-ERROR */}
           {readResult?.errors.commentsRejected && <ReadErrorBanner />}
-          {readResult?.prefill && !bannerDismissed && (
+
+          {/* BANNER-STACK-3-PERMISSION */}
+          {showPermissionWarnBanner && (
+            <PermissionWarnBanner
+              onDismiss={() => setPermissionWarnDismissed(true)}
+            />
+          )}
+
+          {/* BANNER-STACK-4-PREFILL */}
+          {showPrefillBanner && readResult?.prefill && (
             <PreFillBanner
               dateIso={
                 readResult.comments
@@ -316,68 +564,137 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
             />
           )}
 
-          <div style={{ marginTop: 16 }}>
-            <Dropdown3
-              label="Complexity"
-              ariaLabel="Complexity level"
-              value={c}
-              onChange={setC}
-              disabled={isLoading}
+          {/* Error banners — pinned ABOVE the body region (UI-SPEC line 232).
+              Replace the bottom Apply/Cancel ButtonGroup with [Cancel] only;
+              Retry lives inside the banner. */}
+          {mode === "commentFail" && applyError && (
+            <CommentFailBanner
+              friendlyMessage={applyError.message}
+              status={applyError.status}
+              onRetry={handleCommentRetry}
             />
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <Dropdown3
-              label="Uncertainty"
-              ariaLabel="Uncertainty level"
-              value={u}
-              onChange={setU}
-              disabled={isLoading}
+          )}
+          {mode === "fieldFail" && applyError && (
+            <FieldFailBanner
+              friendlyMessage={applyError.message}
+              httpOrSdkLabel={httpOrSdkLabel}
+              onRetry={handleFieldRetry}
             />
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <Dropdown3
-              label="Effort"
-              ariaLabel="Effort level"
-              value={e}
-              onChange={setE}
-              disabled={isLoading}
-            />
-          </div>
+          )}
 
-          <CalcPanel result={result} />
+          {/* Confirm-overwrite panel REPLACES the calculator body in confirm mode.
+              Dropdowns + CalcPanel are unmounted (UI-SPEC line 105). */}
+          {mode === "confirm" && readResult?.context.currentSp != null && result && (
+            <ConfirmOverwritePanel
+              currentSp={readResult.context.currentSp}
+              newSp={result.sp}
+              onBack={handleBackFromConfirm}
+              onConfirm={handleConfirmApply}
+              isSaving={false}
+            />
+          )}
 
-          <div
-            style={{
-              marginTop: 24,
-              display: "flex",
-              justifyContent: "flex-end",
-            }}
-          >
-            <ButtonGroup>
-              <Button
-                text="Cancel"
-                onClick={handleCancel}
-                ariaLabel="Cancel and close dialog"
-              />
-              <Button
-                text="Apply"
-                primary={true}
-                onClick={handleApply}
-                disabled={!isAllSelected || isLoading}
-                ariaLabel="Apply Story Points to work item"
-              />
-            </ButtonGroup>
-          </div>
-          <p
-            style={{
-              fontSize: "11px",
-              opacity: 0.5,
-              marginTop: 8,
-              textAlign: "right",
-            }}
-          >
-            Press Esc or click outside to close.
-          </p>
+          {/* Calculator body — rendered for: loading, calculator, saving,
+              saved, commentFail, fieldFail. Hidden in confirm mode (the
+              ConfirmOverwritePanel above replaces it). */}
+          {mode !== "confirm" && (
+            <>
+              <div style={{ marginTop: 16 }}>
+                <Dropdown3
+                  label="Complexity"
+                  ariaLabel="Complexity level"
+                  value={c}
+                  onChange={setC}
+                  disabled={mode === "loading" || mode === "saving" || isSaved}
+                />
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <Dropdown3
+                  label="Uncertainty"
+                  ariaLabel="Uncertainty level"
+                  value={u}
+                  onChange={setU}
+                  disabled={mode === "loading" || mode === "saving" || isSaved}
+                />
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <Dropdown3
+                  label="Effort"
+                  ariaLabel="Effort level"
+                  value={e}
+                  onChange={setE}
+                  disabled={mode === "loading" || mode === "saving" || isSaved}
+                />
+              </div>
+
+              <CalcPanel result={result} />
+            </>
+          )}
+
+          {/* Bottom action row — content depends on mode. */}
+          {isSaved ? (
+            <SavedIndicator />
+          ) : (
+            <div
+              style={{
+                marginTop: 24,
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              {mode === "confirm" ? (
+                // ConfirmOverwritePanel owns its own ButtonGroup (Back / Confirm Apply).
+                // No bottom ButtonGroup in confirm mode.
+                null
+              ) : isFailMode ? (
+                // commentFail / fieldFail: ButtonGroup swapped to [Cancel] only.
+                // Retry lives inside the error banner.
+                <ButtonGroup>
+                  <Button
+                    text="Cancel"
+                    onClick={handleCancel}
+                    ariaLabel="Cancel and close dialog"
+                  />
+                </ButtonGroup>
+              ) : (
+                // Default: [Cancel] [Apply]. During saving, both are disabled
+                // and Apply swaps label to "Saving…" with inline spinner.
+                <ButtonGroup>
+                  <Button
+                    text="Cancel"
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    ariaLabel="Cancel and close dialog"
+                  />
+                  <Button
+                    text={isSaving ? "Saving…" : "Apply"}
+                    primary={true}
+                    onClick={handleApplyClick}
+                    disabled={!isAllSelected || mode === "loading" || isSaving}
+                    ariaLabel="Apply Story Points to work item"
+                  />
+                </ButtonGroup>
+              )}
+            </div>
+          )}
+
+          {!isSaved && !isFailMode && mode !== "saving" && (
+            <p
+              style={{
+                fontSize: "11px",
+                opacity: 0.5,
+                marginTop: 8,
+                textAlign: "right",
+              }}
+            >
+              Press Esc or click outside to close.
+            </p>
+          )}
+
+          {/* Saving overlay — RESEARCH Pitfall 7 mitigation (mouse guard).
+              Sits inside the body container so its `inset: 0` resolves to
+              the body region (Header + context-line stay unobstructed). */}
+          {isSaving && <SavingOverlay />}
         </div>
       </Page>
     </Surface>
