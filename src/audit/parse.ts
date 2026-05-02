@@ -15,6 +15,30 @@ function normalizeNbsp(s: string): string {
   return s.replace(/ /g, ' ');
 }
 
+/** Decode the HTML entities ADO's modern Comments storage applies to user
+ *  input. When a user posts a comment via the Discussion field (any editor
+ *  mode), ADO's web layer escapes `<`, `>`, `"`, and `'` before persisting,
+ *  so the sentinel `<!-- sp-calc:v1 {"sp":5,...} -->` round-trips through
+ *  the API as `&lt;!-- sp-calc:v1 {&quot;sp&quot;:5,...} --&gt;`. Decode
+ *  these entities before running SENTINEL_RX so the regex (and the inner
+ *  JSON.parse) can match either the raw or the encoded form transparently.
+ *
+ *  03-04 cezari finding: regex from Phase 1 didn't account for HTML-mode
+ *  storage encoding. Decoded inline (no DOMParser) so the parser stays a
+ *  pure function with zero ADO/DOM dependencies for unit testability.
+ *
+ *  Decode `&amp;` LAST: prevents `&amp;quot;` (a literal `&quot;` in the
+ *  source, double-encoded for storage) from being mis-decoded to `"`. */
+function decodeAdoEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
 /** Title-Case lookup — case-insensitive match against LEVELS. (D-04) */
 function toCanonicalLevel(input: unknown): Level | null {
   if (typeof input !== 'string') return null;
@@ -27,7 +51,8 @@ function toCanonicalLevel(input: unknown): Level | null {
 
 export function parse(commentBody: string): AuditPayload | null {
   if (typeof commentBody !== 'string' || commentBody.length === 0) return null;
-  const normalized = normalizeNbsp(commentBody);
+  const decoded = decodeAdoEntities(commentBody);
+  const normalized = normalizeNbsp(decoded);
   const match = normalized.match(SENTINEL_RX);
   if (!match || !match[1]) return null;
 
