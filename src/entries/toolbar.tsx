@@ -70,12 +70,16 @@ SDK.register(REGISTERED_ID, () => {
       console.log(`${LOG_PREFIX} opening dialog`, { fullModalId, config });
 
       // openCustomDialog returns void (verified type signature).
-      // The dialog has a host-managed close button (X) plus lightDismiss:true
-      // default. onClose fires when the host closes the dialog.
+      // The dialog has a host-managed close button (X). Phase 4 D-15 (Probe 4)
+      // verdict: lightDismiss does NOT abort in-flight writes (the iframe is
+      // not destroyed; deferred fetches continue), but the UX surprise is
+      // unacceptable — `lightDismiss: false` hardens against outside-click
+      // force-close during the saving window. onClose fires when the host
+      // closes the dialog.
       layoutSvc.openCustomDialog<undefined>(fullModalId, {
         title: "Calculate Story Points",
         configuration: config,
-        lightDismiss: true,
+        lightDismiss: false,    // D-15: block outside-click during in-flight saves
         onClose: () => {
           console.log(`${LOG_PREFIX} dialog closed`);
         },
