@@ -109,8 +109,23 @@ Plans:
   3. When the user lacks write permission on the work item (Stakeholder license, area-path restriction, closed item), the Apply button is rendered disabled with a tooltip and the modal still opens read-only for inspection — no field write or comment is attempted
   4. When the field write fails (4xx, 412, RuleValidationException), the user sees a status-code-specific error toast, and the comment side of the operation is handled per the Phase 0 atomicity decision (not posted, or posted-and-rolled-back); when the comment write fails after a successful field write, the user sees a clear error toast and the field write is left in place
   5. After a successful Apply, the work item form reflects the new SP value without a full page reload, and reopening the modal pre-fills from the just-written sentinel comment
-**Plans**: TBD
+**Plans**: 6 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [ ] 04-01-PLAN.md — Empirical spike on cezari (D-01/D-05/D-10 assumptions resolved into 04-VERIFICATION.md ## Spike Results)
+- [ ] 04-02-PLAN.md — errorMessages.ts pure module (D-11 + D-20) + REQUIREMENTS.md APPLY-09 rewrite per D-06
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 04-03-PLAN.md — adoFetch helper + postComment writer + comments refactor + bridge.getIsReadOnly + types extension
+- [ ] 04-04-PLAN.md — 7 new UI leaf components (ConfirmOverwritePanel, ReadOnlyMessage, PermissionWarnBanner, CommentFailBanner, FieldFailBanner, SavingOverlay, SavedIndicator)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 04-05-PLAN.md — apply.ts two-leg orchestrator + CalcModal 9-mode state machine + toolbar lightDismiss=false
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 04-06-PLAN.md — Manual cezari verification (D-17 8-scenario checklist) + 04-VERIFICATION.md write-up + REQUIREMENTS/ROADMAP/STATE close commits
 
 ### Phase 5: Polish & Marketplace Publish
 **Goal**: Ship a public Marketplace listing that installs cleanly on a fresh ADO trial org and a Contributor (non-admin) user can complete the full flow on both Agile and CMMI processes
