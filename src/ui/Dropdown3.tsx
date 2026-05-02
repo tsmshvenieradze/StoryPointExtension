@@ -31,17 +31,23 @@ interface Props {
 
 export const Dropdown3: React.FC<Props> = ({ label, ariaLabel, value, onChange, disabled }) => {
   // ListSelection is a stateful object; mount-time-only per the ListBox contract.
-  const selection = React.useMemo(() => new ListSelection(), []);
+  // selectOnFocus:false is REQUIRED — the default (true) makes Dropdown keep the
+  // callout open after selection per Dropdown.Props.d.ts: "By default the callout
+  // will close on select unless multiselect or selectOnFocus is enabled on
+  // selection." 03-04 cezari finding (Override 7).
+  const selection = React.useMemo(() => new ListSelection({ selectOnFocus: false }), []);
 
-  // Sync external value → selection (controlled-style).
+  // Sync external value → selection (controlled-style). Skip mutation when
+  // the selection is already correct — avoids a re-render loop where the
+  // user's click triggers onChange → state update → this effect → mutate
+  // selection → dropdown internals see selection mutation → callout reopens
+  // (03-04 cezari finding: dropdown not closing on user pick).
   React.useEffect(() => {
+    const currentIdx = selection.value[0]?.beginIndex ?? -1;
+    const targetIdx = value !== undefined ? LEVELS.indexOf(value) : -1;
+    if (currentIdx === targetIdx) return;
     selection.clear();
-    if (value !== undefined) {
-      const idx = LEVELS.indexOf(value);
-      if (idx >= 0) {
-        selection.select(idx);
-      }
-    }
+    if (targetIdx >= 0) selection.select(targetIdx);
   }, [value, selection]);
 
   // exactOptionalPropertyTypes (tsconfig strict) rejects `boolean | undefined`
