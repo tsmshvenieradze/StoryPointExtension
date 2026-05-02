@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "story-point-calculator",
-  "version": "0.1.18",
+  "version": "0.1.20",
   "name": "Story Point Calculator",
   "publisher": "TsezariMshvenieradzeExtensions",
   "public": false,
@@ -41,7 +41,7 @@
       "type": "ms.vss-web.external-content",
       "description": "Modal contents loaded into a host-managed dialog.",
       "properties": {
-        "uri": "dist/modal-spike.html"
+        "uri": "dist/modal.html"
       }
     }
   ]

@@ -51,11 +51,8 @@ function baseConfig(entryName, mode) {
 
 module.exports = (env, argv) => {
   const mode = argv.mode === 'production' ? 'production' : 'development';
-  // SPIKE — modal-spike entry is added for Plan 04-01 (D-01/D-05/D-10
-  // empirical resolution). Reverted in Plan 04-01 Task 4.
   return [
     baseConfig('toolbar', mode),
     baseConfig('modal', mode),
-    baseConfig('modal-spike', mode),
   ];
 };
