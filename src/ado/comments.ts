@@ -2,10 +2,10 @@
 // Source: D-22, D-23 (CONTEXT.md); RESEARCH.md §Pattern 2 + Override 2.
 //
 // Why this file exists: WorkItemTrackingRestClient.getComments() in
-// azure-devops-extension-api@4.270.0 is locked at the LEGACY
-// 5.0-preview.2 route returning WorkItemComment[] with revisedDate/text
-// /renderedText shape — NO id, NO isDeleted, NO createdDate. parseLatest
-// (Phase 1) requires id/isDeleted/createdDate to filter and sort.
+// azure-devops-extension-api@4.270.0 is locked at the LEGACY preview
+// route returning WorkItemComment[] with revisedDate/text/renderedText
+// shape — NO id, NO isDeleted, NO createdDate. parseLatest (Phase 1)
+// requires id/isDeleted/createdDate to filter and sort.
 //
 // Resolution: subclass WorkItemTrackingRestClient and call the modern
 // 7.1-preview.4 endpoint via the inherited protected `beginRequest`. The
