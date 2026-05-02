@@ -136,8 +136,20 @@ Plans:
   2. The Marketplace listing has a description, a privacy/data-handling statement (no telemetry; data stays in the user's ADO org), the formula explanation, a 128×128 icon, and screenshots showing the modal in both light and dark themes
   3. A private install on a fresh ADO trial organization (shared via `tfx extension share`, not yet `public:true`) lets a Contributor (non-admin) user complete the full open-modal → Apply flow without permission errors
   4. The extension is published `public:true` on Visual Studio Marketplace under the verified GPIH publisher with exactly the `vso.work_write` scope (no scope changes from Phase 0), and an end-to-end install + Apply succeeds on at least two different ADO organizations — one running the Agile process, one running CMMI
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [ ] 05-01-PLAN.md — Publisher verification gate (PKG-06): user confirms publisher status at the Marketplace portal; 05-VERIFICATION.md skeleton with Publisher Verification Gate section
+- [ ] 05-02-PLAN.md — Build infrastructure trio: GitHub Actions ci.yml + scripts/check-bundle-size.cjs (250 KB gzipped gate) + scripts/publish-cezari.cjs replacing scripts/dev-publish.cjs (Windows spawnSync .cmd fix)
+- [ ] 05-03-PLAN.md — Listing-asset bundle: vss-extension.json content/links/repository/screenshots delta + marketplace/overview.md (D-9/D-10/D-11 + privacy) + README v1 (engineer-audience formula math) + light + dark screenshots + private re-publish to cezari for Marketplace render confirmation
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 05-04-PLAN.md — Cross-process cezari smoke (PKG-04/PKG-07 PARTIAL per D-5/D-7): add Agile + CMMI projects to cezari; D-6 smoke per process; record verdicts in 05-VERIFICATION.md ## Cross-Process Smoke
+
+**Wave 3** *(blocked on Waves 1+2 completion + publisher verification confirmed)*
+- [ ] 05-05-PLAN.md — Public publish: version 0.2.x → 1.0.0 + package.json sync + public:true flip + npm run publish:public + post-publish 1.0.0 re-verification on cezari + REQUIREMENTS/ROADMAP/STATE close
 
 ## Progress
 
@@ -151,4 +163,4 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
 | 3. Modal UI & Read Path | 4/4 | Complete    | 2026-05-02 |
 | 4. Write Path & Edge Cases | 6/6 | Complete    | 2026-05-02 |
-| 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
+| 5. Polish & Marketplace Publish | 0/5 | Not started | - |
