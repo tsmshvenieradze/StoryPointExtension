@@ -3,6 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <title>Story Point Calculator</title>
+  <style>
+    /* 03-04 cezari finding: without width:100% on the document, body.scrollWidth
+       collapses to the natural width of the rendered content (Surface > Page),
+       leaving the iframe occupying only the left half of the host dialog.
+       Make the document fully fill the iframe so flex-grow children expand to
+       the host-allocated width. */
+    html, body, #root {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>

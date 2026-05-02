@@ -92,6 +92,30 @@ async function bootstrap() {
   // host shows a permanent spinner over the dialog content (RESEARCH §Pitfall 3).
   await SDK.notifyLoadSucceeded();
   console.log(`${LOG_PREFIX} notifyLoadSucceeded called`);
+
+  // 03-04 cezari finding: live host renders ms.vss-web.external-content
+  // dialogs at a fixed default (480×246 observed on cezari) and does NOT
+  // auto-fit to content despite the inner min-height contract from UI-SPEC
+  // D-06. Without SDK.resize(), the user sees a clipped 246px-tall dialog.
+  //
+  // Width: read window.innerWidth (the iframe's CURRENT width allocated by
+  // the host) and pass that back. Calling SDK.resize() with no args defaults
+  // to scrollWidth × scrollHeight, which collapses width when content is
+  // narrow. Pinning a hardcoded width (e.g. 480) clamps below the host's
+  // intended dialog width on larger screens. Echoing window.innerWidth
+  // preserves the host's allocation while still letting us correct height.
+  //
+  // template.html now sets html/body/#root to width:100% so the document
+  // fills the iframe — Surface > Page flex-grows to that width naturally.
+  //
+  // ResizeObserver re-fires on layout-changing events (banner show/hide,
+  // dropdown selection updating calc panel, callout open) so the dialog
+  // tracks the rendered content height across the modal lifecycle.
+  const requestResize = () =>
+    SDK.resize(window.innerWidth, document.body.scrollHeight);
+  requestResize();
+  const resizeObserver = new ResizeObserver(requestResize);
+  resizeObserver.observe(document.body);
 }
 
 bootstrap().catch((err) => {
