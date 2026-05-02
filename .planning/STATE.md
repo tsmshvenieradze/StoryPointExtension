@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 complete (PARTIAL PASS); ready for Phase 4 planning
-last_updated: "2026-05-02T17:30:00.000Z"
-last_activity: 2026-05-02 -- Phase 03 plan 04 (cezari manual verification) complete
+stopped_at: Phase 04 context gathered; ready for Phase 04 planning
+last_updated: "2026-05-02T18:30:00.000Z"
+last_activity: 2026-05-02 -- Phase 04 context gathered (8 areas discussed; 04-CONTEXT.md written)
 progress:
   total_phases: 6
   completed_phases: 4
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** Phase 03 complete; ready for Phase 04 (Write Path & Edge Cases)
+**Current focus:** Phase 04 context gathered; ready for `/gsd-plan-phase 4` (Write Path & Edge Cases)
 
 ## Current Position
 
-Phase: 03 (modal-ui-read-path) — COMPLETE (2026-05-02)
-Plan: 4 of 4 (all complete)
-Status: Phase 3 closed; Phase 4 ready to plan
-Last activity: 2026-05-02 -- Phase 03 plan 04 cezari manual verification complete (PARTIAL PASS)
+Phase: 04 (write-path-edge-cases) — CONTEXT GATHERED (2026-05-02)
+Plan: 0 of TBD
+Status: Discuss complete; Phase 4 ready to plan
+Last activity: 2026-05-02 -- Phase 04 context gathered (visible-sentinel UX, overwrite confirm, permission probe, error/success UX, verification scope, adoFetch util, mid-write semantics, post-save pre-fill)
 
 Progress: [██████░░░░] 67% (4 of 6 phases complete)
 
@@ -51,8 +51,8 @@ Progress: [██████░░░░] 67% (4 of 6 phases complete)
 
 **Recent Trend:**
 
-- Last 5 plans: 03-01, 03-02, 03-03, 03-04 (verification with 6 fix-back commits), Phase 3 close
-- Trend: read path empirically validated; 6 real-world bugs caught and fixed during cezari run
+- Last 5 plans: 03-01, 03-02, 03-03, 03-04 (verification with 6 fix-back commits), Phase 3 close, Phase 4 context gathered
+- Trend: read path empirically validated; 6 real-world bugs caught and fixed during cezari run; Phase 4 discuss locks 8 implementation decisions (HTML-format sentinel, replace-with-confirm panel, isReadOnly probe, status-code map, adoFetch util)
 
 *Updated after each plan completion*
 
@@ -71,6 +71,10 @@ Recent decisions affecting current work:
 - Phase 03-04: Override 5 — `ms.vss-web.external-content` dialogs need explicit `SDK.resize` lifecycle, not host content-fit
 - Phase 03-04: Override 6 — `html, body, #root { width: 100%; height: 100% }` required in template.html
 - Phase 03-04: Override 7 — `ListSelection({ selectOnFocus: false })` required for Dropdown auto-close
+- Phase 04 D-01: addComment posts with `commentFormat: 1 /* CommentFormat.Html */` so `<!-- -->` sentinel is preserved by storage and hidden by renderer. Plan must include 30-min cezari empirical validation (D-02 fallback: invisible-div carrier).
+- Phase 04 D-06: Read-only branch REPLACES the calculator with a message panel. **REQUIREMENTS.md APPLY-09 must be rewritten** by the planner (mirrors Phase 3 D-17 FIELD-04 rewrite) before Phase 4 closes.
+- Phase 04 D-14: New shared `src/ado/adoFetch.ts` helper consolidates direct-fetch pattern; `comments.ts` refactors to consume it; `postComment.ts` is the new caller.
+- Phase 04 D-15: Block close affordances + saving overlay during in-flight writes; no AbortController plumbing.
 
 ### Pending Todos
 
@@ -78,8 +82,8 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 4: Visible-sentinel UX decision required — pasted/posted sentinel renders as literal `<!-- ... -->` text in ADO Discussion view. Three options: accept / post-as-HTML / different invisible carrier (see Phase 03-04 SUMMARY).
-- Phase 4: Use direct-fetch pattern for `addComment` — do NOT use the SDK REST client (it hangs in dialog iframe per 03-04 Override 4).
+- Phase 4: Visible-sentinel UX resolved via D-01 (HTML format) with empirical validation step in plan (D-02). Fallback to invisible-div carrier if sanitizer strips comments.
+- Phase 4: Use direct-fetch pattern for `addComment` — do NOT use the SDK REST client (it hangs in dialog iframe per 03-04 Override 4). Now centralized in `src/ado/adoFetch.ts` per D-14.
 - Phase 5: Custom SP fields on customer Scrum installs — real customers may delete inherited `Microsoft.VSTS.Scheduling.StoryPoints` field. Phase 5 should add a settings UI for ref-name override OR document as known limitation.
 - Phase 5: Cross-process coverage — cezari run verified Scrum/PBI only. Phase 5 must extend Check 1 across all Scrum types AND a separate Agile org.
 - Phase 5: `dev-publish.cjs` retry broken on Windows — fix before final publish (see Phase 03-04 Issues Discovered).
@@ -94,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-02T17:30:00.000Z
-Stopped at: Phase 3 complete (PARTIAL PASS); ready for Phase 4 planning
-Resume file: .planning/phases/03-modal-ui-read-path/03-04-SUMMARY.md
+Last session: 2026-05-02T18:30:00.000Z
+Stopped at: Phase 04 context gathered; ready for Phase 04 planning
+Resume file: .planning/phases/04-write-path-edge-cases/04-CONTEXT.md
