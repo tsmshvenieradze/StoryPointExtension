@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 04 Plan 01 complete; spike findings empirically resolved on cezari
-last_updated: "2026-05-02T15:45:49Z"
-last_activity: 2026-05-02 -- Plan 04-01 complete (spike → revert; Plans 04-02/04-03 unblocked)
+stopped_at: Plan 04-05 complete — Phase 4 implementation surface ready for Plan 04-06 cezari publish
+last_updated: "2026-05-02T16:27:41.648Z"
+last_activity: 2026-05-02
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 14
-  completed_plans: 10
-  percent: 71
+  completed_plans: 13
+  percent: 93
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 04 (write-path-edge-cases) — EXECUTING
-Plan: 3 of 6 (next: 04-03 — adoFetch + postComment + bridge.getIsReadOnly)
-Status: Executing Phase 04 (Wave 1 complete; Wave 2 unblocked)
-Last activity: 2026-05-02 -- Plan 04-01 complete (spike → revert; Plans 04-02/04-03 unblocked)
+Plan: 5 of 6 (next: 04-03 — adoFetch + postComment + bridge.getIsReadOnly)
+Status: Ready to execute
+Last activity: 2026-05-02
 
 Progress: [███████░░░] 71% (10 of 14 plans complete; 4 of 6 phases complete)
 
@@ -56,6 +56,7 @@ Progress: [███████░░░] 71% (10 of 14 plans complete; 4 of 6 
 - Trend: spike-evidence-first pattern shifted Phase 4 implementation from training-data assumptions to verified facts before any production file is written. D-02 fallback adopted, D-07 reactive-only read-only handling locked.
 
 *Updated after each plan completion*
+| Phase 04 P05 | 14m | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,10 @@ Recent decisions affecting current work:
 - Phase 04 D-13: api-version `7.0-preview.3` confirmed (functionally identical to 7.1-preview.4; matches Phase 3 read path single source of truth).
 - Phase 04 D-14: New shared `src/ado/adoFetch.ts` helper consolidates direct-fetch pattern; `comments.ts` refactors to consume it; `postComment.ts` is the new caller (Plan 04-03).
 - Phase 04 D-15: Block close affordances + saving overlay during in-flight writes; no AbortController plumbing. **Probe 4 (2026-05-02) confirmed lightDismiss does NOT abort in-flight writes — `lightDismiss:false` is required for UX clarity, not data integrity.**
+- [Phase ?]: Phase 04 Plan 05: applyToWorkItem two-leg orchestrator landed; comment-first → field-write atomicity proven via vitest mock-call-order assertion (Phase 0 D-01 contract honored at the language level)
+- [Phase ?]: Phase 04 Plan 05: CalcModal extended to 9-mode state machine (loading/calculator/confirm/saving/saved/readonly/noField/commentFail/fieldFail) with 4-leg parallel read path; banner stack ordering enforced via 4 BANNER-STACK-N structural markers
+- [Phase ?]: Phase 04 Plan 05: PermissionWarnBanner SUPPRESSED on the spike-A3 baseline path (probeFailed=true && isReadOnly=false) — slot reserved structurally for future probe-validated failure modes
+- [Phase ?]: Phase 04 Plan 05: toolbar.tsx lightDismiss=false (D-15) + manifest 0.2.0; Phase 4 implementation surface complete and Plan 04-06 cezari publish unblocked
 
 ### Pending Todos
 
@@ -104,6 +109,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-02T15:45:49Z
-Stopped at: Plan 04-01 complete (cezari spike → revert; Wave 1 done)
-Resume file: .planning/phases/04-write-path-edge-cases/04-03-PLAN.md (next plan in Wave 2; consumes 04-VERIFICATION.md ## Spike Results)
+Last session: 2026-05-02T16:27:41.645Z
+Stopped at: Plan 04-05 complete — Phase 4 implementation surface ready for Plan 04-06 cezari publish
+Resume file: .planning/phases/04-write-path-edge-cases/04-06-PLAN.md

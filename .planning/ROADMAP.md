@@ -122,7 +122,7 @@ Plans:
 - [x] 04-04-PLAN.md — 7 new UI leaf components (ConfirmOverwritePanel, ReadOnlyMessage, PermissionWarnBanner, CommentFailBanner, FieldFailBanner, SavingOverlay, SavedIndicator) (completed 2026-05-02)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 04-05-PLAN.md — apply.ts two-leg orchestrator + CalcModal 9-mode state machine + toolbar lightDismiss=false
+- [x] 04-05-PLAN.md — apply.ts two-leg orchestrator + CalcModal 9-mode state machine + toolbar lightDismiss=false (completed 2026-05-02)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 04-06-PLAN.md — Manual cezari verification (D-17 8-scenario checklist) + 04-VERIFICATION.md write-up + REQUIREMENTS/ROADMAP/STATE close commits
