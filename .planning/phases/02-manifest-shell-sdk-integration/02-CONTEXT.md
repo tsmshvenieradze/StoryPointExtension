@@ -30,8 +30,8 @@ Out of scope (later phases own these):
 
 ### Dev Iteration Loop
 - **D-01:** **`tfx extension publish --share-with cezari`** is the dev iteration command. Each cycle: edit code → `npm run build` → `npm run package` → `tfx extension publish --share-with cezari`. Refresh the work item form in the browser to pick up the new version. ~30 seconds per iteration.
-- **D-02:** **Marketplace PAT is already provisioned.** User confirmed. The PAT is stored locally (will be added to Phase 2's `.env.local` if convenient) and supplied to `tfx extension publish` via either the `--token` flag or the `TFX_TOKEN` environment variable. Do NOT commit the token; `.env.local` (and any `*.env` patterns) must be gitignored.
-- **D-03:** **Auto-bump dev version per publish.** `tfx-cli` rejects re-uploads of the same version. Use `tfx extension publish --rev-version` to auto-increment the `vss-extension.json` patch version on each dev publish, OR maintain a separate `vss-extension.dev.json` overlay and bump manually. Recommendation for the planner: use `--rev-version` with a `.tfxignore` that excludes `vss-extension.json` from being committed back as bumped (i.e., revert the bump after publish, or use a separate file). Planner decides the exact mechanism.
+- **D-02:** **Marketplace PAT is already provisioned.** User confirmed. The PAT is supplied to `tfx extension publish` via the `--token <PAT>` flag. **Note (research correction):** `tfx-cli` does NOT read a `TFX_TOKEN` env var — only `TFX_TRACE` is read from env, per source inspection of `tfcommand.js`. The dev-loop wrapper script (D-03) reads the PAT from `.env.local` and passes it as `--token`. Do NOT commit `.env.local`; `.env*` patterns are gitignored per D-17.
+- **D-03:** **Auto-bump dev version per publish via a wrapper script.** `tfx-cli` rejects re-uploads of the same version. Use `tfx extension publish --rev-version` which **mutates `vss-extension.json` on disk** (verified via tfx-cli source). Recommended pattern: a `scripts/dev-publish.cjs` wrapper that (a) snapshots `vss-extension.json`, (b) sources `.env.local` for `TFX_PAT`, (c) runs `tfx extension publish --share-with cezari --token "$TFX_PAT" --rev-version`, (d) restores the manifest from snapshot so the bumped version doesn't pollute git. Public-publish version-bump rules live in Phase 5.
 
 ### "Hello" Modal Payload
 - **D-04:** **Modal renders minimal text + workItemId.** Content: "Story Point Calculator — Hello from Work Item #{N}" inside an `azure-devops-ui` `Page` (or `Surface`) component. The Page chrome inherits the host theme automatically — toggling ADO from light to dark in the dev org should flip the modal's background and text colors with no extra code.
@@ -40,7 +40,7 @@ Out of scope (later phases own these):
 
 ### Toolbar Contribution Details
 - **D-07:** **Toolbar label:** `Calculate Story Points` (matches Marketplace display name from Phase 0 D-10). Set via `properties.text` or the equivalent `text` field in the contribution definition, depending on the SDK's exact contract.
-- **D-08:** **Toolbar icon:** **inline 16×16 calculator SVG.** Add `images/toolbar-icon.svg` (a simple monochrome calculator glyph that renders well in both light and dark themes — single color, no gradients, recommended fill `currentColor` so theme tokens drive it). Reference via `properties.iconUrl: "images/toolbar-icon.svg"` in `vss-extension.json`. Add the path to the `files` block. Phase 5 will replace with the final branded icon if needed.
+- **D-08:** **Toolbar icon:** **inline 16×16 calculator SVG.** Add `images/toolbar-icon.svg` (monochrome glyph, single color, no gradients, fill `currentColor` so theme tokens drive it). **Reference via `properties.icon: "images/toolbar-icon.svg"`** in `vss-extension.json`. **Note (research correction):** The `ms.vss-web.action` schema uses `properties.icon`, NOT `properties.iconUrl` — verified against `learn.microsoft.com/.../add-workitem-extension` (2026-04-03) and existing manifest contributions. Add the path to the `files` block. Phase 5 may replace with a branded version.
 - **D-09:** **Action registration:** The toolbar entry registers a callback object with the SDK contribution registry; the callback's `execute(actionContext)` method extracts the work item ID from `actionContext.workItemId` (or the equivalent SDK shape) and calls `HostPageLayoutService.openCustomDialog('calc-sp-modal', { configuration: { workItemId } })`.
 
 ### Configuration Passing
@@ -53,7 +53,7 @@ Out of scope (later phases own these):
 
 ### `.vsix` Packaging Conventions
 - **D-14:** **Dev `vss-extension.json` keeps `public: false`.** Already locked in Phase 0 manifest skeleton. Phase 2 confirms this and does not introduce a public flip.
-- **D-15:** **`tfx ignore` rules** — exclude `node_modules/`, `tests/`, `.planning/`, `src/`, `*.md`, `*.config.*`, `package*.json`, `.git/`, `.gitignore`, `LICENSE` (LICENSE is bundled in `dist/` if needed). The `.vsix` should contain only the `dist/` bundles, the `images/` directory, the `vss-extension.json` manifest, and the marketplace README placeholder. Build the `.tfxignore` file in Phase 2 to enforce this.
+- **D-15:** **Bundle scope is controlled by the manifest `files` array, NOT by a `.tfxignore` file.** **Note (research correction):** `tfx-cli` does NOT support a `.tfxignore` mechanism (verified by source-code inspection of `node_modules/tfx-cli/_build/`). The only way to scope what enters the `.vsix` is the `files` array in `vss-extension.json`. Phase 2 ensures `files` lists only: `dist/toolbar.html`, `dist/modal.html`, the JS/CSS chunks emitted by webpack, `images/icon.png`, `images/toolbar-icon.svg`. Source files, tests, `node_modules`, `.planning/`, `package*.json`, configs are NOT listed → they are NOT included. Do NOT create a `.tfxignore` file.
 - **D-16:** **Bundle size target for Phase 2:** stay under 100 KB gzipped (toolbar shim + Hello modal). The Phase 5 hard cap is 250 KB; Phase 2 has no React UI yet, so it should be well under. Don't add a CI gate yet (Phase 5 owns that), but check manually.
 
 ### Environment & Secrets Hygiene (closes WR-02 from Phase 0 review)
@@ -144,7 +144,7 @@ Out of scope (later phases own these):
 - **The console log prefix:** `[sp-calc]` — short, searchable, doesn't conflict with ADO's own logs.
 - **Toolbar SVG hint:** an inline `<svg viewBox="0 0 16 16">` with a calculator outline (rectangle + four button dots) using `fill="currentColor"`. ADO will color it via theme tokens; tested fill behavior is to inherit the toolbar foreground.
 - **Dev ADO org URL form:** prefer `dev.azure.com/cezari` over the legacy `cezari.visualstudio.com` in scripts and docs. Both resolve to the same collection.
-- **`.tfxignore` minimum content:** node_modules, tests, src, .planning, .git, *.md (except dist/README.md if any), *.config.*, package*.json, .gitignore, LICENSE (bundled separately if needed), .env*, *.test.*, *.spec.*
+- **No `.tfxignore` file** — D-15 corrected. Bundle scope is controlled by the manifest `files` array.
 
 </specifics>
 
