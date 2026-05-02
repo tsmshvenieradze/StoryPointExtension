@@ -34,12 +34,12 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 
 ### UI — Toolbar Button + Modal
 
-- [ ] **UI-01**: A "Calculate Story Points" entry appears in the work item toolbar menu via the `ms.vss-web.action` contribution targeting `ms.vss-work-web.work-item-toolbar-menu`
-- [ ] **UI-02**: Clicking the toolbar entry opens a modal via `HostPageLayoutService.openCustomDialog` referencing the `ms.vss-web.external-content` modal contribution
+- [x] **UI-01**: A "Calculate Story Points" entry appears in the work item toolbar menu via the `ms.vss-web.action` contribution targeting `ms.vss-work-web.work-item-toolbar-menu`
+- [x] **UI-02**: Clicking the toolbar entry opens a modal via `HostPageLayoutService.openCustomDialog` referencing the `ms.vss-web.external-content` modal contribution
 - [ ] **UI-03**: Modal renders three labeled dropdowns (Complexity, Uncertainty, Effort), each with the five level options, using `azure-devops-ui` Dropdown components
 - [ ] **UI-04**: Modal displays a live read-only "Calculation Details" panel showing: weighted sum W (2 decimals), Raw SP (2 decimals), Final Story Points (integer or 0.5), and the formula `W = 0.4·C + 0.4·U + 0.2·E; SP = round_fib(0.5 × 26^((W−1)/4))`
 - [ ] **UI-05**: Modal has Apply and Cancel buttons; Apply is disabled until all three dropdowns have a selection
-- [ ] **UI-06**: Modal renders correctly in both light and dark ADO themes (theme inherited from host)
+- [x] **UI-06**: Modal renders correctly in both light and dark ADO themes (theme inherited from host)
 - [ ] **UI-07**: Modal is fully keyboard-navigable: Tab moves between dropdowns, Enter confirms a dropdown selection, Esc cancels, Tab to Apply + Enter applies
 - [ ] **UI-08**: Modal applies to work items of type User Story, Bug, Task, Feature, and Epic (and any other type that has the resolved SP field per FIELD-02)
 
@@ -121,12 +121,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIELD-02 | Phase 3 | Pending |
 | FIELD-03 | Phase 3 | Pending |
 | FIELD-04 | Phase 3 | Pending |
-| UI-01 | Phase 2 | Pending |
-| UI-02 | Phase 2 | Pending |
+| UI-01 | Phase 2 | Complete |
+| UI-02 | Phase 2 | Complete |
 | UI-03 | Phase 3 | Pending |
 | UI-04 | Phase 3 | Pending |
 | UI-05 | Phase 3 | Pending |
-| UI-06 | Phase 2 | Pending |
+| UI-06 | Phase 2 | Complete |
 | UI-07 | Phase 3 | Pending |
 | UI-08 | Phase 3 | Pending |
 | APPLY-01 | Phase 3 | Pending |

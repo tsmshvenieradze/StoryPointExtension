@@ -122,7 +122,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
-| 2. Manifest Shell & SDK Integration | 1/1 | Complete   | 2026-05-02 |
+| 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
 | 3. Modal UI & Read Path | 0/TBD | Not started | - |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
