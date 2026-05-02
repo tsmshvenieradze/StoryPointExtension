@@ -86,6 +86,7 @@ for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     "extension", "publish",
     "--manifest-globs", "vss-extension.json",
     "--share-with", "cezari",
+    "--no-wait-validation",
     "--token", pat,
     ...process.argv.slice(2),
   ];
