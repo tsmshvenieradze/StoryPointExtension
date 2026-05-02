@@ -82,11 +82,22 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. The modal renders three labeled `azure-devops-ui` Dropdown components (Complexity, Uncertainty, Effort) each with the five level options, a live "Calculation Details" panel showing W (2 decimals), Raw SP (2 decimals), Final SP, and the formula text, and Apply (disabled until all three dropdowns are selected) plus Cancel buttons
   2. The modal is fully keyboard-navigable: Tab moves between dropdowns, Enter confirms a dropdown selection, Esc cancels, Tab to Apply + Enter applies — verified on User Story, Bug, Task, Feature, and Epic
-  3. On modal open, FieldResolver probes the work item type's fields and returns `Microsoft.VSTS.Scheduling.StoryPoints` (Agile/Scrum/Basic) or falls back to `Microsoft.VSTS.Scheduling.Size` (CMMI), caching the result per `(projectId, workItemTypeName)`; when neither is present the toolbar button is rendered disabled with an explanatory tooltip and the modal does not open
+  3. On modal open, FieldResolver probes the work item type's fields and returns `Microsoft.VSTS.Scheduling.StoryPoints` (Agile/Scrum/Basic) or falls back to `Microsoft.VSTS.Scheduling.Size` (CMMI), caching the result per `(projectId, workItemTypeName)`; when neither is present the modal opens and shows a clear message explaining which work item types are supported, with a Close button — the toolbar button remains enabled (lazy-probe per Phase 3 D-16 / FIELD-04)
   4. On modal open, the current value of the resolved SP field is displayed via `IWorkItemFormService.getFieldValue()`, and `WorkItemTrackingRestClient.getComments()` is called and run through the AUDIT parser to find the most recent sentinel
   5. When a prior sentinel comment is found, the three dropdowns are pre-filled from its payload before the user interacts; when none is found the dropdowns start empty
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
+
+Plans:
+**Wave 1**
+- [ ] 03-01-PLAN.md — ADO bridge layer (ModernCommentsClient subclass for 7.1-preview.4 comments + IWorkItemFormService wrappers + read-path types) and REQUIREMENTS.md FIELD-04 rewrite per D-17
+- [ ] 03-02-PLAN.md — FieldResolver pure module + vitest D-30 suite (StoryPoints/Size priority, cache, D-20 fallback, isDeleted filter)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 03-03-PLAN.md — Calculator UI components (Dropdown3, CalcPanel, banners, NoFieldMessage), CalcModal orchestrator, stub Apply (D-27), and src/entries/modal.tsx rewrite
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 03-04-PLAN.md — Manual cezari verification (D-29 12-item checklist) + theme inheritance audit + 03-VERIFICATION.md
 
 ### Phase 4: Write Path & Edge Cases
 **Goal**: Make Apply actually mutate the work item with the atomicity ordering chosen in Phase 0, gated by permission and overwrite checks, with friendly errors on every documented failure mode
@@ -123,6 +134,6 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
-| 3. Modal UI & Read Path | 0/TBD | Not started | - |
+| 3. Modal UI & Read Path | 0/4 | Not started | - |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
