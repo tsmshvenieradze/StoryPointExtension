@@ -88,3 +88,46 @@ export async function getWorkItemTypeName(
 export function getProjectId(): string {
   return SDK.getWebContext().project.id;
 }
+
+/**
+ * Probe whether the current work item is read-only (Stakeholder license,
+ * area-path lock, closed state, rule-locked). Source: D-05, D-07
+ * (Phase 4 CONTEXT.md); Plan 04-01 spike A3 verdict.
+ *
+ * Spike A3 verdict: LAZY-FALLBACK-ONLY — none of the four probe
+ * candidates yielded a usable upfront read-only signal:
+ *   (a) `formService.isReadOnly()` — method does not exist on the form
+ *       service (returns undefined when optional-chained).
+ *   (b) `getFieldValue('System.AuthorizedAs')` — returns identity but
+ *       not a permission signal.
+ *   (c) self-`setFieldValue` of current value — returns true and
+ *       `isDirty=false` in the writable case; behavior on a truly
+ *       read-only fixture is unverified, and `formService.reset()` had
+ *       unexpected behavior.
+ *   (d) `SDK.getUser()` — exposes only descriptor/id/name/displayName/
+ *       imageUrl; NO `subjectKind` or `licenseRights` field — cannot
+ *       gate by license tier.
+ *
+ * Action: D-07 lazy-fallback path — never assert read-only upfront.
+ * Always return `{ isReadOnly: false, probeFailed: true }`. The apply
+ * orchestrator (Plan 04-05) catches errors from setFieldValue/save and
+ * surfaces them via FieldFailBanner / friendlyMessageForStatus.
+ *
+ * NEVER throws — defensive coercion pattern from getCurrentSpValue.
+ * The unused `formService` parameter is retained so the signature is
+ * stable for a future spike that might find a working probe.
+ */
+export async function getIsReadOnly(
+  _formService: IWorkItemFormService,
+): Promise<{ isReadOnly: boolean; probeFailed: boolean }> {
+  // Per Spike A3 verdict (LAZY-FALLBACK-ONLY) — see header. The
+  // try/catch wraps a no-op for now so a future spike-validated probe
+  // can be inserted without changing call sites or rewriting error
+  // handling.
+  try {
+    return { isReadOnly: false, probeFailed: true };
+  } catch (err) {
+    console.warn(`${LOG_PREFIX} getIsReadOnly probe failed`, err);
+    return { isReadOnly: false, probeFailed: true }; // D-07 default: writable on probe failure
+  }
+}

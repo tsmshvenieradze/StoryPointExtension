@@ -56,4 +56,17 @@ export type CalcSpReadResult = {
     fieldsRejected: boolean;
     commentsRejected: boolean;
   };
+  // Source: D-05, D-07 (Phase 4 CONTEXT.md). Optional because the
+  // read-path effect populates it asynchronously alongside other reads.
+  // Plan 04-05 CalcModal checks `?.isReadOnly` before short-circuiting
+  // to the readonly branch (D-06) and `?.probeFailed` for the D-07
+  // PermissionWarnBanner.
+  // Per Plan 04-01 spike A3 verdict (LAZY-FALLBACK-ONLY): probeFailed
+  // is `true` in the baseline path — no eager probe is reliable; the
+  // actual read-only state surfaces reactively when setFieldValue/save
+  // throws and friendlyMessageForStatus maps the 403/412 to D-09 copy.
+  permission?: {
+    isReadOnly: boolean;
+    probeFailed: boolean;
+  };
 };
