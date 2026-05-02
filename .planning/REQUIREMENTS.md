@@ -53,7 +53,7 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 - [ ] **APPLY-06**: Apply posts the audit comment via `WorkItemTrackingRestClient.addComment()` (API version `7.0-preview.3`)
 - [ ] **APPLY-07**: Write atomicity ordering (comment-first vs field-first) is decided in Phase 1 planning, documented in the plan, and consistently applied across the codebase
 - [ ] **APPLY-08**: When the field write fails, the user sees a clear error toast and no comment is posted (or posted comment is marked accordingly per APPLY-07 decision); when the comment fails, the user sees a clear error toast and the field write is left in place
-- [ ] **APPLY-09**: Permission check before showing/enabling Apply: when the user lacks write permission on the work item, the Apply button is disabled with a tooltip; modal still opens read-only for inspection
+- [ ] **APPLY-09**: When the user lacks write permission on the work item (isReadOnly=true), the modal opens and replaces the calculator UI with a clear message explaining the work item is read-only. The toolbar button remains enabled. The current Story Points value is still shown via the context line for inspection.
 
 ### Pkg — Marketplace Package & Publish
 
