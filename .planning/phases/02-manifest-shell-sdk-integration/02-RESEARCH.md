@@ -30,7 +30,7 @@ Two facts in the existing project artifacts diverge from the Microsoft Learn 202
 
 **Toolbar Contribution Details**
 - **D-07:** Toolbar label: `Calculate Story Points`.
-- **D-08:** Toolbar icon: inline 16×16 calculator SVG. `images/toolbar-icon.svg` with `fill="currentColor"`. Reference via `properties.iconUrl: "images/toolbar-icon.svg"` in `vss-extension.json`. Add the path to the `files` block.
+- **D-08:** Toolbar icon: inline 16×16 calculator SVG. `images/toolbar-icon.svg` with `fill="currentColor"`. Reference via `properties.icon: "images/toolbar-icon.svg"` in `vss-extension.json`. Add the path to the `files` block.
 - **D-09:** Action registration: callback's `execute(actionContext)` extracts work item ID from `actionContext.workItemId` (or equivalent) and calls `HostPageLayoutService.openCustomDialog('calc-sp-modal', { configuration: { workItemId } })`.
 
 **Configuration Passing**
@@ -153,7 +153,7 @@ Two facts in the existing project artifacts diverge from the Microsoft Learn 202
        │  │  ▸ ... overflow                 │  │
        │  │     ▸ Calculate Story Points  ◀─┼──┼── (1) entry rendered from
        │  │       (text from manifest)      │  │     vss-extension.json properties.text;
-       │  └────────────┬────────────────────┘  │     icon from properties.iconUrl
+       │  └────────────┬────────────────────┘  │     icon from properties.icon
        │               │ click                 │
        │               ▼                       │
        │  ┌─────────────────────────────────┐  │
@@ -223,7 +223,7 @@ images/
 .gitignore                       # MODIFY: add .env, .env.local, .env.*.local
 README.md                        # MODIFY: add "Dev Publish" recipe section
 package.json                     # MODIFY: add dev:publish, dev:share, dev:rev-publish scripts
-vss-extension.json               # MODIFY: add toolbar-icon.svg to files; add iconUrl to action properties
+vss-extension.json               # MODIFY: add toolbar-icon.svg to files; add icon to action properties
 ```
 
 ### Pattern 1: Toolbar entry (verbatim from Microsoft `work-item-toolbar-menu` sample, modernized)
@@ -451,7 +451,7 @@ export type CalcSpModalConfig = {
 
 ### Pattern 4: Inline 16×16 SVG toolbar icon (D-08)
 
-**What:** A standalone SVG file referenced from the manifest's contribution `properties.iconUrl`. Single color, uses `fill="currentColor"` so ADO theme tokens drive the foreground color. The Microsoft sample uses PNGs with explicit `light`/`dark` variants; an SVG with `currentColor` collapses both into one file.
+**What:** A standalone SVG file referenced from the manifest's contribution `properties.icon`. Single color, uses `fill="currentColor"` so ADO theme tokens drive the foreground color. The Microsoft sample uses PNGs with explicit `light`/`dark` variants; an SVG with `currentColor` collapses both into one file.
 
 **When to use:** Any toolbar/menu contribution where a monochrome icon suffices and you want theme-perfect rendering at any zoom level.
 
@@ -992,27 +992,31 @@ Phase 2 introduces NO stored data, NO live service config, NO OS-registered stat
 
 **Confirmation needed before Phase 2 execution:** A1 (PAT provisioned — CONTEXT.md says yes); A2 (cezari org install policy — assumed open). All other items have HIGH-confidence verification or are LOW-risk stylistic choices.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should the toolbar iframe use `loaded:false + notifyLoadSucceeded()` OR `loaded:true` (default)?**
    - What we know: D-12 says both iframes follow `loaded:false`. Microsoft canonical sample's toolbar uses `SDK.init()` default (`loaded:true`).
    - What's unclear: D-12's intent — discipline / consistency, or a hard requirement.
    - Recommendation: Follow D-12 (`loaded:false`) for symmetry. Add `await SDK.notifyLoadSucceeded()` immediately after the `SDK.register(...)` call. Costs ~2 lines of code; harmless.
+   - RESOLVED: D-12 mandates loaded:false for symmetry with the modal iframe; the plan honors this. The Microsoft sample uses loaded:true default but D-12's explicit notifyLoadSucceeded() pattern is safer (avoids the documented stuck-spinner edge case where the host doesn't fire the toolbar-rendered event). Plan Tasks 5 and 6 both use loaded:false + notifyLoadSucceeded().
 
 2. **Does the in-modal "Close" button (D-06) need to programmatically dismiss the dialog, or is it acceptable as a decorative element relying on the host X?**
    - What we know: D-06 says "single Close button"; CONTEXT.md notes "via the host's built-in X" as a possibility.
    - What's unclear: User intent — visible button purely for UX guidance, or functional programmatic close.
    - Recommendation: Phase 2 ships decorative + host-X. If verifier flags as "Close button does nothing," Phase 3 adopts the registered-method pattern (modal calls `SDK.unregister` or registers a `dismiss` method the host invokes). Phase 2's success criteria don't require programmatic close.
+   - RESOLVED: D-06 leaves this to planner discretion. Phase 2 ships a decorative Close button (host X handles dismissal) — simpler implementation, sufficient for the smoke test. Phase 3 may upgrade to a registered method-based dismiss if the verifier flags the UX.
 
 3. **What is the actual `actionContext` shape for `ms.vss-work-web.work-item-toolbar-menu`?**
    - What we know: Microsoft sample types it as `any`; community knowledge suggests `{ workItemId, id, workItemType, ... }`.
    - What's unclear: Exact verified shape on current ADO Services.
    - Recommendation: Use the permissive guard in Pattern 1; log the full `actionContext` to console on first invocation; capture the actual shape during Phase 2 dev publish. Document in `02-VERIFICATION.md`.
+   - RESOLVED: Microsoft does not document the exact shape; community samples show {id: number} but some show {workItemId: number}. The plan's Task 5 uses a permissive guard `actionContext.id ?? actionContext.workItemId` to handle both. The first dev-publish on cezari will reveal which one the host actually passes; the guard makes Phase 2 robust without needing prior confirmation.
 
 4. **Should `--rev-version` autoincrement be reverted after each dev publish?**
    - What we know: `--rev-version` writes back to `vss-extension.json`. Three viable patterns (auto-revert, auto-commit, manual).
    - What's unclear: Team convention preference.
    - Recommendation: **Auto-revert in `scripts/dev-publish.cjs`** (Pitfall 6 Strategy 1). Phase 2 dev iterations won't pollute git history; Phase 5 introduces a real CI versioning strategy.
+   - RESOLVED: The plan's scripts/dev-publish.cjs (Task 8) snapshots vss-extension.json before the publish, runs --rev-version (which mutates the file on disk), then restores from snapshot. Git history stays clean; published .vsix carries the bumped version. This is the auto-revert pattern.
 
 ## Sources
 
