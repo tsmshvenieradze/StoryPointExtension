@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "story-point-calculator",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "name": "Story Point Calculator",
   "publisher": "TsezariMshvenieradzeExtensions",
   "public": false,
