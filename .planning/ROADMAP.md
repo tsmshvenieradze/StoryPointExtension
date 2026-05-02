@@ -68,8 +68,12 @@ Plans:
   2. Clicking the toolbar entry opens a host-managed custom dialog whose iframe is the registered `ms.vss-web.external-content` modal contribution, opened via `HostPageLayoutService.openCustomDialog` with the work item ID passed via `configuration`
   3. The opened dialog renders a "Hello" payload that visibly inherits the host's light and dark themes (toggle ADO theme — the dialog colors flip with the host), confirming `applyTheme:true` and the SDK init lifecycle (`SDK.init` → `await SDK.ready()` → `register` → `notifyLoadSucceeded`) wired correctly in both iframes
   4. Reloading the work item form (hard and soft refresh, plus Next/Previous arrows) does not produce duplicate or missing toolbar entries
-**Plans**: TBD
+**Plans**: 1 plan
 **UI hint**: yes
+
+Plans:
+- [ ] 02-01-PLAN.md — Manifest shell + SDK integration: SVG toolbar icon, toolbar.tsx + modal.tsx with full SDK lifecycle, dev-publish wrapper, manual verification on cezari org
+
 
 ### Phase 3: Modal UI & Read Path
 **Goal**: Replace the "Hello" payload with the full calculator UI wired to Phase 1's pure modules, FieldResolver, and the SDK read path so the user can see current SP and a pre-filled selection on every open
@@ -118,7 +122,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
-| 2. Manifest Shell & SDK Integration | 0/TBD | Not started | - |
+| 2. Manifest Shell & SDK Integration | 0/1 | Not started | - |
 | 3. Modal UI & Read Path | 0/TBD | Not started | - |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
