@@ -19,6 +19,7 @@ If everything else fails, this must work: open work item → click button → an
 - ✓ **Calc engine (CALC-01..05)** — pure-TS module at `src/calc/` ports `sp_calculator.xlsx` exactly: `weightedSum (W = 0.4·C + 0.4·U + 0.2·E)`, `rawSp (0.5 × 26^((W−1)/4))`, `roundFib` Fibonacci threshold table (≤0.75→0.5, ≤1.5→1, ≤2.5→2, ≤4→3, ≤6.5→5, ≤10.5→8, else→13), `calculate` pipeline. Frozen `LEVELS` constant; type-exhaustive `Level`/`Score`/`FibonacciSp` unions; 169 vitest tests covering all 7 Fibonacci buckets + threshold boundaries + 125-case parity table — Phase 1
 - ✓ **Audit comment module (AUDIT-01..07)** — pure-TS module at `src/audit/` produces and parses the canonical sentinel format `<!-- sp-calc:v1 {"sp":N,"c":"...","u":"...","e":"...","schemaVersion":1} -->`. Stable JSON via replacer-array; bounded sentinel regex; HTML/NBSP normalization; case-insensitive label matching; `schemaVersion !== 1` rejection; never-throws parser; `parseLatest` filters deleted/sorts by createdDate/falls through on malformed; 153 vitest tests including 125-case round-trip and 17-case parser edge table — Phase 1
 - ✓ **100% coverage gate** — `vitest.config.ts` enforces 100% line/branch/function/statement coverage on `src/calc/**` and `src/audit/**`; CI fails below this threshold — Phase 1
+- ✓ **Manifest shell + SDK integration (UI-01, UI-02, UI-06)** — toolbar action `calc-sp-action` registered as `ms.vss-web.action` targeting `ms.vss-work-web.work-item-toolbar-menu`; click opens host-managed dialog via `IHostPageLayoutService.openCustomDialog` with `{ workItemId }` configuration; modal renders `azure-devops-ui` Surface+Page that inherits host theme automatically; SDK lifecycle (register → init({loaded:false}) → ready → notifyLoadSucceeded) correct in both iframes; dev-publish wrapper with retry-on-version-conflict and PAT-via-`.env.local`; PNG icon (Marketplace rejects SVG); webpack object-form entry so HtmlWebpackPlugin injects script tags; verified live on `cezari.visualstudio.com/Cezari` against all 4 ROADMAP success criteria — Phase 2
 
 ### Active
 
@@ -141,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-01 after Phase 1 completion (calc engine + audit module validated; 322 tests passing at 100% coverage)*
+*Last updated: 2026-05-02 after Phase 2 completion (toolbar/modal/SDK integration verified live on cezari dev org)*
