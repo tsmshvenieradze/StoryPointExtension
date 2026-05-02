@@ -31,7 +31,7 @@
         "text": "Calculate Story Points",
         "title": "Open the Story Point calculator",
         "toolbarText": "Calculate SP",
-        "icon": "images/toolbar-icon.svg",
+        "icon": "images/toolbar-icon.png",
         "uri": "dist/toolbar.html",
         "registeredObjectId": "calc-sp-action"
       }
