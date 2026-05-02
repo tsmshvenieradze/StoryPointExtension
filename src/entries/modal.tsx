@@ -41,7 +41,7 @@ import { CalcModal } from "../ui/CalcModal";
 const LOG_PREFIX = "[sp-calc/modal]";
 
 const ConfigError: React.FC<{ received: unknown }> = ({ received }) => (
-  <Surface background={SurfaceBackground.neutral}>
+  <Surface background={SurfaceBackground.normal}>
     <Page className="flex-grow">
       <Header title="Story Point Calculator — Configuration Error" titleSize={TitleSize.Large} />
       <div className="page-content page-content-top">

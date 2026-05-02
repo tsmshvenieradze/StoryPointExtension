@@ -311,7 +311,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
   // No-field branch — REPLACES the entire calculator UI (D-19).
   if (mode === "noField") {
     return (
-      <Surface background={SurfaceBackground.neutral}>
+      <Surface background={SurfaceBackground.normal}>
         <Page className="flex-grow">
           <Header title="Calculate Story Points" titleSize={TitleSize.Medium} />
           <div className="page-content page-content-top">
@@ -339,7 +339,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
   // line 89: short-circuits AFTER the noField branch.
   if (mode === "readonly") {
     return (
-      <Surface background={SurfaceBackground.neutral}>
+      <Surface background={SurfaceBackground.normal}>
         <Page className="flex-grow">
           <Header title="Calculate Story Points" titleSize={TitleSize.Medium} />
           <div className="page-content page-content-top">
@@ -510,7 +510,7 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     false;
 
   return (
-    <Surface background={SurfaceBackground.neutral}>
+    <Surface background={SurfaceBackground.normal}>
       <Page className="flex-grow">
         <Header
           title="Calculate Story Points"
