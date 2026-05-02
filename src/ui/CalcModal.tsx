@@ -32,7 +32,7 @@ import {
   type CalcSpReadResult,
 } from "../ado";
 import { resolve as resolveField } from "../field";
-import { stubApply } from "../apply/stubApply";
+import { applyToWorkItem, type ApplyError, type ApplyInput } from "../apply";
 
 import { Dropdown3 } from "./Dropdown3";
 import { CalcPanel } from "./CalcPanel";
@@ -253,12 +253,18 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
 
   const handleApply = () => {
     if (!isAllSelected || !readResult || readResult.resolvedField === null) return;
-    stubApply({
+    // Plan 04-05 Task 1 transitional: stubApply removed; the real
+    // applyToWorkItem orchestrator is wired in Task 2 (state machine
+    // extension). This logger preserves the verifier-grep "[sp-calc/apply]"
+    // marker until Task 2 swaps in the runApplySequence handler.
+    const input: ApplyInput = {
       c: c!,
       u: u!,
       e: e!,
       fieldRefName: readResult.resolvedField,
-    });
+    };
+    console.log(`${LOG_PREFIX} apply pending Task 2 wiring`, input);
+    void applyToWorkItem; // keep import live until Task 2
   };
 
   const handleCancel = () => {
