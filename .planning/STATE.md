@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 plans verified
-last_updated: "2026-05-02T10:55:27.205Z"
-last_activity: 2026-05-02 -- Phase 03 execution started
+stopped_at: Phase 3 complete (PARTIAL PASS); ready for Phase 4 planning
+last_updated: "2026-05-02T17:30:00.000Z"
+last_activity: 2026-05-02 -- Phase 03 plan 04 (cezari manual verification) complete
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 4
-  percent: 50
+  completed_plans: 8
+  percent: 67
 ---
 
 # Project State
@@ -21,24 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** Phase 03 — modal-ui-read-path
+**Current focus:** Phase 03 complete; ready for Phase 04 (Write Path & Edge Cases)
 
 ## Current Position
 
-Phase: 03 (modal-ui-read-path) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 03
-Last activity: 2026-05-02 -- Phase 03 execution started
+Phase: 03 (modal-ui-read-path) — COMPLETE (2026-05-02)
+Plan: 4 of 4 (all complete)
+Status: Phase 3 closed; Phase 4 ready to plan
+Last activity: 2026-05-02 -- Phase 03 plan 04 cezari manual verification complete (PARTIAL PASS)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████░░░░] 67% (4 of 6 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 8
 - Average duration: —
-- Total execution time: 0.0 hours
+- Total execution time: ~4 days (calendar) across 8 plans
 
 **By Phase:**
 
@@ -47,11 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | 0 | 1 | - | - |
 | 1 | 2 | - | - |
 | 2 | 1 | - | - |
+| 3 | 4 | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: —
-- Trend: —
+- Last 5 plans: 03-01, 03-02, 03-03, 03-04 (verification with 6 fix-back commits), Phase 3 close
+- Trend: read path empirically validated; 6 real-world bugs caught and fixed during cezari run
 
 *Updated after each plan completion*
 
@@ -65,18 +66,23 @@ Recent decisions affecting current work:
 - Pre-Phase 0: React + TypeScript + `azure-devops-ui` is the only viable UI stack (justified divergence from GPIH Angular standard — `azure-devops-ui` is React-only)
 - Pre-Phase 0: Manifest scope locked at `vso.work_write` only — adding scopes post-publish forces re-consent across every install
 - Pre-Phase 0: FieldResolver promoted to v1 (was v2) — CMMI uses `Microsoft.VSTS.Scheduling.Size`, not `StoryPoints`; without it v1 breaks on first CMMI customer
-- Pre-Phase 0: Sentinel HTML-comment + JSON payload + `schemaVersion` audit format — survives ADO renderer and is round-trip parseable
+- Pre-Phase 0: Sentinel HTML-comment + JSON payload + `schemaVersion` audit format — survives ADO renderer and is round-trip parseable (verified 03-04 with HTML-entity decode)
+- Phase 03-04: Override 4 — SDK REST client unusable in dialog iframe; use direct fetch with `SDK.getAccessToken() + SDK.getHost().name`. Phase 4 must follow this pattern for `addComment`.
+- Phase 03-04: Override 5 — `ms.vss-web.external-content` dialogs need explicit `SDK.resize` lifecycle, not host content-fit
+- Phase 03-04: Override 6 — `html, body, #root { width: 100%; height: 100% }` required in template.html
+- Phase 03-04: Override 7 — `ListSelection({ selectOnFocus: false })` required for Dropdown auto-close
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- Phase 0: Marketplace publisher account status for GPIH unconfirmed — must be resolved in Phase 0 (24h verification round-trip if missing)
-- Phase 0: Write atomicity ordering (comment-first vs field-first) is unresolved — ARCHITECTURE.md and PITFALLS.md give contradictory recommendations; must be decided and documented in Phase 0 before Phase 4 can plan
-- Phase 0: npm versions in research are training-data floors — Phase 0 must run `npm view` for the four critical packages before pinning `package.json`
-- Phase 2: Sentinel HTML comment must be verified to round-trip through both markdown-mode and HTML-mode ADO comment renderers before locking the format
+- Phase 4: Visible-sentinel UX decision required — pasted/posted sentinel renders as literal `<!-- ... -->` text in ADO Discussion view. Three options: accept / post-as-HTML / different invisible carrier (see Phase 03-04 SUMMARY).
+- Phase 4: Use direct-fetch pattern for `addComment` — do NOT use the SDK REST client (it hangs in dialog iframe per 03-04 Override 4).
+- Phase 5: Custom SP fields on customer Scrum installs — real customers may delete inherited `Microsoft.VSTS.Scheduling.StoryPoints` field. Phase 5 should add a settings UI for ref-name override OR document as known limitation.
+- Phase 5: Cross-process coverage — cezari run verified Scrum/PBI only. Phase 5 must extend Check 1 across all Scrum types AND a separate Agile org.
+- Phase 5: `dev-publish.cjs` retry broken on Windows — fix before final publish (see Phase 03-04 Issues Discovered).
 
 ## Deferred Items
 
@@ -88,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-02T10:52:10.209Z
-Stopped at: Phase 3 plans verified
-Resume file: .planning/phases/03-modal-ui-read-path/03-01-PLAN.md
+Last session: 2026-05-02T17:30:00.000Z
+Stopped at: Phase 3 complete (PARTIAL PASS); ready for Phase 4 planning
+Resume file: .planning/phases/03-modal-ui-read-path/03-04-SUMMARY.md

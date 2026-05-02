@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 0: Bootstrap & Prerequisites** - Unblock the build: pin versions, verify Marketplace publisher, lock manifest scope, decide write atomicity ordering (completed 2026-05-01)
 - [x] **Phase 1: Calc Engine & Audit Parser** - Pure functions matching the Excel calculator and the sentinel-format comment serializer/parser, both fully unit-tested with zero ADO dependencies (completed 2026-05-01)
 - [x] **Phase 2: Manifest Shell & SDK Integration** - Toolbar button appears in a dev org, click opens a themed "Hello" dialog — the highest-risk integration point fails fast here (completed 2026-05-02)
-- [ ] **Phase 3: Modal UI & Read Path** - Full React calculator modal with FieldResolver, intermediate values, current SP read, and pre-fill from prior sentinel comment
+- [x] **Phase 3: Modal UI & Read Path** - Full React calculator modal with FieldResolver, intermediate values, current SP read, and pre-fill from prior sentinel comment (completed 2026-05-02)
 - [ ] **Phase 4: Write Path & Edge Cases** - Apply writes the field and posts the audit comment using the chosen atomicity order, with permission checks, overwrite confirmation, and friendly error handling
 - [ ] **Phase 5: Polish & Marketplace Publish** - Bundle size gate, listing assets, private smoke install, then public publish on Visual Studio Marketplace verified on Agile and CMMI orgs
 
@@ -97,7 +97,7 @@ Plans:
 - [x] 03-03-PLAN.md — Calculator UI components (Dropdown3, CalcPanel, banners, NoFieldMessage), CalcModal orchestrator, stub Apply (D-27), and src/entries/modal.tsx rewrite
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 03-04-PLAN.md — Manual cezari verification (D-29 12-item checklist) + theme inheritance audit + 03-VERIFICATION.md
+- [x] 03-04-PLAN.md — Manual cezari verification (D-29 12-item checklist) + theme inheritance audit + 03-VERIFICATION.md (completed 2026-05-02; PARTIAL PASS verdict, 6 real-world fixes back-ported)
 
 ### Phase 4: Write Path & Edge Cases
 **Goal**: Make Apply actually mutate the work item with the atomicity ordering chosen in Phase 0, gated by permission and overwrite checks, with friendly errors on every documented failure mode
@@ -134,6 +134,6 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 | 0. Bootstrap & Prerequisites | 1/1 | Complete    | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 2/2 | Complete    | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete    | 2026-05-02 |
-| 3. Modal UI & Read Path | 0/4 | Not started | - |
+| 3. Modal UI & Read Path | 4/4 | Complete    | 2026-05-02 |
 | 4. Write Path & Edge Cases | 0/TBD | Not started | - |
 | 5. Polish & Marketplace Publish | 0/TBD | Not started | - |
