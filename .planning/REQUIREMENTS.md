@@ -30,7 +30,7 @@ Requirements for initial public Marketplace release. Each maps to roadmap phases
 - [ ] **FIELD-01**: FieldResolver probes the current work item type's field list via `IWorkItemFormService.getFields()` (or equivalent SDK call) at modal open
 - [ ] **FIELD-02**: FieldResolver returns `Microsoft.VSTS.Scheduling.StoryPoints` when present (Agile, Scrum, Basic processes); falls back to `Microsoft.VSTS.Scheduling.Size` (CMMI) when StoryPoints is absent
 - [ ] **FIELD-03**: FieldResolver caches the resolved reference name per `(projectId, workItemTypeName)` for the lifetime of the iframe
-- [ ] **FIELD-04**: When neither field is present on the work item type, the toolbar button is rendered disabled with a tooltip explaining which field types are supported
+- [ ] **FIELD-04**: When neither field is present on the work item type, the modal opens and shows a clear message explaining which work item types are supported, with a Close button. The toolbar button remains enabled.
 
 ### UI — Toolbar Button + Modal
 
