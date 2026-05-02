@@ -8,9 +8,11 @@ Works on Scrum, Agile, Basic, and CMMI processes. Single scope: `vso.work_write`
 
 ## Install
 
-Public listing on the Visual Studio Marketplace: _coming soon (Phase 5)_.
+Public listing on the Visual Studio Marketplace:
 
-For private testing, install directly from the publisher's manage page once shared with your org.
+> **[marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator)**
+
+Click **Get it free**, choose your Azure DevOps organization, install. The toolbar entry "Calculate Story Points" appears on every work item that has a Story Points (or Size) field.
 
 ## Use
 
@@ -133,4 +135,4 @@ webpack.config.cjs        # bundler config (toolbar + modal HTML entries)
 
 ## License
 
-[MIT](LICENSE) © Tsezari Mshvenieradze
+[MIT](LICENSE)

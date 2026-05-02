@@ -4,7 +4,7 @@
   "description": "Azure DevOps work item extension: structured Story Point estimation using Complexity, Uncertainty, Effort.",
   "private": true,
   "license": "MIT",
-  "author": "Tsezari Mshvenieradze",
+  "author": "",
   "engines": {
     "node": ">=20.10.0",
     "npm": ">=10.0.0"
