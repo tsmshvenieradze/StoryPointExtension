@@ -52,18 +52,46 @@ if (!pat) {
   process.exit(4);
 }
 
-// 3. Invoke tfx-cli. shell: true on Windows fixes the Phase 03-04 stdout
-//    capture bug. Pass --token after spawn (PAT not on argv).
-const args = [
+// 3. Parse our own --public flag out of argv (NOT a tfx-cli flag).
+//    Public publish: drop --share-with cezari, sanity-check the manifest
+//    has "public": true, and remind the user about publisher verification.
+//    Private publish (default): --share-with cezari for testing on cezari.
+const ownArgs = process.argv.slice(2);
+const isPublic = ownArgs.includes("--public");
+const passthroughArgs = ownArgs.filter((a) => a !== "--public");
+
+if (isPublic) {
+  // Sanity-check the manifest before pushing to the public Marketplace.
+  const manifestPath = path.join(REPO_ROOT, "vss-extension.json");
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch (err) {
+    console.error(`${LOG_PREFIX} ABORT: cannot parse vss-extension.json: ${err.message}`);
+    process.exit(5);
+  }
+  if (manifest.public !== true) {
+    console.error(`${LOG_PREFIX} ABORT: vss-extension.json has "public": ${JSON.stringify(manifest.public)}.`);
+    console.error(`        Set "public": true in vss-extension.json before running publish:public.`);
+    console.error(`        (Plan 05-05 owns this flip — do not run publish:public until that plan executes.)`);
+    process.exit(6);
+  }
+  console.log(`${LOG_PREFIX} PUBLIC publish — vss-extension.json public:true confirmed.`);
+  console.log(`${LOG_PREFIX} Reminder: publisher MUST be verified at marketplace.visualstudio.com/manage/publishers/...`);
+  console.log(`${LOG_PREFIX} If verification is not granted, ADO will reject this publish.`);
+}
+
+const baseArgs = [
   "tfx", "extension", "publish",
   "--manifest-globs", "vss-extension.json",
-  "--share-with", "cezari",
   "--no-wait-validation",
   "--token", pat,
-  ...process.argv.slice(2),
 ];
+const targetArgs = isPublic ? [] : ["--share-with", "cezari"];
+const args = [...baseArgs, ...targetArgs, ...passthroughArgs];
 
-console.log(`${LOG_PREFIX} npx tfx extension publish --share-with cezari (token redacted)`);
+const target = isPublic ? "PUBLIC Marketplace" : "cezari (private)";
+console.log(`${LOG_PREFIX} npx tfx extension publish → ${target} (token redacted)`);
 const r = spawnSync("npx", args, {
   cwd: REPO_ROOT,
   stdio: "inherit",
