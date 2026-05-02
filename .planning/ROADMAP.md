@@ -94,7 +94,7 @@ Plans:
 - [x] 03-02-PLAN.md — FieldResolver pure module + vitest D-30 suite (StoryPoints/Size priority, cache, D-20 fallback, isDeleted filter)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 03-03-PLAN.md — Calculator UI components (Dropdown3, CalcPanel, banners, NoFieldMessage), CalcModal orchestrator, stub Apply (D-27), and src/entries/modal.tsx rewrite
+- [x] 03-03-PLAN.md — Calculator UI components (Dropdown3, CalcPanel, banners, NoFieldMessage), CalcModal orchestrator, stub Apply (D-27), and src/entries/modal.tsx rewrite
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 03-04-PLAN.md — Manual cezari verification (D-29 12-item checklist) + theme inheritance audit + 03-VERIFICATION.md
