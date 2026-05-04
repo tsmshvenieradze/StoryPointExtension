@@ -375,7 +375,15 @@ After Marketplace propagation + the usual uninstall+reinstall+hard refresh ritua
    - Outside-click → still closes
 4. **Visual sanity** — dropdowns and CalcPanel should feel comfortable, not cramped, after the 48px horizontal inset.
 
-If steps 1–3 PASS → v1.0.7 ships clean; quick-task `260504-cl1` resolves with both functional + visual goals met.
+### v1.0.7 cezari verdict: PASS (2026-05-04)
+
+User reported "done" after publishing v1.0.7 to public Marketplace and re-testing on cezari. Side gutter visible; close surfaces (Cancel / Esc / post-Saved auto-close) still functional; no regressions reported. Quick task `260504-cl1` RESOLVED — both functional goal (programmatic close on three surfaces) and visual goal (24px side gutter restored) met.
+
+Net journey across the 4-version arc:
+- v1.0.4 (`7b4d00e`) — closeProgrammatically helper + Cancel/post-Saved/Esc wires shipped. **Falsified** in cezari verification: `closeDialog()` is a silent no-op for `openCustomDialog` instances.
+- v1.0.5 (`a1e60d4`) — toolbar swapped from `openCustomDialog` to `addDialog`. **Close surfaces PASSED**; visual regression discovered (no side gutter from the addDialog renderer).
+- v1.0.6 (`61987eb`) — body padding rule added in `template.html`. **Failed cascade**: `azure-devops-ui/Core/override.css` line 28 won the tie via later source order from style-loader injection.
+- v1.0.7 (`86d2356`) — `!important` on the body padding rule. **PASS** on both axes.
 
 ### Self-Check: PASSED (v1.0.7 cascade fix)
 

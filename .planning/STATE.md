@@ -5,7 +5,7 @@ milestone_name: milestone
 status: milestone-complete
 stopped_at: "Phase 5 closed; v1.0 milestone shipped public (v1.0.0..v1.0.3)"
 last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: "2026-05-04 -- Quick task 260504-cl1: programmatic close spike + wire (Cancel / post-Saved auto-close / Esc) — bumped 1.0.3 → 1.0.4, pending cezari verification before public publish"
+last_activity: "2026-05-04 -- Quick task 260504-cl1 RESOLVED: programmatic close on Cancel / post-Saved auto-close / Esc shipped + verified on cezari across v1.0.4..v1.0.7 (1.0.4 closeDialog hypothesis falsified → 1.0.5 addDialog swap unlocked close + revealed gutter regression → 1.0.6 body padding lost cascade to override.css → 1.0.7 !important fix PASS)"
 progress:
   total_phases: 6
   completed_phases: 6
