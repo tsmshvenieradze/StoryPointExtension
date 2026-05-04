@@ -7,17 +7,42 @@
 // No imports from src/calc/ or src/audit/ (D-24).
 
 import * as SDK from "azure-devops-extension-sdk";
-import type { IHostPageLayoutService } from "azure-devops-extension-api";
 import type { CalcSpModalConfig } from "../ado/types";
 
 const LOG_PREFIX = "[sp-calc/toolbar]";
 
-// CommonServiceIds is declared as a `const enum` upstream; with our
-// `isolatedModules: true` tsconfig we cannot access const-enum members at
-// runtime. Use the string literal directly — value verified in
-// node_modules/azure-devops-extension-api/Common/CommonServices.d.ts and
-// in RESEARCH §interfaces (CommonServiceIds.HostPageLayoutService).
-const HOST_PAGE_LAYOUT_SERVICE_ID = "ms.vss-features.host-page-layout-service";
+// Plan 260504-cl1 v1.0.5 reversal: use IGlobalMessagesService.addDialog
+// instead of IHostPageLayoutService.openCustomDialog.
+//
+// v1.0.4 cezari evidence (2026-05-04 console transcript): every wired close
+// surface (Cancel button, post-Saved 600ms timer, Esc keydown) successfully
+// invoked SDK.getService("ms.vss-tfs-web.tfs-global-messages-service")
+// .closeDialog() with no throw — and the modal stayed open. Conclusion:
+// closeDialog() only manages the dialog stack created by addDialog(); it
+// is a silent no-op for openCustomDialog instances. Phase 4 D-10
+// NO-PROGRAMMATIC-CLOSE was correct on the openCustomDialog code path.
+//
+// To make programmatic close actually work, swap the OPEN side too:
+// addDialog → managed by closeDialog → all three close surfaces become live.
+// Trade: addDialog renders through the host's CornerDialog/CustomDialog
+// renderer rather than the external-content dialog renderer; visual chrome
+// may differ (centering, sizing). Worst case = v1.0.6 revert.
+const GLOBAL_MESSAGES_SERVICE_ID = "ms.vss-tfs-web.tfs-global-messages-service";
+
+// Local interface — IGlobalMessagesService comes from a const-enum-bearing
+// module that our isolatedModules tsconfig can't import at runtime. Mirror
+// the bridge.ts pattern (only the methods we call). Verified at
+// node_modules/azure-devops-extension-api/Common/CommonServices.d.ts:652.
+interface IGlobalDialog {
+  contributionId?: string;
+  contributionConfiguration?: object;
+  title?: string;
+  onDismiss?: () => void;
+}
+interface IGlobalMessagesService {
+  addDialog: (dialog: IGlobalDialog) => void;
+  closeDialog: () => void;
+}
 
 // The registered object id MUST match vss-extension.json
 // contributions[id=calc-sp-action].properties.registeredObjectId.
@@ -60,35 +85,32 @@ SDK.register(REGISTERED_ID, () => {
         return;
       }
 
-      const layoutSvc = await SDK.getService<IHostPageLayoutService>(
-        HOST_PAGE_LAYOUT_SERVICE_ID
+      const messagesSvc = await SDK.getService<IGlobalMessagesService>(
+        GLOBAL_MESSAGES_SERVICE_ID
       );
 
       const config: CalcSpModalConfig = { workItemId };
       const fullModalId = `${SDK.getExtensionContext().id}.${MODAL_CONTRIB_SHORT_ID}`;
 
-      console.log(`${LOG_PREFIX} opening dialog`, { fullModalId, config });
+      console.log(`${LOG_PREFIX} opening dialog (addDialog)`, { fullModalId, config });
 
-      // openCustomDialog returns void (verified type signature).
-      // Phase 4 D-15 (Probe 4 verdict): lightDismiss does NOT abort in-flight
-      // writes — the iframe is not destroyed on outside-click; deferred fetches
-      // continue and `setFieldValue + .save()` completes. Plan 04-06 cezari
-      // verification (Scenario 1, 2026-05-02) found that `lightDismiss: false`
-      // ALSO blocks Esc dismissal at the host level, leaving the user with no
-      // escape hatch other than the title-bar X — confusing UX.
+      // addDialog returns void; the dialog enters the global dialog stack and
+      // becomes the target of the matching closeDialog() call (used by the
+      // bridge.ts closeProgrammatically helper that Cancel / post-Saved /
+      // Esc all route to). contributionConfiguration is the addDialog
+      // analogue of openCustomDialog's `configuration` — same XDM channel
+      // proxy, same JSON-safe payload requirement (D-11).
       //
-      // Resolution: leave lightDismiss at the host default (true). In-modal
-      // interaction during `saving` is already blocked by the 3-pronged
-      // mitigation (SavingOverlay pointer-events, body aria-hidden, Dropdown
-      // disabled). If the user clicks outside mid-saving, the write still
-      // completes — only the saved-state ✓ flash is missed. Acceptable trade.
-      // onClose fires when the host closes the dialog.
-      layoutSvc.openCustomDialog<undefined>(fullModalId, {
+      // onDismiss replaces openCustomDialog's onClose; the host invokes it
+      // when the dialog leaves the stack (via X click, outside-click, or
+      // our closeDialog() call). No TResult parameter — addDialog does not
+      // surface a result object back to the toolbar.
+      messagesSvc.addDialog({
+        contributionId: fullModalId,
+        contributionConfiguration: config,
         title: "Calculate Story Points",
-        configuration: config,
-        // lightDismiss intentionally omitted — host default (true). See header.
-        onClose: () => {
-          console.log(`${LOG_PREFIX} dialog closed`);
+        onDismiss: () => {
+          console.log(`${LOG_PREFIX} dialog dismissed`);
         },
       });
     },
