@@ -23,9 +23,13 @@
 //   4th parallel-read leg still exists so a future probe-validated
 //   isReadOnly:true case lights up the readonly branch (D-06) automatically.
 //
-// Plan 04-01 spike A4 verdict (NO-PROGRAMMATIC-CLOSE): no SDK close call
-//   from saved mode. SavedIndicator handles 200ms ✓ flash → persistent
-//   "Press Esc to close." hint; user dismisses via host close affordance.
+// Plan 260504-cl1 reverses Phase 4 D-10 (NO-PROGRAMMATIC-CLOSE): Probe 3
+// tested only SDK.notifyDialogResult / notifyDismiss / closeCustomDialog
+// (none existed). The untested candidate — IGlobalMessagesService.closeDialog()
+// at ms.vss-tfs-web.tfs-global-messages-service — is now wrapped by
+// bridge.closeProgrammatically and wired into handleCancel, a 600ms
+// post-Saved auto-close useEffect, and modal.tsx's iframe Escape listener.
+// try/catch + diagnostic log = no regression if it doesn't work.
 //
 // Plan 04-01 Probe 4 (D-15): lightDismiss does NOT abort in-flight writes
 //   (the iframe survives outside-click; deferred fetches continue). Plan 04-06
@@ -59,6 +63,7 @@ import {
   getProjectId,
   fetchCommentsForRead,
   getIsReadOnly,
+  closeProgrammatically,
   type CalcSpReadResult,
 } from "../ado";
 import { resolve as resolveField } from "../field";
@@ -301,6 +306,18 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     };
   }, [workItemId]);
 
+  // Post-Saved auto-close (Plan 260504-cl1). 600ms = SavedIndicator's 200ms ✓
+  // flash + 400ms breathing room so the user perceives "saved" before the modal
+  // disappears. If closeProgrammatically returns false, the modal stays open in
+  // saved mode (current v1.0.3 behavior — no regression).
+  React.useEffect(() => {
+    if (mode !== "saved") return;
+    const timeoutId = window.setTimeout(() => {
+      void closeProgrammatically();
+    }, 600);
+    return () => window.clearTimeout(timeoutId);
+  }, [mode]);
+
   // ---------------------------------------------------------------------
   // Mode-replacement branches — these REPLACE the entire body wholesale
   // (no banner stack, no calculator, no ButtonGroup). Per UI-SPEC mounting
@@ -448,10 +465,16 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     void runApplySequence({ skipCommentLeg: true });
   };
 
-  const handleCancel = () => {
-    // Cannot programmatically close (Override 1 / Anti-pattern 2). Logged
-    // for verifier visibility; user uses host X / Esc / outside-click.
-    console.log(`${LOG_PREFIX} cancel clicked — host close affordance required`);
+  const handleCancel = async () => {
+    // Plan 260504-cl1: spike-as-ship — try IGlobalMessagesService.closeDialog()
+    // (untested by Plan 04-01 Probe 3). If it returns false (threw or method
+    // missing), fall back to D-10 carry-forward log so the user understands
+    // why the modal stayed open. Outside-click / X still work.
+    console.log(`${LOG_PREFIX} cancel clicked → closeProgrammatically`);
+    const closed = await closeProgrammatically();
+    if (!closed) {
+      console.log(`${LOG_PREFIX} programmatic close returned false — host close affordance required`);
+    }
   };
 
   // ---------------------------------------------------------------------
