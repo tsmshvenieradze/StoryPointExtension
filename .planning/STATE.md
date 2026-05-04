@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: milestone-archived
-stopped_at: "v1.0 milestone archived; ready for /gsd-new-milestone to scope v1.1+"
-last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: "2026-05-04 -- /gsd-complete-milestone v1.0 — archived ROADMAP + REQUIREMENTS + AUDIT to .planning/milestones/v1.0-*.md; ROADMAP.md collapsed; PROJECT.md migrated v1 reqs to Validated; MILESTONES.md created; git tag v1.0 pushed"
+milestone: v1.1
+milestone_name: Auto-Publish CI/CD
+status: planning
+stopped_at: "v1.1 milestone bootstrapped; defining requirements"
+last_updated: "2026-05-05T00:00:00.000Z"
+last_activity: "2026-05-05 -- /gsd-new-milestone v1.1 Auto-Publish CI/CD — PROJECT.md updated with new milestone section; STATE.md reset; requirements + roadmap pending"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,18 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** v1.0 milestone — COMPLETE. Extension live on Visual Studio Marketplace under publisher `TsezariMshvenieradzeTfsAiReviewTask`.
+**Current focus:** v1.1 milestone — Auto-Publish CI/CD. GitHub Actions workflow that ships a new patch to Marketplace on every PR-merge to master.
 
 ## Current Position
 
-Milestone: v1.0 — **COMPLETE** (shipped 2026-05-02 v1.0.0; latest 2026-05-04 v1.0.3)
-Phase: 05 (polish-marketplace-publish) — Complete
-Plan: 5 of 5 (all five Phase 5 plans closed; 05-01 MOOT, 05-02 PASS, 05-03 PARTIAL, 05-04 DEFERRED, 05-05 PASS)
-Status: v1.0 shipped public; ready for `/gsd-complete-milestone` (retrospective + v2 milestone planning).
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-05 — Milestone v1.1 started
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
-Progress: [██████████] 100% (19 of 19 plans complete; 6 of 6 phases complete)
+Progress: [          ] 0% (0 of 0 plans complete; 0 of 0 phases complete)
 
 ## Performance Metrics
 
@@ -110,15 +110,17 @@ v1.0.1+ items (carried from Phase 5 close):
 
 ## Session Continuity
 
-Last session: 2026-05-04T00:00:00.000Z
-Stopped at: v1.0 milestone archived; ready for /gsd-new-milestone
-Resume file: `.planning/MILESTONES.md` for the v1.0 record + carry-overs. Archive lives at `.planning/milestones/v1.0-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Next workflow: `/gsd-new-milestone` to scope v1.1+ — questioning → research → requirements → roadmap.
+Last session: 2026-05-05T00:00:00.000Z
+Stopped at: v1.1 milestone bootstrapped; defining requirements
+Resume file: `.planning/PROJECT.md` Current Milestone section + `.planning/REQUIREMENTS.md` (once defined). Next workflow: `/gsd-plan-phase 6` after roadmap approval.
 
-v1.0.1+ tech debt (rolled forward to v1.1+ planning):
+v1.1 milestone subsumes:
+- Removal of legacy `publish:cezari` npm script (v1.0 carry-over)
+
+v1.0.1+ tech debt (still rolled forward — out of v1.1 scope):
 - APPLY-03 production wire-format mismatch (parse.ts widening vs orphan stripping)
 - closeProgrammatically defense-in-depth + shared SAVING_DATASET_KEY constant
 - Strip dead PermissionWarnBanner if no probe lands by v1.2
-- Remove or guard dead `publish:cezari` script
 - Phase 5 carry-overs: light + dark screenshots, Contributor non-admin smoke, cross-process Agile + CMMI smoke
 - Old publisher cleanup (TsezariMshvenieradzeExtensions stuck-private)
 - Custom SP field rename support (out-of-scope per CLAUDE.md; revisit if reported)

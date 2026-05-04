@@ -8,13 +8,31 @@
 
 For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). For tech-debt carry-overs see [.planning/milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md).
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Auto-Publish CI/CD
 
-v1.1+ scope is undefined. Run `/gsd-new-milestone` to bootstrap the next cycle (questioning → research → requirements → roadmap). Candidate themes pulled from v1.0 audit + listing limitations:
+**Goal:** Every PR merge to master ships a new patch version of the extension to Marketplace automatically, with no manual steps.
+
+**Target features:**
+- GitHub Actions workflow triggered on push to master, with pre-flight gates (typecheck → unit tests → webpack build → bundle ≤ 250 KB gzipped)
+- Auto-bump patch in `package.json` + `vss-extension.json` and commit back to master with `[skip ci]` guard to prevent CI loops
+- Package via `tfx extension create` and publish via `tfx extension publish` to existing publisher `TsezariMshvenieradzeTfsAiReviewTask`, using a Marketplace PAT stored as a GitHub Secret
+- Push a git tag (vX.Y.Z) on each successful publish
+- Remove the legacy `publish:cezari` npm script (v1.0 carry-over) so the GH Action becomes the canonical publish path
+- Fail-fast on errors with manual re-run; no auto-retry, no notification surface
+
+**Key context:**
+- Repo lives on GitHub; extension publishes to Visual Studio Marketplace
+- Existing publisher + listing already public (`TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator`); no publisher work needed
+- Within-milestone extension versions will be v1.0.8 → v1.0.N patch bumps; "v1.1" is a planning marker, not the shipped extension version
+- Bundle ceiling 250 KB gzipped inherited from v1.0 Phase 5
+
+## Next Milestone Goals (post-v1.1)
+
+Candidate themes pulled from v1.0 audit + listing limitations (deferred until v1.1 ships):
 
 - **Pre-fill APPLY-03 production fix** — either widen `src/audit/parse.ts` to accept the human-readable line postComment writes, or strip the orphaned `serialize` re-export and document as v1 known-limitation.
 - **Phase 5 carry-overs** — light + dark screenshots in vss-extension.json, Contributor non-admin smoke, cross-process Agile + CMMI smoke (Plan 05-04 deferred).
-- **Cross-phase integration debt** — `closeProgrammatically` defense-in-depth + shared `SAVING_DATASET_KEY` constant; strip dead `PermissionWarnBanner` if no probe lands; remove or guard dead `publish:cezari` script.
+- **Cross-phase integration debt** — `closeProgrammatically` defense-in-depth + shared `SAVING_DATASET_KEY` constant; strip dead `PermissionWarnBanner` if no probe lands.
 - **v2 customization (placeholder)** — Settings hub, configurable weights/dimensions/levels (per archived REQUIREMENTS.md v2 section).
 
 ---
@@ -46,7 +64,12 @@ If everything else fails, this must work: open work item → click button → an
 
 ### Active
 
-(empty — v1 closed; v1.1+ scope to be defined via `/gsd-new-milestone`)
+v1.1 Auto-Publish CI/CD requirements will be enumerated in `.planning/REQUIREMENTS.md` (this milestone). High-level groupings:
+- CI workflow (trigger, pre-flight gates, environment)
+- Version bump (manifest + package.json, commit-back, `[skip ci]` guard)
+- Publish (tfx-cli package + publish, PAT secret, fail-fast)
+- Release tagging (push v1.0.N tag on success)
+- Cleanup (remove legacy `publish:cezari` npm script)
 
 ### Out of Scope
 
@@ -142,4 +165,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-04 after v1.0 milestone close (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat)*
+*Last updated: 2026-05-05 — v1.1 milestone (Auto-Publish CI/CD) bootstrapped via `/gsd-new-milestone`. v1.0 milestone closed 2026-05-04 (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat).*
