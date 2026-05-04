@@ -17,11 +17,55 @@ import type { IWorkItemFormService } from "azure-devops-extension-api/WorkItemTr
 // node_modules/azure-devops-extension-api/WorkItemTracking/WorkItemTrackingServices.d.ts
 // (declare enum WorkItemTrackingServiceIds { WorkItemFormService = "ms.vss-work-web.work-item-form" }).
 const WORK_ITEM_FORM_SERVICE_ID = "ms.vss-work-web.work-item-form";
+
+// Verified at node_modules/azure-devops-extension-api/Common/CommonServices.d.ts
+//   line 12  enum CommonServiceIds { GlobalMessagesService = "ms.vss-tfs-web.tfs-global-messages-service" }
+//   line 675 IGlobalMessagesService.closeDialog(): void
+// Plan 04-01 Probe 3 did NOT test this — it only probed SDK.notifyDialogResult /
+// notifyDismiss / closeCustomDialog (all undefined). This service is the
+// untested candidate; Plan 260504-cl1 wires it with try/catch + diagnostic log
+// so a no-op failure surfaces in DevTools without regressing v1.0.3 behavior.
+const GLOBAL_MESSAGES_SERVICE_ID = "ms.vss-tfs-web.tfs-global-messages-service";
+
 const LOG_PREFIX = "[sp-calc/bridge]";
+
+// Local interface for the typed handle — avoids importing the const-enum
+// from `azure-devops-extension-api` (mirrors the IWorkItemFormService import
+// pattern above). Only the closeDialog() method is needed here.
+interface IGlobalMessagesService {
+  closeDialog: () => void;
+}
 
 /** Acquires the form service handle. Resolves after SDK.ready(). */
 export async function getFormService(): Promise<IWorkItemFormService> {
   return SDK.getService<IWorkItemFormService>(WORK_ITEM_FORM_SERVICE_ID);
+}
+
+/**
+ * Programmatically close the host's currently active dialog.
+ * Returns true if the call did not throw (assumed-closed); false otherwise.
+ *
+ * Reverses Phase 4 D-10 NO-PROGRAMMATIC-CLOSE: that LOCK was based on
+ * Plan 04-01 Probe 3, which probed only the SDK namespace. This service
+ * (ms.vss-tfs-web.tfs-global-messages-service) was not in the probe set;
+ * its closeDialog() method is the untested candidate. Wiring it with
+ * try/catch + diagnostic log means worst case is no regression vs v1.0.3
+ * (modal stays open as it did before); best case all three surfaces close.
+ */
+export async function closeProgrammatically(): Promise<boolean> {
+  try {
+    const svc = await SDK.getService<IGlobalMessagesService>(GLOBAL_MESSAGES_SERVICE_ID);
+    if (typeof svc?.closeDialog !== "function") {
+      console.warn(`${LOG_PREFIX} closeProgrammatically: service has no closeDialog method`, svc);
+      return false;
+    }
+    svc.closeDialog();
+    console.log(`${LOG_PREFIX} closeProgrammatically: closeDialog() invoked`);
+    return true;
+  } catch (err) {
+    console.warn(`${LOG_PREFIX} closeProgrammatically failed`, err);
+    return false;
+  }
 }
 
 /**

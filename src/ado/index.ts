@@ -16,6 +16,7 @@ export {
   getWorkItemTypeName,
   getProjectId,
   getIsReadOnly,
+  closeProgrammatically,
 } from "./bridge";
 export { fetchCommentsForRead } from "./comments";
 export { postComment } from "./postComment";
