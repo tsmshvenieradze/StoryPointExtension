@@ -16,6 +16,18 @@
       padding: 0;
       box-sizing: border-box;
     }
+    /* v1.0.6 (260504-cl1 follow-up): the addDialog host renderer (CornerDialog
+       / CustomDialog) does NOT add the side gutter that the openCustomDialog
+       external-content renderer did in v1.0.0..v1.0.4, so the iframe content
+       sat flush against both vertical edges of the dialog. Compensate inside
+       the iframe with the standard ADO 24px horizontal inset. box-sizing
+       border-box keeps the iframe's width allocation intact; ResizeObserver
+       still feeds document.body.scrollHeight back to SDK.resize so the dialog
+       grows to fit. Vertical padding stays 0 — the host renders the title
+       strip above us and the dialog frame already includes bottom whitespace. */
+    body {
+      padding: 0 24px;
+    }
   </style>
 </head>
 <body>
