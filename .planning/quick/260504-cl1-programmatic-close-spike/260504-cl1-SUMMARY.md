@@ -4,7 +4,7 @@ type: execute
 status: complete
 mode: sequential
 autonomous: false
-ship_version: "1.0.6"
+ship_version: "1.0.7"
 prior_version: "1.0.3"
 phase_unlock: "Phase 4 D-10 NO-PROGRAMMATIC-CLOSE — spike-as-ship reversal (v1.0.4 falsified the closeDialog hypothesis on openCustomDialog instances; v1.0.5 swaps the open-side primitive to addDialog)"
 files_modified:
@@ -41,6 +41,12 @@ commits:
   - hash: 61987eb
     task: 8
     message: "chore(260504-cl1): bump 1.0.5 -> 1.0.6"
+  - hash: fd799b0
+    task: 9
+    message: "fix(260504-cl1): add !important to body padding so it survives override.css"
+  - hash: 86d2356
+    task: 10
+    message: "chore(260504-cl1): bump 1.0.6 -> 1.0.7"
 gates:
   typecheck: pass
   vitest: "398/398 pass"
@@ -300,3 +306,82 @@ If steps 1–2 PASS → v1.0.6 ships clean; quick-task `260504-cl1` resolves wit
 - `package.json` contains `"version": "1.0.6"` — found.
 - `src/template.html` contains `body {` rule with `padding: 0 24px` — found.
 - Final pipeline at HEAD `61987eb`: typecheck pass, 398/398 tests pass, build clean, size 147.9 KB gzipped — verified.
+
+## v1.0.7 follow-up — `!important` on body padding (Tasks 9–10, commits `fd799b0` + `86d2356`)
+
+### v1.0.6 cezari verdict: rule loaded, cascade LOST
+
+User uninstalled v1.0.5, reinstalled v1.0.6, hard-refreshed the work item form. Pasted the rendered DOM from DevTools — confirmed v1.0.6 chrome (the 24px body padding rule was present in the iframe's `<style>` block in `<head>`) but content was STILL flush against dialog edges. Computed styles on `<body>` showed `padding-left: 0px` / `padding-right: 0px` — the rule was loaded but not winning the cascade.
+
+### Root cause: cascade order vs. specificity tie
+
+`azure-devops-ui/Core/override.css` line 28 declares:
+
+```css
+body {
+  display: flex;
+  ...
+  padding: 0;
+  margin: 0;
+}
+```
+
+`modal.tsx` imports `override.css`. Webpack's `style-loader` injects it at runtime as a `<style>` tag appended to `<head>` — AFTER the inline `<style>` block from `template.html` is already parsed. Both selectors are `body` (specificity 0,0,0,1; tied). When specificity ties, **later-loaded wins**. Override.css wins; my `padding: 0 24px` is shadowed.
+
+The DOM dump diagnostic was decisive — without it, both "v1.0.6 didn't propagate" and "Surface escapes body via absolute positioning" were equally likely hypotheses.
+
+### v1.0.7 fix: `!important` on the padding rule
+
+`!important` outranks a non-`!important` rule of equal selector weight regardless of source order. `override.css`'s `body { padding: 0 }` has no `!important`, so a `!important` on my `body { padding: 0 24px }` wins.
+
+```css
+body { padding: 0 24px !important; }
+```
+
+One-character diff (the `!important` declaration). The expanded inline comment in `template.html` captures the cascade-tie reasoning so the next maintainer doesn't strip the `!important` thinking it's CSS sloppiness.
+
+Alternative considered: a React-rendered `position: relative` inline-padded wrapper in `modal.tsx` (inline `style` props win over any non-`!important` CSS rule). Equally bulletproof but moves the styling concern from CSS into the entry-point JSX. Rejected for v1.0.7 — `!important` is the smaller, more local change. If a future ADO SDK update lands a `!important` body-padding rule we'll fall back to the React wrapper.
+
+### Task 9 — `template.html` `!important` (commit `fd799b0`)
+
+- `body { padding: 0 24px }` → `body { padding: 0 24px !important }`.
+- Expanded comment block to document the cascade-tie root cause (override.css line 28, style-loader load order, specificity tie behavior) so the priority-bump isn't accidentally stripped as "lazy CSS".
+
+### Task 10 — version bump 1.0.6 → 1.0.7 (commit `86d2356`)
+
+- `vss-extension.json`: `"version": "1.0.6"` → `"1.0.7"`.
+- `package.json`: `"version": "1.0.6"` → `"1.0.7"`.
+- Pipeline gates:
+  - `npm run typecheck` — pass
+  - `npm test` — 398/398 pass
+  - `npm run build` — pass
+  - `npm run check:size` — 148.4 KB gzipped (budget 250 KB; 101.6 KB headroom; +0.5 KB from expanded comment block, immaterial)
+
+### v1.0.7 cezari verification checklist
+
+```
+npm run publish:public
+```
+
+After Marketplace propagation + the usual uninstall+reinstall+hard refresh ritual:
+
+1. **Open** any work item → click **Calculate Story Points**. Side gutter should now be visible (~24px each side between content and dialog edge).
+2. **Confirm via DevTools:** select `<body>` in Elements tab, check Computed → `padding-left: 24px` and `padding-right: 24px`. The rule should now show with the !important indicator.
+3. **Re-verify v1.0.5 close surfaces (regression check):**
+   - Cancel → closes
+   - Esc → closes
+   - Post-Saved 600ms timer → closes
+   - Mid-save Esc → does NOT close (`Escape ignored — saving in flight`)
+   - Outside-click → still closes
+4. **Visual sanity** — dropdowns and CalcPanel should feel comfortable, not cramped, after the 48px horizontal inset.
+
+If steps 1–3 PASS → v1.0.7 ships clean; quick-task `260504-cl1` resolves with both functional + visual goals met.
+
+### Self-Check: PASSED (v1.0.7 cascade fix)
+
+- `fd799b0` — present in `git log`. File: `src/template.html` (10 insertions / 2 deletions; one CSS character + comment expansion). Verified.
+- `86d2356` — present in `git log`. Files: `vss-extension.json`, `package.json` (1 insertion / 1 deletion each). Verified.
+- `vss-extension.json` contains `"version": "1.0.7"` — found.
+- `package.json` contains `"version": "1.0.7"` — found.
+- `src/template.html` contains `body { padding: 0 24px !important; }` — found.
+- Final pipeline at HEAD `86d2356`: typecheck pass, 398/398 tests pass, build clean, size 148.4 KB gzipped — verified.
