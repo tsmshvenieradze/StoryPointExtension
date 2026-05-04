@@ -5,7 +5,7 @@ milestone_name: milestone
 status: milestone-complete
 stopped_at: "Phase 5 closed; v1.0 milestone shipped public (v1.0.0..v1.0.3)"
 last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: "2026-05-04 -- Phase 5 close-out (SUMMARYs + STATE rewrite + ROADMAP flips + REQUIREMENTS PKG-02..07 [x])"
+last_activity: "2026-05-04 -- Quick task 260504-cl1: programmatic close spike + wire (Cancel / post-Saved auto-close / Esc) — bumped 1.0.3 → 1.0.4, pending cezari verification before public publish"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -81,13 +81,19 @@ None. v1.0 milestone closed.
 
 None active. v1.0 milestone closed.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260504-cl1 | Programmatic close spike + wire (Cancel + post-Saved auto-close + Esc keydown); 1.0.3 → 1.0.4 | 2026-05-04 | 7b4d00e | [260504-cl1-programmatic-close-spike](./quick/260504-cl1-programmatic-close-spike/) |
+
 v1.0.1+ backlog (carried forward; not blockers):
 
 - **Screenshots** — capture light + dark via DevTools, restore `screenshots[]` in manifest (Plan 05-03 carry-over).
 - **Cross-process smoke** — exercise FieldResolver fallback empirically on Agile (`User Story` → `StoryPoints`) + CMMI (`Requirement` → `Size`) per Plan 05-04 procedure.
 - **Old publisher cleanup** — unpublish / delete stuck private extension on `TsezariMshvenieradzeExtensions` (low-priority housekeeping).
 - **Custom SP field rename support** — some orgs rename `StoryPoints` via process customization; FieldResolver covers standard fields only. Revisit if reported.
-- **Esc-dismissal limitation** — SDK v4 has no programmatic dialog close from `ms.vss-web.external-content`; users dismiss via outside-click or X button. Documented in marketplace/overview.md ## Known limitations.
+- **Esc-dismissal limitation** — Quick task 260504-cl1 (2026-05-04) revisited Phase 4 D-10 NO-PROGRAMMATIC-CLOSE LOCK, found that Plan 04-01 Probe 3 missed `IGlobalMessagesService.closeDialog()` (service id `ms.vss-tfs-web.tfs-global-messages-service`); v1.0.4 wires it into Cancel + post-Saved auto-close + iframe Escape with try/catch + diagnostic logs (no regression if the call no-ops). Pending user cezari verification before public publish.
 - **Network-failure D-17 scenarios 3/5/7** — offline / Stakeholder license / slow-3G manual scenarios deferred (orchestrator code paths covered by 398/398 unit tests).
 
 ## Deferred Items
@@ -99,7 +105,7 @@ v1.0.1+ items (carried from Phase 5 close):
 | Listing | Light + dark screenshots in `screenshots[]` | Open (Plan 05-03 carry-over) | 2026-05-02 |
 | Verification | Cross-process Agile + CMMI smoke on cezari | Open (Plan 05-04 deferred) | 2026-05-02 |
 | Housekeeping | Unpublish stuck private extension on `TsezariMshvenieradzeExtensions` publisher | Open (low priority) | 2026-05-02 |
-| UX | Esc-key dismissal of modal | Permanent limitation (SDK v4 constraint) | Phase 4 |
+| UX | Esc-key dismissal of modal | Candidate fix in v1.0.4 (Quick 260504-cl1) — pending cezari verification | Phase 4 (revisited 2026-05-04) |
 
 ## Session Continuity
 
