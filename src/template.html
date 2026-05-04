@@ -24,9 +24,17 @@
        border-box keeps the iframe's width allocation intact; ResizeObserver
        still feeds document.body.scrollHeight back to SDK.resize so the dialog
        grows to fit. Vertical padding stays 0 — the host renders the title
-       strip above us and the dialog frame already includes bottom whitespace. */
+       strip above us and the dialog frame already includes bottom whitespace.
+
+       v1.0.7: !important is required. azure-devops-ui/Core/override.css line 28
+       declares `body { padding: 0; margin: 0; display: flex }` and is injected
+       at runtime by style-loader AFTER this <style> block, so without the
+       priority bump it wins specificity (same selector weight, later wins) and
+       zeroes the gutter. v1.0.6 cezari verification (uninstall+reinstall+hard
+       refresh) confirmed the rule was present in DOM but overridden in
+       computed styles. Don't drop the !important — that was the actual fix. */
     body {
-      padding: 0 24px;
+      padding: 0 24px !important;
     }
   </style>
 </head>
