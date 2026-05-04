@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: milestone-complete
-stopped_at: "Phase 5 closed; v1.0 milestone shipped public (v1.0.0..v1.0.3)"
+milestone_name: MVP
+status: milestone-archived
+stopped_at: "v1.0 milestone archived; ready for /gsd-new-milestone to scope v1.1+"
 last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: "2026-05-04 -- Quick task 260504-cl1 RESOLVED: programmatic close on Cancel / post-Saved auto-close / Esc shipped + verified on cezari across v1.0.4..v1.0.7 (1.0.4 closeDialog hypothesis falsified → 1.0.5 addDialog swap unlocked close + revealed gutter regression → 1.0.6 body padding lost cascade to override.css → 1.0.7 !important fix PASS)"
+last_activity: "2026-05-04 -- /gsd-complete-milestone v1.0 — archived ROADMAP + REQUIREMENTS + AUDIT to .planning/milestones/v1.0-*.md; ROADMAP.md collapsed; PROJECT.md migrated v1 reqs to Validated; MILESTONES.md created; git tag v1.0 pushed"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -111,5 +111,14 @@ v1.0.1+ items (carried from Phase 5 close):
 ## Session Continuity
 
 Last session: 2026-05-04T00:00:00.000Z
-Stopped at: Phase 5 closed; v1.0 milestone shipped public (v1.0.0..v1.0.3)
-Resume file: `.planning/phases/05-polish-marketplace-publish/05-VERIFICATION.md` for the canonical Phase 5 record. Next workflow: `/gsd-complete-milestone` to write the v1.0 retrospective and start v2 milestone planning.
+Stopped at: v1.0 milestone archived; ready for /gsd-new-milestone
+Resume file: `.planning/MILESTONES.md` for the v1.0 record + carry-overs. Archive lives at `.planning/milestones/v1.0-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Next workflow: `/gsd-new-milestone` to scope v1.1+ — questioning → research → requirements → roadmap.
+
+v1.0.1+ tech debt (rolled forward to v1.1+ planning):
+- APPLY-03 production wire-format mismatch (parse.ts widening vs orphan stripping)
+- closeProgrammatically defense-in-depth + shared SAVING_DATASET_KEY constant
+- Strip dead PermissionWarnBanner if no probe lands by v1.2
+- Remove or guard dead `publish:cezari` script
+- Phase 5 carry-overs: light + dark screenshots, Contributor non-admin smoke, cross-process Agile + CMMI smoke
+- Old publisher cleanup (TsezariMshvenieradzeExtensions stuck-private)
+- Custom SP field rename support (out-of-scope per CLAUDE.md; revisit if reported)

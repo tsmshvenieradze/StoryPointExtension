@@ -1,5 +1,24 @@
 # Story Point Calculator (Azure DevOps Extension)
 
+## Current State
+
+**Status:** ✅ v1.0 SHIPPED 2026-05-04 — public on Visual Studio Marketplace as [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) at v1.0.7.
+
+40/40 v1 requirements satisfied (3 PARTIAL with documented v1.0.1+ deferrals; 1 satisfied-with-caveat tracked for v1.1+). Bundle 147.9 KB / 250 KB gzipped. 398/398 unit tests passing. Programmatic close (Cancel / post-Saved auto-close / iframe Esc) live since v1.0.5 via the addDialog swap.
+
+For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). For tech-debt carry-overs see [.planning/milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md).
+
+## Next Milestone Goals
+
+v1.1+ scope is undefined. Run `/gsd-new-milestone` to bootstrap the next cycle (questioning → research → requirements → roadmap). Candidate themes pulled from v1.0 audit + listing limitations:
+
+- **Pre-fill APPLY-03 production fix** — either widen `src/audit/parse.ts` to accept the human-readable line postComment writes, or strip the orphaned `serialize` re-export and document as v1 known-limitation.
+- **Phase 5 carry-overs** — light + dark screenshots in vss-extension.json, Contributor non-admin smoke, cross-process Agile + CMMI smoke (Plan 05-04 deferred).
+- **Cross-phase integration debt** — `closeProgrammatically` defense-in-depth + shared `SAVING_DATASET_KEY` constant; strip dead `PermissionWarnBanner` if no probe lands; remove or guard dead `publish:cezari` script.
+- **v2 customization (placeholder)** — Settings hub, configurable weights/dimensions/levels (per archived REQUIREMENTS.md v2 section).
+
+---
+
 ## What This Is
 
 An Azure DevOps work item extension that lets users estimate Story Points using a structured 3-dimension calculator (Complexity, Uncertainty, Effort) instead of free-form guessing. It ports an existing Excel-based calculator (`sp_calculator.xlsx`) into a modal accessible from the work item form, writes the result directly to the Story Points field, and leaves an audit comment so anyone can later see how the number was derived. Built for engineering teams using Azure Boards; published to the Visual Studio Marketplace.
@@ -19,37 +38,15 @@ If everything else fails, this must work: open work item → click button → an
 - ✓ **Calc engine (CALC-01..05)** — pure-TS module at `src/calc/` ports `sp_calculator.xlsx` exactly: `weightedSum (W = 0.4·C + 0.4·U + 0.2·E)`, `rawSp (0.5 × 26^((W−1)/4))`, `roundFib` Fibonacci threshold table (≤0.75→0.5, ≤1.5→1, ≤2.5→2, ≤4→3, ≤6.5→5, ≤10.5→8, else→13), `calculate` pipeline. Frozen `LEVELS` constant; type-exhaustive `Level`/`Score`/`FibonacciSp` unions; 169 vitest tests covering all 7 Fibonacci buckets + threshold boundaries + 125-case parity table — Phase 1
 - ✓ **Audit comment module (AUDIT-01..07)** — pure-TS module at `src/audit/` produces and parses the canonical sentinel format `<!-- sp-calc:v1 {"sp":N,"c":"...","u":"...","e":"...","schemaVersion":1} -->`. Stable JSON via replacer-array; bounded sentinel regex; HTML/NBSP normalization; case-insensitive label matching; `schemaVersion !== 1` rejection; never-throws parser; `parseLatest` filters deleted/sorts by createdDate/falls through on malformed; 153 vitest tests including 125-case round-trip and 17-case parser edge table — Phase 1
 - ✓ **100% coverage gate** — `vitest.config.ts` enforces 100% line/branch/function/statement coverage on `src/calc/**` and `src/audit/**`; CI fails below this threshold — Phase 1
-- ✓ **Manifest shell + SDK integration (UI-01, UI-02, UI-06)** — toolbar action `calc-sp-action` registered as `ms.vss-web.action` targeting `ms.vss-work-web.work-item-toolbar-menu`; click opens host-managed dialog via `IHostPageLayoutService.openCustomDialog` with `{ workItemId }` configuration; modal renders `azure-devops-ui` Surface+Page that inherits host theme automatically; SDK lifecycle (register → init({loaded:false}) → ready → notifyLoadSucceeded) correct in both iframes; dev-publish wrapper with retry-on-version-conflict and PAT-via-`.env.local`; PNG icon (Marketplace rejects SVG); webpack object-form entry so HtmlWebpackPlugin injects script tags; verified live on `cezari.visualstudio.com/Cezari` against all 4 ROADMAP success criteria — Phase 2
+- ✓ **Manifest shell + SDK integration (UI-01, UI-02, UI-06)** — toolbar action `calc-sp-action` registered as `ms.vss-web.action` targeting `ms.vss-work-web.work-item-toolbar-menu`; click opens host-managed dialog via `IGlobalMessagesService.addDialog` (swapped from openCustomDialog in v1.0.5) with `{ workItemId }` contributionConfiguration; modal renders `azure-devops-ui` Surface+Page that inherits host theme automatically; SDK lifecycle (register → init({loaded:false}) → ready → notifyLoadSucceeded) correct in both iframes — Phase 2 + Quick task 260504-cl1
+- ✓ **Modal UI + read path (UI-03..UI-08, FIELD-01..04, APPLY-01..03)** — three labeled dropdowns + live calc panel + FieldResolver (StoryPoints / Size with cache + D-20 fallback); read path fetches current SP + comments + permission probe in parallel; NoFieldMessage replaces UI when neither SP field is present; iframe Esc keydown listener routes to closeProgrammatically (added v1.0.5+) — Phase 3 + Quick task 260504-cl1. *(APPLY-03 caveat: pre-fill flow is structurally dead in production for v1-authored comments due to D-02 STRIPPED-FALLBACK wire-format mismatch; tracked for v1.1+.)*
+- ✓ **Write path + edge cases (APPLY-04..09)** — confirm-overwrite panel ("Current X / New Y"); two-leg apply orchestrator with comment-first → field-write atomicity per Phase 0 D-01; isDirty no-op skip; CommentFailBanner / FieldFailBanner with retry handlers; SavingOverlay + Pitfall 7 immutability guard; reactive read-only UX via FieldFailBanner per spike A3 LAZY-FALLBACK-ONLY — Phase 4
+- ✓ **Marketplace ship (PKG-01..07)** — `.vsix` via `tfx-cli` with multi-entry webpack build; CI bundle gate at 250 KB gzipped (current 147.9 KB; 102.1 KB headroom); marketplace listing with overview.md (description, privacy, formula, limitations); v1.0.0 shipped public 2026-05-02 under publisher swap to `TsezariMshvenieradzeTfsAiReviewTask` (original `TsezariMshvenieradzeExtensions` was stuck-private); patch sequence v1.0.1..v1.0.7 — Phase 5 + Quick task 260504-cl1. *(PARTIAL: PKG-04 Contributor non-admin smoke skipped, PKG-05 screenshots deferred, PKG-07 cross-process Agile + CMMI smoke deferred — all carry-over to v1.0.1+.)*
+- ✓ **Programmatic close (Cancel / post-Saved auto-close / Esc)** — closeProgrammatically helper at SDK boundary calling IGlobalMessagesService.closeDialog(); paired with addDialog opening primitive (matched-pair contract); 600ms post-Saved timer; iframe-local Esc keydown listener with saving-state guard via document.body.dataset.spcSaving — Quick task 260504-cl1 (v1.0.5..v1.0.7)
 
 ### Active
 
-**v1 — Core calculator (fixed formula):**
-
-- [ ] Toolbar button "Calculate Story Points" appears on work item form for User Story, Bug, Task, Feature/Epic
-- [ ] Modal with 3 dropdowns: Complexity, Uncertainty, Effort — each with 5 levels (Very Easy → Very Hard)
-- [ ] Modal displays intermediate values: weighted sum W, Raw SP, Final Fibonacci SP, and the formula itself
-- [ ] Apply writes Story Points field on the work item via `IWorkItemFormService.setFieldValue()` + `.save()`
-- [ ] Apply adds a sentinel-format audit comment via `WorkItemTrackingRestClient.addComment()`
-- [ ] Audit comment format: `<!-- sp-calc:v1 {"sp":5,"c":"Hard","u":"Medium","e":"Easy","schemaVersion":1} -->` plus a human-readable line; parser unit-tested for edited/HTML-wrapped/NBSP/multi-comment cases
-- [ ] **FieldResolver** detects the SP field reference name per work item type (Agile: `Microsoft.VSTS.Scheduling.StoryPoints`, CMMI: `Microsoft.VSTS.Scheduling.Size`); button disabled with tooltip when no SP-equivalent field exists
-- [ ] Pre-flight permission check: button disabled when user lacks write permission on the work item
-- [ ] If SP already exists, modal warns and shows "Current: X / New: Y" before overwrite
-- [ ] If a prior sentinel SP audit comment exists, modal pre-fills the dropdowns from it
-- [ ] Calculation logic matches `sp_calculator.xlsx` exactly (W = 0.4·C + 0.4·U + 0.2·E; SP = 0.5 × 26^((W−1)/4); rounded to Fibonacci 0.5/1/2/3/5/8/13)
-- [ ] Unit tests cover calc pipeline (level→score, weighted sum, raw SP, Fibonacci rounding) AND audit-comment serializer/parser
-- [ ] Bundle size ≤ 250 KB gzipped (toolbar shim + lazy-loaded modal)
-- [ ] Browser parity: Chrome, Edge, Firefox, Safari
-- [ ] Published as a public extension on Visual Studio Marketplace (English-only UI)
-
-**v2 — Customization:**
-
-- [ ] Settings hub at Org Settings AND Project Settings (override pattern)
-- [ ] Configurable weights (must sum to 1.0)
-- [ ] Configurable dimensions (add/remove beyond C/U/E — e.g., Risk, Dependencies)
-- [ ] Configurable level labels (override "Very Easy" → "Trivial", etc.)
-- [ ] Configurable Fibonacci thresholds (or alternate target scales)
-- [ ] Project-level settings override organization-level defaults
-- [ ] Settings persisted in ADO Extension Data Service
+(empty — v1 closed; v1.1+ scope to be defined via `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -91,26 +88,29 @@ If everything else fails, this must work: open work item → click button → an
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| React + TypeScript with `azure-devops-ui` | ADO Extension SDK is React-first; native UI components only available for React; consistency with ADO chrome | — Pending |
-| Public Marketplace distribution | Reach beyond GPIH; future internal use is one tenant of many | — Pending |
-| English-only UI | User-chosen; Georgian rendering quality is poor in ADO; reduces i18n complexity for v1 | — Pending |
-| Apply button (not auto-write) | User reviews intermediate values + warning before mutation; explicit consent on overwrite | — Pending |
-| `IWorkItemFormService.setFieldValue()` + `.save()` (not REST PATCH) | The work item form is open and dirty — REST PATCH while form is open causes revision conflicts and silent overwrites | — Pending |
-| Sentinel HTML-comment + JSON payload + `schemaVersion` for audit format | Naive `SP=5 (...)` is too fragile (HTML wrapping, NBSP, user edits); sentinel survives ADO renderer and is round-trip parseable; `schemaVersion` enables v2 dimension expansion without breaking v1 parsing | — Pending |
-| Audit comment as both audit log AND pre-fill source | Avoids extra storage layer; single source of truth for calculation history | — Pending |
-| FieldResolver in v1 (not v2) for SP field reference name | CMMI processes use `Microsoft.VSTS.Scheduling.Size`, not `StoryPoints` — without this, v1 breaks on first CMMI customer; ~2hr implementation | — Pending |
-| Manifest scope locked at `vso.work_write` only | Adding scopes post-publish forces re-consent across every install; lock minimum scope before first public publish | — Pending |
-| v1 ships fixed formula, v2 adds customization | De-risks v1 launch; validates core flow before paying customization complexity | — Pending |
-| ADO Extension Data Service for v2 settings | Zero infra; built-in multi-tenancy; aligns with marketplace install-and-go expectation | — Pending |
-| Org Settings + Project Settings hubs (v2) — project isolation via key prefix | EDS only has `Default` and `User` scopes; project-level scoping must be implemented as `sp-config-proj-<projectId>` key prefix | — Pending |
-| Unit tests for calc logic only | Manual QA covers UI per company standard; calc logic is pure function and worth automating | — Pending |
-| Parse audit comment for pre-fill (not separate storage) | Closes the loop with the audit trail; no schema migration risk | — Pending |
-| Toolbar button (not inline form group) | Modal is the right UX for question-answer flow; toolbar is the standard ADO pattern for actions | — Pending |
-| **Apply ordering: comment-first → field-write** | Audit comment is the canonical source of truth for calc intent. Successful comment + failed field write is recoverable (parser pre-fills, user retries). Successful field write + failed comment loses provenance and breaks pre-fill. Decided in Phase 0 CONTEXT.md (D-01). | — Pending |
-| Always post a new comment per Apply (no de-dup, no edit) | Multiple retry comments are an audit feature, not a bug; parser takes the most recent sentinel. Avoids a comparison/edit code path. Decided in Phase 0 CONTEXT.md (D-03). | — Pending |
-| Marketplace publisher: `TsezariMshvenieradzeExtensions` (personal, already verified) | Personal publisher rather than GPIH-branded; no internal review chain to gate publishes. Decided in Phase 0 (D-08). | — Pending |
-| Extension ID: `story-point-calculator`; Display: "Story Point Calculator"; License: MIT | One-way decisions locked before any publish. Decided in Phase 0 (D-09–D-11). | — Pending |
-| Flat `src/` with subfolders (single package, single tsconfig) | Simplest layout for a single-purpose extension; reject npm workspaces/project references for v1. Decided in Phase 0 (D-05–D-07). | — Pending |
+| React + TypeScript with `azure-devops-ui` | ADO Extension SDK is React-first; native UI components only available for React; consistency with ADO chrome | ✓ Good — proven in Phase 2; theme inheritance via `applyTheme: true` works without detection code |
+| Public Marketplace distribution | Reach beyond GPIH; future internal use is one tenant of many | ✓ Good — shipped 2026-05-02 |
+| English-only UI | User-chosen; Georgian rendering quality is poor in ADO; reduces i18n complexity for v1 | ✓ Good |
+| Apply button (not auto-write) | User reviews intermediate values + warning before mutation; explicit consent on overwrite | ✓ Good |
+| `IWorkItemFormService.setFieldValue()` + `.save()` (not REST PATCH) | The work item form is open and dirty — REST PATCH while form is open causes revision conflicts and silent overwrites | ✓ Good — apply.ts two-leg orchestrator works; isDirty no-op skip handles same-value case |
+| Sentinel HTML-comment + JSON payload + `schemaVersion` for audit format | Naive `SP=5 (...)` is too fragile (HTML wrapping, NBSP, user edits); sentinel survives ADO renderer and is round-trip parseable; `schemaVersion` enables v2 dimension expansion without breaking v1 parsing | ⚠️ Revisit — Plan 04-01 spike A1 falsified: ADO storage strips `<!-- -->` regardless of api-version. Production write path now plain-text-only (D-02 STRIPPED-FALLBACK). Sentinel parser retained as test-only; pre-fill from sentinel structurally dead in production. v1.1+ either widens parse.ts or strips orphaned `serialize` |
+| Audit comment as both audit log AND pre-fill source | Avoids extra storage layer; single source of truth for calculation history | ⚠️ Revisit — pre-fill from sentinel comment dead in production per row above; audit trail (human-readable comment) is live |
+| FieldResolver in v1 (not v2) for SP field reference name | CMMI processes use `Microsoft.VSTS.Scheduling.Size`, not `StoryPoints` — without this, v1 breaks on first CMMI customer; ~2hr implementation | ✓ Good — FIELD-01..04 satisfied with cache + D-20 default; cross-process Agile + CMMI production smoke deferred to v1.0.1+ |
+| Manifest scope locked at `vso.work_write` only | Adding scopes post-publish forces re-consent across every install; lock minimum scope before first public publish | ✓ Good |
+| v1 ships fixed formula, v2 adds customization | De-risks v1 launch; validates core flow before paying customization complexity | ✓ Good — v1 shipped 4-day calendar; v2 scope undefined |
+| ADO Extension Data Service for v2 settings | Zero infra; built-in multi-tenancy; aligns with marketplace install-and-go expectation | — Pending (v2 not yet scoped) |
+| Org Settings + Project Settings hubs (v2) — project isolation via key prefix | EDS only has `Default` and `User` scopes; project-level scoping must be implemented as `sp-config-proj-<projectId>` key prefix | — Pending (v2 not yet scoped) |
+| Unit tests for calc logic only | Manual QA covers UI per company standard; calc logic is pure function and worth automating | ✓ Good — 398/398 passing; 100% coverage gates on calc + audit |
+| Toolbar button (not inline form group) | Modal is the right UX for question-answer flow; toolbar is the standard ADO pattern for actions | ✓ Good |
+| **Apply ordering: comment-first → field-write** | Audit comment is the canonical source of truth for calc intent. Successful comment + failed field write is recoverable (parser pre-fills, user retries). Successful field write + failed comment loses provenance and breaks pre-fill. Decided in Phase 0 CONTEXT.md (D-01). | ⚠️ Revisit — atomicity ordering itself works (vitest mock.invocationCallOrder + cezari console transcripts confirm); but recoverability premise is undermined by the D-02 sentinel-comment falsification (parser pre-fill no longer fires for v1-authored comments). Re-evaluate v1.1+ alongside the parse.ts widening decision. |
+| Always post a new comment per Apply (no de-dup, no edit) | Multiple retry comments are an audit feature, not a bug; parser takes the most recent sentinel. Avoids a comparison/edit code path. Decided in Phase 0 CONTEXT.md (D-03). | ✓ Good — Phase 4 fix-back loop confirmed |
+| Marketplace publisher: `TsezariMshvenieradzeTfsAiReviewTask` (Phase 5 swap) | Original `TsezariMshvenieradzeExtensions` got stuck-private at first publish; swapped to a different already-verified publisher to unblock. Decided in Phase 5 ship-day. | ✓ Good — public publish succeeded; old publisher cleanup is low-priority housekeeping |
+| Extension ID: `story-point-calculator`; Display: "Story Point Calculator"; License: MIT | One-way decisions locked before any publish. Decided in Phase 0 (D-09–D-11). | ✓ Good |
+| Flat `src/` with subfolders (single package, single tsconfig) | Simplest layout for a single-purpose extension; reject npm workspaces/project references for v1. Decided in Phase 0 (D-05–D-07). | ✓ Good |
+| **Phase 4 D-10: NO-PROGRAMMATIC-CLOSE** (locked then reversed) | Plan 04-01 Probe 3 tested only `SDK.notifyDialogResult / notifyDismiss / closeCustomDialog` (all undefined); concluded no programmatic close exists. | ⚠️ Revisit — Quick task 260504-cl1 (v1.0.4..v1.0.7) found that `IGlobalMessagesService.closeDialog()` works ONLY when paired with `IGlobalMessagesService.addDialog()` opening primitive. v1.0.5 swapped open-side to addDialog; programmatic close on Cancel + post-Saved auto-close + iframe Esc all live. Phase 4 D-10 was correct for the openCustomDialog code path, wrong as a universal claim. |
+| **Phase 4 D-02: STRIPPED-FALLBACK** (audit comment plain-text only) | Plan 04-01 spike A1 falsified D-01 sentinel preservation: ADO storage strips `<!-- -->` regardless of `format:1` flag, api-version, or carrier shape. | ✓ Good for v1 ship; ⚠️ Revisit — neuters APPLY-03 in production; tracked for v1.1+ |
+| **Phase 4 D-07: LAZY-FALLBACK-ONLY** (no eager isReadOnly probe) | Plan 04-01 spike A3 falsified four probe candidates: `formService.isReadOnly()` undefined; `getFieldValue('System.AuthorizedAs')` returns identity not permission; self-`setFieldValue` causes dirty side-effects; `SDK.getUser()` lacks license-tier discriminators. | ✓ Good — reactive UX via FieldFailBanner is the production baseline; PermissionWarnBanner slot retained for a future probe-validated path |
+| **`addDialog` over `openCustomDialog`** (Quick task 260504-cl1, v1.0.5) | The matched-pair primitive contract: `closeDialog()` only manages the dialog stack populated by `addDialog`. To enable programmatic close, the open-side primitive had to swap too. | ✓ Good — all three close surfaces live in v1.0.5+; visual chrome differs (24px gutter moved inside iframe via `body { padding: 0 24px !important }` in v1.0.7) |
 
 **Open questions / risks:**
 
@@ -142,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-02 after Phase 2 completion (toolbar/modal/SDK integration verified live on cezari dev org)*
+*Last updated: 2026-05-04 after v1.0 milestone close (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat)*
