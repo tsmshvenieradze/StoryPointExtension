@@ -318,6 +318,21 @@ export const CalcModal: React.FC<Props> = ({ workItemId }) => {
     return () => window.clearTimeout(timeoutId);
   }, [mode]);
 
+  // Cross-component handshake for the iframe Esc listener in modal.tsx —
+  // routes the saving-state discriminator without prop-drilling. The
+  // listener checks document.body.dataset.spcSaving === "true" before
+  // calling closeProgrammatically (Pitfall 7 immutability guard).
+  React.useEffect(() => {
+    if (mode === "saving") {
+      document.body.dataset.spcSaving = "true";
+    } else {
+      delete document.body.dataset.spcSaving;
+    }
+    return () => {
+      delete document.body.dataset.spcSaving;
+    };
+  }, [mode]);
+
   // ---------------------------------------------------------------------
   // Mode-replacement branches — these REPLACE the entire body wholesale
   // (no banner stack, no calculator, no ButtonGroup). Per UI-SPEC mounting

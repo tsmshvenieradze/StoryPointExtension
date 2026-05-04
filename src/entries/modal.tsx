@@ -36,6 +36,7 @@ const Page = PageRaw as unknown as React.FC<
 import "azure-devops-ui/Core/override.css";
 
 import type { CalcSpModalConfig } from "../ado/types";
+import { closeProgrammatically } from "../ado";
 import { CalcModal } from "../ui/CalcModal";
 
 const LOG_PREFIX = "[sp-calc/modal]";
@@ -116,6 +117,32 @@ async function bootstrap() {
   requestResize();
   const resizeObserver = new ResizeObserver(requestResize);
   resizeObserver.observe(document.body);
+
+  // Iframe-level Escape listener (Plan 260504-cl1). The host's keydown
+  // handler doesn't see iframe Escape due to the browser security model
+  // (05-RESEARCH.md:530); we listen inside the iframe and route to
+  // closeProgrammatically. The listener is window-level so it fires
+  // regardless of focus target inside the iframe.
+  //
+  // Saving guard: do NOT close while a write is in flight — RESEARCH
+  // Pitfall 7 immutability discipline. The CalcModal mode isn't directly
+  // accessible from this scope, so we use a custom data-attribute the modal
+  // raises when mode transitions to/from "saving" (see CalcModal.tsx wiring).
+  const escListener = (ev: KeyboardEvent) => {
+    if (ev.key !== "Escape") return;
+    // The custom data-attribute is the cross-component handshake — set
+    // by CalcModal whenever mode is "saving". Avoids prop-drilling a
+    // ref through three layers for a single discriminator.
+    if (document.body.dataset.spcSaving === "true") {
+      console.log(`${LOG_PREFIX} Escape ignored — saving in flight`);
+      return;
+    }
+    console.log(`${LOG_PREFIX} Escape pressed → closeProgrammatically`);
+    void closeProgrammatically();
+  };
+  window.addEventListener("keydown", escListener);
+  // No removal: the iframe is destroyed when the host closes the dialog,
+  // which tears down all listeners. Best-effort cleanup is unnecessary.
 }
 
 bootstrap().catch((err) => {
