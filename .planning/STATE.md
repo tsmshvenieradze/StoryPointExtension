@@ -86,6 +86,7 @@ None active. v1.0 milestone closed.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260504-cl1 | Programmatic close spike + wire (Cancel + post-Saved auto-close + Esc keydown); 1.0.3 → 1.0.4 | 2026-05-04 | 7b4d00e | [260504-cl1-programmatic-close-spike](./quick/260504-cl1-programmatic-close-spike/) |
+| 260504-uk5 | Close out Phase 5: 3 SUMMARYs (05-01 MOOT, 05-04 DEFERRED, 05-05 PASS), commit 05-VERIFICATION.md, REQUIREMENTS PKG-02..07 [x], STATE rewrite, ROADMAP Phase 5 [x] | 2026-05-04 | 0996b14 | [260504-uk5-close-out-phase-5-write-summarys-for-05-](./quick/260504-uk5-close-out-phase-5-write-summarys-for-05-/) |
 
 v1.0.1+ backlog (carried forward; not blockers):
 
