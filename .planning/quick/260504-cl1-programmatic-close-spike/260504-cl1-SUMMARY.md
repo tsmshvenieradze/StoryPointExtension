@@ -4,14 +4,15 @@ type: execute
 status: complete
 mode: sequential
 autonomous: false
-ship_version: "1.0.4"
+ship_version: "1.0.5"
 prior_version: "1.0.3"
-phase_unlock: "Phase 4 D-10 NO-PROGRAMMATIC-CLOSE — spike-as-ship reversal"
+phase_unlock: "Phase 4 D-10 NO-PROGRAMMATIC-CLOSE — spike-as-ship reversal (v1.0.4 falsified the closeDialog hypothesis on openCustomDialog instances; v1.0.5 swaps the open-side primitive to addDialog)"
 files_modified:
   - src/ado/bridge.ts
   - src/ado/index.ts
   - src/ui/CalcModal.tsx
   - src/entries/modal.tsx
+  - src/entries/toolbar.tsx
   - vss-extension.json
   - package.json
 commits:
@@ -27,6 +28,12 @@ commits:
   - hash: 7b4d00e
     task: 4
     message: "chore(260504-cl1): bump 1.0.3 -> 1.0.4"
+  - hash: 1c7cf4f
+    task: 5
+    message: "feat(260504-cl1): swap dialog open from openCustomDialog to addDialog"
+  - hash: a1e60d4
+    task: 6
+    message: "chore(260504-cl1): bump 1.0.4 -> 1.0.5"
 gates:
   typecheck: pass
   vitest: "398/398 pass"
@@ -135,3 +142,84 @@ A parallel quick task (260504-uk5, also running on master) staged `.planning/REQ
 - `src/entries/modal.tsx` contains `addEventListener.*keydown` (1 occurrence) — found.
 - `src/entries/modal.tsx` contains `spcSaving` (1 occurrence) — found.
 - Final pipeline at HEAD `7b4d00e`: typecheck pass, 398/398 tests pass — verified.
+
+## v1.0.5 follow-up — addDialog swap (Tasks 5–6, commits `1c7cf4f` + `a1e60d4`)
+
+### v1.0.4 cezari verdict: FALSIFIED
+
+User published v1.0.4 to public Marketplace and re-tested on cezari (2026-05-04). DevTools console transcript:
+
+```
+[sp-calc/apply] postComment ok commentId=448806
+[sp-calc/apply] setFieldValue start refName=Microsoft.VSTS.Scheduling.StoryPoints value=0.5
+[sp-calc/apply] no-op apply: form not dirty after setFieldValue (same value); skipping save()
+[sp-calc/modal] apply sequence ok
+[sp-calc/bridge] closeProgrammatically: closeDialog() invoked   ← post-Saved auto-close (modal stayed open)
+
+[sp-calc/modal] Escape pressed → closeProgrammatically
+[sp-calc/bridge] closeProgrammatically: closeDialog() invoked   ← Esc keydown (modal stayed open)
+[sp-calc/modal] Escape pressed → closeProgrammatically
+[sp-calc/bridge] closeProgrammatically: closeDialog() invoked   ← Esc keydown (modal stayed open)
+```
+
+`closeProgrammatically` returns `true` on every call (no throw, `closeDialog` is a function on the resolved service handle), but the dialog does not close. **Conclusion:** `IGlobalMessagesService.closeDialog()` only manages the dialog stack populated by `IGlobalMessagesService.addDialog()` — it is a silent no-op for `IHostPageLayoutService.openCustomDialog` instances. Phase 4 D-10 NO-PROGRAMMATIC-CLOSE was correct on the openCustomDialog code path; v1.0.4's "untested candidate" hypothesis is now empirically falsified.
+
+### v1.0.5 fix: swap the open-side primitive
+
+`IGlobalMessagesService.addDialog({ contributionId, contributionConfiguration, title, onDismiss })` is the matching open-side primitive for `closeDialog()`. Same XDM service, same dialog stack — calling `closeDialog()` on a dialog opened via `addDialog` should actually close it. We keep all three close-surface wires (Cancel, post-Saved 600ms timer, Esc keydown) unchanged; only `src/entries/toolbar.tsx` swaps API.
+
+### Task 5 — `toolbar.tsx` openCustomDialog → addDialog (commit `1c7cf4f`)
+
+- Dropped `IHostPageLayoutService` import + `HOST_PAGE_LAYOUT_SERVICE_ID` constant.
+- Added local `IGlobalMessagesService` + `IGlobalDialog` interfaces (mirrors `bridge.ts` pattern; isolatedModules-safe; only the methods we actually call: `addDialog`, `closeDialog`).
+- Replaced `layoutSvc.openCustomDialog<undefined>(fullModalId, { title, configuration: config, onClose })` with `messagesSvc.addDialog({ contributionId: fullModalId, contributionConfiguration: config, title, onDismiss })`.
+- Updated header comment block to capture v1.0.4 → v1.0.5 reasoning, the trade (CornerDialog/CustomDialog renderer vs external-content renderer; visual chrome may differ), and the rollback path (v1.0.6 reverts to openCustomDialog and accepts the documented close limitation).
+
+### Task 6 — version bump 1.0.4 → 1.0.5 (commit `a1e60d4`)
+
+- `vss-extension.json`: `"version": "1.0.4"` → `"1.0.5"`.
+- `package.json`: `"version": "1.0.4"` → `"1.0.5"`.
+- Pipeline gates (run after edits, before commit):
+  - `npm run typecheck` — pass
+  - `npm test` — 398/398 pass
+  - `npm run build` — pass (modal.js 635 KiB raw / 143.1 KiB gzipped, toolbar.js 8.2 KiB raw / 3.3 KiB gzipped)
+  - `npm run check:size` — 147.2 KB gzipped vs 250 KB budget; 102.8 KB headroom (no measurable bundle delta)
+
+### v1.0.5 cezari verification checklist
+
+The extension is `"public": true` since v1.0.0 — the legacy `publish:cezari` flow now errors with `Public extensions can't be shared` (TFX `--share-with` is invalid for public extensions). User publishes via:
+
+```
+npm run publish:public
+```
+
+Then on cezari, after Marketplace propagation (~1-5 min) + hard-refresh (`Ctrl+Shift+R`) of the work item form:
+
+1. **Open** any work item → click **Calculate Story Points**. The dialog should render with theme-correct chrome. Note any visual delta from v1.0.4 (centering, sizing, header style) — addDialog uses a different host renderer so chrome MAY differ.
+2. **Cancel test:** click **Cancel** — modal should close. Expected DevTools console:
+   - `[sp-calc/modal] cancel clicked → closeProgrammatically`
+   - `[sp-calc/bridge] closeProgrammatically: closeDialog() invoked`
+   - `[sp-calc/toolbar] dialog dismissed` (the new `onDismiss` callback fires when host tears down the dialog)
+3. **Esc test:** open modal again, press **Escape** — modal should close. Expected:
+   - `[sp-calc/modal] Escape pressed → closeProgrammatically`
+   - `[sp-calc/bridge] closeProgrammatically: closeDialog() invoked`
+   - `[sp-calc/toolbar] dialog dismissed`
+4. **Auto-close test:** select a trio, click **Apply**, watch — Saved ✓ flashes for 200ms, then ~400ms later modal closes. Verify field updated and audit comment posted. Same expected log sequence as above.
+5. **Mid-save Esc safety:** select a trio, click **Apply**, IMMEDIATELY press **Escape** during the saving overlay — modal must NOT close. Expected `[sp-calc/modal] Escape ignored — saving in flight`. Field write must complete server-side regardless.
+6. **Outside-click regression:** open modal, click outside — should still close (host's `lightDismiss=true` carries through to addDialog). Expected `[sp-calc/toolbar] dialog dismissed` only (no `closeProgrammatically` log — host dismissed without our route).
+7. **Visual regression sanity:** if the dialog renders narrower/wider/off-center vs v1.0.4 to a degree that hurts UX, capture a screenshot and we file a v1.0.6 to either accept the change with CSS adjustments or revert toolbar.tsx to openCustomDialog and re-document the close limitation in the listing.
+
+If steps 2–4 PASS visually and the close logs are clean → spike succeeded; v1.0.5 ships as a real programmatic-close release.
+
+If steps 2–4 STILL FAIL (closeDialog still no-op even after addDialog open) → fundamental mismatch between contribution-type rendering paths; revert toolbar.tsx, file v1.0.6 to remove the misleading wires + fix the lying "Press Esc..." hint, and accept the limitation in the listing description.
+
+### Self-Check: PASSED (v1.0.5 swap)
+
+- `1c7cf4f` — present in `git log`. File: `src/entries/toolbar.tsx` (50 insertions / 28 deletions; net rewrite of the open-side path + new local interfaces + new header doc). Verified.
+- `a1e60d4` — present in `git log`. Files: `vss-extension.json`, `package.json`. Verified.
+- `vss-extension.json` contains `"version": "1.0.5"` — found.
+- `package.json` contains `"version": "1.0.5"` — found.
+- `src/entries/toolbar.tsx` contains `addDialog` (3 occurrences: comment, interface, call) — found.
+- `src/entries/toolbar.tsx` contains `openCustomDialog` (0 occurrences) — verified swap is complete.
+- `src/entries/toolbar.tsx` contains `IGlobalMessagesService` (2 occurrences: interface, generic on getService) — found.
+- Final pipeline at HEAD `a1e60d4`: typecheck pass, 398/398 tests pass, build clean, size 147.2 KB gzipped — verified.
