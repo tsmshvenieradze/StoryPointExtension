@@ -71,7 +71,7 @@
 - [ ] **DOC-02**: `.planning/OPERATIONS.md` documents the manual emergency-publish runbook (the exact `tfx` invocation captured BEFORE the legacy script is archived)
 - [ ] **DOC-03**: `.planning/PROJECT.md` "Validated" section updated post-milestone (v1.1 capabilities promoted from Active to Validated)
 
-**Total v1.1 requirements: 32**
+**Total v1.1 requirements: 38** (8 CI + 7 GATE + 5 BUMP + 5 PUBLISH + 4 TAG + 3 FAIL + 3 CLEAN + 3 DOC) — corrected from earlier "32" tally on 2026-05-05 by gsd-roadmapper during traceability fill.
 
 ---
 
@@ -110,19 +110,54 @@ Not in v1.1, not in v1.2, not on the roadmap unless requirements change. Each ex
 
 ## Traceability
 
-(filled by gsd-roadmapper after roadmap approval)
+Filled by gsd-roadmapper on 2026-05-05 after producing `.planning/ROADMAP.md`. Every v1.1 requirement maps to exactly one phase. Coverage: 38/38.
 
-| REQ-ID | Phase |
-|--------|-------|
-| CI-01 → CI-08 | TBD |
-| GATE-01 → GATE-07 | TBD |
-| BUMP-01 → BUMP-05 | TBD |
-| PUBLISH-01 → PUBLISH-05 | TBD |
-| TAG-01 → TAG-04 | TBD |
-| FAIL-01 → FAIL-03 | TBD |
-| CLEAN-01 → CLEAN-03 | TBD |
-| DOC-01 → DOC-03 | TBD |
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| CI-01 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-02 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-03 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-04 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-05 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-06 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-07 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| CI-08 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-01 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-02 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-03 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-04 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-05 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-06 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| GATE-07 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| FAIL-01 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| FAIL-02 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| FAIL-03 | Phase 6 — Workflow Scaffold & Pre-flight Gates | Pending |
+| BUMP-01 | Phase 7 — Bump, Publish, Tag | Pending |
+| BUMP-02 | Phase 7 — Bump, Publish, Tag | Pending |
+| BUMP-03 | Phase 7 — Bump, Publish, Tag | Pending |
+| BUMP-04 | Phase 7 — Bump, Publish, Tag | Pending |
+| BUMP-05 | Phase 7 — Bump, Publish, Tag | Pending |
+| PUBLISH-01 | Phase 7 — Bump, Publish, Tag | Pending |
+| PUBLISH-02 | Phase 7 — Bump, Publish, Tag | Pending |
+| PUBLISH-03 | Phase 7 — Bump, Publish, Tag | Pending |
+| PUBLISH-04 | Phase 7 — Bump, Publish, Tag | Pending |
+| PUBLISH-05 | Phase 7 — Bump, Publish, Tag | Pending |
+| TAG-01 | Phase 7 — Bump, Publish, Tag | Pending |
+| TAG-02 | Phase 7 — Bump, Publish, Tag | Pending |
+| TAG-03 | Phase 7 — Bump, Publish, Tag | Pending |
+| TAG-04 | Phase 7 — Bump, Publish, Tag | Pending |
+| CLEAN-01 | Phase 8 — Cleanup & Runbooks | Pending |
+| CLEAN-02 | Phase 8 — Cleanup & Runbooks | Pending |
+| CLEAN-03 | Phase 8 — Cleanup & Runbooks | Pending |
+| DOC-01 | Phase 8 — Cleanup & Runbooks | Pending |
+| DOC-02 | Phase 8 — Cleanup & Runbooks | Pending |
+| DOC-03 | Phase 8 — Cleanup & Runbooks | Pending |
+
+**Coverage:** 38/38 mapped. No orphans. No duplicates.
+
+**Phase distribution:** Phase 6 = 18 reqs (CI 8 + GATE 7 + FAIL 3); Phase 7 = 14 reqs (BUMP 5 + PUBLISH 5 + TAG 4); Phase 8 = 6 reqs (CLEAN 3 + DOC 3).
 
 ---
 
-*Created: 2026-05-05 — `/gsd-new-milestone` v1.1 questioning + research synthesis. 32 requirements across 8 categories. Phases TBD.*
+*Created: 2026-05-05 — `/gsd-new-milestone` v1.1 questioning + research synthesis. 38 requirements across 8 categories.*
+*Traceability filled: 2026-05-05 — gsd-roadmapper after `.planning/ROADMAP.md` written.*
