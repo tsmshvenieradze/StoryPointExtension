@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Publish CI/CD
-status: planning
-stopped_at: "Phase 6 planned; ready for /gsd-execute-phase 6"
+status: executing
+stopped_at: "Phase 6 Wave 1 dispatched (06-01 + 06-02 in parallel via worktrees)"
 last_updated: "2026-05-05T00:00:00.000Z"
-last_activity: "2026-05-05 -- /gsd-plan-phase 6 -- research + pattern-mapper + planner + plan-checker all green on first iteration; 3 plans across 2 waves (06-01 + 06-02 parallel in W1; 06-03 in W2 non-autonomous for live PR merges); 18/18 reqs covered, 10/10 decisions traced, anti-pattern audit clean"
+last_activity: "2026-05-05 -- /gsd-execute-phase 6 -- Wave 1 dispatched (06-01 ci.yml on:-edit + 06-02 publish.yml scaffold); Wave 2 (06-03 verification dance) will pause at human-action checkpoints"
 progress:
   total_phases: 3
   completed_phases: 0
