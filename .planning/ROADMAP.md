@@ -40,11 +40,11 @@
   4. Forcing any one gate to fail (typecheck / vitest / build / `check:size`) leaves the workflow red at the failed step, and the dry-run final step does NOT execute (gate ordering verified).
   5. The successful end-of-workflow dry-run step echoes the would-be next version (e.g. `would publish v1.0.8`) without invoking `tfx`, leaving Marketplace untouched at v1.0.7.
   6. The `TFX_PAT` repo secret is created and resolves in the workflow (`echo "${{ secrets.TFX_PAT != '' }}"` returns `true`); a `gh api repos/:owner/:repo/branches/master/protection` call confirms current branch-protection state and the result is recorded in CONTEXT for Phase 7.
-**Plans:** 3 plans
+**Plans:** 3 plans (Wave 1 complete; Wave 2 pending live verification)
 Plans:
-- [ ] 06-01-PLAN.md — Drop `push: master` from ci.yml (CI-02)
-- [ ] 06-02-PLAN.md — Scaffold publish.yml with gates, probes, and dry-run echo (CI-01, CI-03..08, GATE-01..07, FAIL-01..03)
-- [ ] 06-03-PLAN.md — Verification dance (negative + positive merge cases) and capture branch-protection-probe-result.md (D-1, D-1a, D-5)
+- [x] 06-01-PLAN.md — Drop `push: master` from ci.yml (CI-02) ✓
+- [x] 06-02-PLAN.md — Scaffold publish.yml with gates, probes, and dry-run echo (CI-01, CI-03..08, GATE-01..07, FAIL-01..03) ✓
+- [ ] 06-03-PLAN.md — Verification dance (negative + positive merge cases) and capture branch-protection-probe-result.md (D-1, D-1a, D-5) — pending live PR merges
 
 ### Phase 7: Bump, Publish, Tag
 **Goal:** A real merge to master automatically packages a new patch `.vsix`, publishes it to the Visual Studio Marketplace, commits the version bump back to master with `[skip ci]`, and pushes an annotated tag — the first run ships v1.0.8.

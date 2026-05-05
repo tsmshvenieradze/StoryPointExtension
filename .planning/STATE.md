@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Publish CI/CD
 status: executing
-stopped_at: "Phase 6 Wave 1 dispatched (06-01 + 06-02 in parallel via worktrees)"
+stopped_at: "Phase 6 Wave 1 complete; Wave 2 (06-03) pending live PR merges"
 last_updated: "2026-05-05T00:00:00.000Z"
-last_activity: "2026-05-05 -- /gsd-execute-phase 6 -- Wave 1 dispatched (06-01 ci.yml on:-edit + 06-02 publish.yml scaffold); Wave 2 (06-03 verification dance) will pause at human-action checkpoints"
+last_activity: "2026-05-05 -- Phase 6 Wave 1 complete: 06-01 (ci.yml on:-block edit, push: trigger removed) + 06-02 (publish.yml scaffolded, 109 lines, all anti-pattern checks pass). Both worktrees merged. Post-merge gates green: typecheck OK, 398/398 tests pass, build OK, bundle 148.4 KB / 250 KB (101.6 KB headroom). Wave 2 (06-03) is non-autonomous and needs user to push branch + merge two no-op PRs to master."
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 
 ## Current Position
 
-Phase: 6 — Workflow Scaffold & Pre-flight Gates (planned, ready to execute)
-Plan: 0 of 3 complete (06-01, 06-02, 06-03 all written; checker passed on first iteration)
-Status: Ready to execute — `/gsd-execute-phase 6`
-Last activity: 2026-05-05 — /gsd-plan-phase 6 produced 06-RESEARCH.md + 06-PATTERNS.md + 06-{01,02,03}-PLAN.md; ROADMAP.md Phase 6 plan list filled in
+Phase: 6 — Workflow Scaffold & Pre-flight Gates (Wave 1 complete; Wave 2 pending)
+Plan: 2 of 3 complete (06-01 ✓, 06-02 ✓, 06-03 pending live PR merges)
+Status: Awaiting Wave 2 — user pushes `milestone1.1` branch and merges two no-op PRs to master so 06-03 can verify the trigger plumbing live
+Last activity: 2026-05-05 — Wave 1 worktrees merged (06-01 ci.yml on:-block edit, 06-02 publish.yml scaffold); post-merge build/test/typecheck/bundle gates all green
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
