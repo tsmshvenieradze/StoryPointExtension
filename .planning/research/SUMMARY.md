@@ -155,17 +155,18 @@ The four agents disagreed: STACK proposed 1–2, FEATURES 3, ARCHITECTURE 3, PIT
 
 ## Watch Out For
 
-1. **Branch name typo `milelstone1.1`** — current branch has typo. Not a blocker but should be raised with the user before merging to master.
-2. **Marketplace version drift from a manual `publish:cezari` run during the v1.1 dev window** — first auto-publish then 500s with "Version number must increase". Mitigation: announce manual-publish freeze; enforce by P3 deletion.
-3. **`master` becoming branch-protected mid-milestone** — would break commit-back silently. Verify state explicitly in P1 (one `gh api` call); document contingency in YAML comment.
-4. **Two-slot concurrency limitation** — if 3+ PRs merge in <5 min, queued slots get cancelled by latest. All CODE ships in latest run; intermediate VERSIONS get folded. Document as expected, NOT a bug.
-5. **`actions/checkout@v5` requires runner v2.327.1+** — GH-hosted is well past, but flag if any self-hosted runner is added later.
+1. **Marketplace version drift from a manual `publish:cezari` run during the v1.1 dev window** — first auto-publish then 500s with "Version number must increase". Mitigation: announce manual-publish freeze; enforce by P3 deletion.
+2. **`master` becoming branch-protected mid-milestone** — would break commit-back silently. Verify state explicitly in P1 (one `gh api` call); document contingency in YAML comment.
+3. **Two-slot concurrency limitation** — if 3+ PRs merge in <5 min, queued slots get cancelled by latest. All CODE ships in latest run; intermediate VERSIONS get folded. Document as expected, NOT a bug.
+4. **`actions/checkout@v5` requires runner v2.327.1+** — GH-hosted is well past, but flag if any self-hosted runner is added later.
 
 ---
 
 ## Open Questions for the User (resolve before plan-phase)
 
-1. **Branch name fix.** Current `milelstone1.1` (typo). Rename to `milestone1.1` before opening the milestone PR? **Default: yes, while branch is local-only.**
+> Items 1, 3, 4, 5, 6, 7 resolved 2026-05-05 during /gsd-new-milestone questioning. Item 2 resolved 2026-05-05 during /gsd-discuss-phase 6 (branch renamed local-only). Remaining items kept here only for historical traceability.
+
+1. ~~**Branch name fix.** Current `milelstone1.1` (typo).~~ Resolved — renamed to `milestone1.1`.
 2. **`master` branch protection — current state?** No protection rules visible in commit history; one `gh api repos/:owner/:repo/branches/master/protection` call in P1 would confirm.
 3. **Repo secret name.** `TFX_PAT` (matches existing `scripts/publish-cezari.cjs` env var, recommended) or `MARKETPLACE_PAT` (FEATURES-suggested)? **Default: `TFX_PAT`** for zero-WTF parity with local script.
 4. **Precise gate names in workflow YAML.** Recommend: `Typecheck`, `Unit tests`, `Build`, `Bundle size gate`, `Bump version`, `Package vsix`, `Publish to Marketplace`, `Commit version bump`, `Tag release`. Confirm or specify alternatives (matters for status-check pinning if branch protection is added later).

@@ -19,14 +19,14 @@ No code analogs needed beyond `ci.yml`. `scripts/check-bundle-size.cjs` and `scr
 
 **Analog:** `.github/workflows/ci.yml` — same shape (single job, sequential `npm`-script gate steps on `ubuntu-latest`), diverges on triggers, concurrency group, permissions, and the final dry-run echo step.
 
-**Imports / file-header pattern** (ci.yml lines 1-12):
+**Imports / file-header pattern** (ci.yml lines 1-12, **PRE-Plan-06-01 state**; this is the original shape that publish.yml's header was modeled on, NOT the current ci.yml — Plan 06-01 has since dropped the `push:` trigger from ci.yml):
 
 ```yaml
 name: CI
 
 on:
-  push:
-    branches: [master]
+  push:                       # ← Plan 06-01 removes this trigger
+    branches: [master]        # ← from the live ci.yml (PR-only after migration)
   pull_request:
     branches: [master]
 

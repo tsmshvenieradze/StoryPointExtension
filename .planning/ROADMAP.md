@@ -90,8 +90,6 @@ Every v1.1 requirement maps to exactly one phase. No orphans. No duplicates.
 
 **Coverage:** 38/38 v1.1 requirements mapped.
 
-> **Tally discrepancy noted:** REQUIREMENTS.md states "Total v1.1 requirements: 32" but enumeration of the eight category checklists yields **38 IDs**. This roadmap mapped all 38; the REQUIREMENTS.md tally line should be corrected to 38 (a one-line edit; no coverage impact). Flagged as a stale-tally bug, not a roadmap gap.
-
 **Phase distribution:**
 - Phase 6: 18 requirements (CI 8 + GATE 7 + FAIL 3) — workflow plumbing + gates + failure-policy YAML
 - Phase 7: 14 requirements (BUMP 5 + PUBLISH 5 + TAG 4) — Marketplace state mutation
@@ -113,7 +111,7 @@ Every v1.1 requirement maps to exactly one phase. No orphans. No duplicates.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 6. Workflow Scaffold & Pre-flight Gates | 0/3 | Planned — ready for /gsd-execute-phase 6 | — |
+| 6. Workflow Scaffold & Pre-flight Gates | 2/3 | In progress (Wave 1 complete; Wave 2 pending live verification) | — |
 | 7. Bump, Publish, Tag | 0/0 | Not started — phases not yet planned | — |
 | 8. Cleanup & Runbooks | 0/0 | Not started — phases not yet planned | — |
 

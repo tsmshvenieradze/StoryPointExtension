@@ -32,7 +32,7 @@ Last activity: 2026-05-05 — Wave 1 worktrees merged (06-01 ci.yml on:-block ed
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
-Progress: [          ] 0% (0 of 0 plans complete; 0 of 3 phases complete)
+Progress: [██████    ] 67% (2 of 3 plans complete in Phase 6; 0 of 3 phases complete)
 
 ## Performance Metrics
 
@@ -46,7 +46,7 @@ Progress: [          ] 0% (0 of 0 plans complete; 0 of 3 phases complete)
 
 | Phase | Plans | Status | Completed |
 |-------|-------|--------|-----------|
-| 6. Workflow Scaffold & Pre-flight Gates | 0/0 | Not started — phases not yet planned | — |
+| 6. Workflow Scaffold & Pre-flight Gates | 2/3 | In progress (Wave 1 complete; Wave 2 pending live verification) | — |
 | 7. Bump, Publish, Tag | 0/0 | Not started — phases not yet planned | — |
 | 8. Cleanup & Runbooks | 0/0 | Not started — phases not yet planned | — |
 
@@ -88,15 +88,12 @@ Already-locked v1.1 decisions (from research synthesis):
 
 | Item | Where | When |
 |------|-------|------|
-| `/gsd-plan-phase 6` | Phase 6 plan decomposition | Next session |
-| Verify `master` branch protection state via `gh api ...` | Phase 6 plan task | During Phase 6 execution |
+| Plan 06-03 live verification (negative + positive PR merges) | Phase 6 Wave 2 | Awaiting user-side merges on PR #2 + verification PRs |
 | Re-verify `tfx extension publish --help` flag spelling | Phase 7 plan task | Just-in-time at Phase 7 execution |
-| Fix REQUIREMENTS.md stale tally (32 → 38) | Phase 8 / DOC-03 or earlier patch | Anywhere before milestone close |
 
 ### Blockers/Concerns
 
-- **Branch name typo `milelstone1.1` (current branch).** Should be renamed `milestone1.1` while still local-only — flagged in research SUMMARY but not yet acted on. Not a blocker for planning but should be addressed before opening the milestone PR.
-- **REQUIREMENTS.md tally bug.** "Total v1.1 requirements: 32" line is stale; enumerated checklists yield 38 IDs. Roadmap mapped all 38 — no coverage impact. One-line edit pending.
+None active.
 
 ### Quick Tasks Completed
 
