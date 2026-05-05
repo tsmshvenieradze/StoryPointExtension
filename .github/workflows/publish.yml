@@ -75,22 +75,36 @@ jobs:
           BODY=$(gh api repos/${{ github.repository }}/branches/master/protection 2>&1)
           STATUS=$?
           set -e
-          if [ $STATUS -eq 0 ]; then
-            echo "protected=true" >> "$GITHUB_OUTPUT"
-            echo "Master IS branch-protected:"
-            echo "$BODY"
+
+          # Classify the response. The branches/protection endpoint requires
+          # repo-admin scope, which GITHUB_TOKEN cannot be granted via the
+          # workflow `permissions:` block (no `administration` scope exists
+          # there). So this probe is best-effort: it gives a definitive
+          # answer when the token is admin-scoped (e.g., via a custom PAT
+          # if ever added) or when the response shape is unambiguous; it
+          # honestly reports "unknown" when the token simply lacks scope.
+          # 06-03 Task 3 captures the developer-side probe as the durable
+          # source-of-truth artifact.
+          if [ "$STATUS" -eq 0 ]; then
+            STATE=protected
+            HEADLINE='master is **PROTECTED**. P7 commit-back must use App or PAT bypass.'
+            LOG_PREFIX='Master IS branch-protected:'
+          elif echo "$BODY" | grep -qi 'Branch not protected'; then
+            STATE=not_protected
+            HEADLINE='master is **NOT protected**. P7 commit-back can use `GITHUB_TOKEN`.'
+            LOG_PREFIX='Master is NOT branch-protected (HTTP 404):'
           else
-            echo "protected=false" >> "$GITHUB_OUTPUT"
-            echo "Master is NOT branch-protected (gh api exit $STATUS):"
-            echo "$BODY"
+            STATE=unknown
+            HEADLINE='Branch-protection state could not be determined (token permission or transient error). P7 must re-probe with an admin-scoped token before deciding commit-back strategy.'
+            LOG_PREFIX="::warning::Branch-protection probe inconclusive (gh api exit $STATUS, body did not match 'Branch not protected'):"
           fi
+
+          echo "protected=${STATE}" >> "$GITHUB_OUTPUT"
+          echo "$LOG_PREFIX"
+          echo "$BODY"
           {
             echo "## Branch protection probe"
-            if [ $STATUS -eq 0 ]; then
-              echo "master is **PROTECTED**. P7 commit-back must use App or PAT bypass."
-            else
-              echo "master is **NOT protected**. P7 commit-back can use \`GITHUB_TOKEN\`."
-            fi
+            echo "$HEADLINE"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Dry-run — compute next version (DOES NOT publish)
