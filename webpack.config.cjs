@@ -22,7 +22,7 @@ function baseConfig(entryName, mode) {
           loader: 'ts-loader',
           options: { transpileOnly: false },
         },
-        {
+        { 
           test: /\.scss$/,
           use: ['style-loader', 'css-loader', 'sass-loader'],
         },
