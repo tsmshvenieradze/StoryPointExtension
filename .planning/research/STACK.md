@@ -1,392 +1,329 @@
-# Technology Stack
+# Stack Research — v1.1 Auto-Publish CI/CD
 
 **Project:** Story Point Calculator (Azure DevOps Extension)
-**Researched:** 2026-05-01
-**Researcher:** gsd-project-researcher (stack dimension)
-**Overall confidence:** MEDIUM (see "Verification Gap" below)
+**Milestone:** v1.1 — GitHub Actions auto-publish to Visual Studio Marketplace
+**Researched:** 2026-05-04
+**Overall confidence:** HIGH (versions verified live against npm registry and GitHub releases API on the research date)
 
 ---
 
 ## Verification Gap (Read First)
 
-The research environment for this run had **WebFetch, WebSearch, Context7 (MCP), and general Bash all denied by sandbox policy**. That means none of the version numbers below were re-verified against the live npm registry or Microsoft docs during this research pass — they come from Claude's training data (cutoff January 2026) and the well-known release cadence of these packages.
+Two independent confidence dimensions for every package/action below:
 
-**Implication for the roadmap:** Treat the versions in the tables below as *floors* (i.e., "at least this version, probably current"), not as locked pins. Phase 1 (Bootstrap) MUST include a one-shot `npm view <pkg> version` check for each package below before writing them into `package.json`. The choice of *package* and the rationale for each is HIGH confidence; the *exact version string* is MEDIUM confidence.
+- **Choice** — how sure I am we should use this package/action at all for this milestone
+- **Version** — how sure I am the pinned floor is current as of 2026-05-04 (today)
 
-Confidence labels on every table reflect this split:
-- **Choice:** how sure I am we should use this package at all
-- **Version:** how sure I am the pinned number is current as of May 2026
+All major-version pins below were verified live via:
+- `npm view <pkg> version` and `npm view <pkg> time --json` against the public npm registry
+- `https://api.github.com/repos/<owner>/<action>/releases?per_page=8` (GitHub Releases API)
+
+so Version confidence is HIGH for the floors stated. SemVer minor/patch above the floor is expected to be safe per each action's compat policy.
+
+**Cross-cutting decision (binds the rest of this doc):**
+- We are NOT introducing Microsoft Entra-backed publishing (workload identity / OIDC) in v1.1 — that path requires a federated service connection and is documented for Azure Pipelines, not GH Actions. v1.1 uses a **Marketplace-scoped PAT**. Microsoft confirmed (2025–2026 blog posts) that the publishing service accepts any PAT with the `Marketplace (publish)` scope even after the *global* PAT retirement (Mar 15 → Dec 1, 2026), so this path is forward-compatible. We track Entra/OIDC as a v1.2+ candidate, not a v1.1 blocker.
 
 ---
 
 ## Recommended Stack
 
-### Core ADO Extension SDK
+### A. GitHub Actions Runner & Core Actions
 
-| Package | Version (floor) | Purpose | Choice / Version confidence |
-|---------|-----------------|---------|------|
-| `azure-devops-extension-sdk` | `^4.0.2` | Host-iframe handshake, `SDK.init()`, `SDK.ready()`, `SDK.getService()`, `SDK.getConfiguration()`, `SDK.notifyLoadSucceeded()` | HIGH / MEDIUM |
-| `azure-devops-extension-api` | `^4.255.0` (or `^4.x` latest) | Typed clients for Work Item Tracking, Core, Identities, Extension Data | HIGH / MEDIUM |
+| Component | Version (floor) | Purpose | Choice / Version confidence |
+|-----------|-----------------|---------|------|
+| `ubuntu-latest` runner | (Ubuntu 24.04 as of May 2026) | Hosted runner for the publish workflow | HIGH / HIGH |
+| `actions/checkout` | `v5` (`v5.0.1`) | Clone repo with credentials persisted for commit-back; supports `fetch-depth: 0` for tag visibility | HIGH / HIGH |
+| `actions/setup-node` | `v4` (`v4.4.0`+) — explicitly **not** v6 in this milestone | Install Node + npm cache | HIGH / HIGH |
+| `actions/cache` | (transitive — provided by `setup-node` `cache: 'npm'`) | npm dependency cache; do not add a separate `actions/cache` step | HIGH / HIGH |
+| `stefanzweifel/git-auto-commit-action` | `v6` (current `v6.0.1`, June 2025) — pin major, allow minor/patch | Commit version-bump back to `master` with `[skip ci]` token in the message | HIGH / MEDIUM |
 
-**Why these two and not the legacy `vss-web-extension-sdk`:** The `vss-web-extension-sdk` package (v5.x, AMD/RequireJS-based) is the *old* SDK targeting the v1 contribution model. It still works, but Microsoft's current samples (`microsoft/azure-devops-extension-sample`) all use the new pair (`azure-devops-extension-sdk` + `azure-devops-extension-api`), which is ES module-native, TypeScript-first, and webpack/vite-friendly. Greenfield projects should use the new SDK. (HIGH confidence — verifiable from the public sample repo's `package.json`.)
+#### Why ubuntu-latest (not windows-latest)
 
-**SDK v4 init pattern (important quirk):**
+| Criterion | ubuntu-latest | windows-latest | Verdict |
+|-----------|---------------|----------------|---------|
+| **tfx-cli OS coverage** | First-class (`tfx-cli` has no native Windows-only deps; `winreg` is a transitive dep but is no-op on non-Windows) | First-class but slower bootstrapping; the existing local `publish-cezari.cjs` had to add `shell: process.platform === "win32"` to work around `spawnSync` on Windows | **ubuntu-latest** |
+| **CI minute cost** | 1× per minute (multiplier on private repos) | 2× per minute on private repos | **ubuntu-latest** |
+| **Existing CI (`.github/workflows/ci.yml`)** | Already runs `ubuntu-latest` for typecheck/test/build/bundle-gate | — | **Same image** keeps caching consistent |
+| **`azure-devops-ui` SCSS pipeline** | Confirmed working in current CI | — | **ubuntu-latest** |
+| **`tfx extension publish` quirks** | None reported in 2025–2026 issues against `tfx-cli` 0.21+ | An old `0.13.0`-era issue (`#427` — `tfx not found after install`) was a Windows PATH problem; `0.23.1` ships with shebang-correct bin entries | **ubuntu-latest** (sidesteps the `spawnSync({shell})` workaround entirely) |
 
-```ts
-import * as SDK from "azure-devops-extension-sdk";
+This repo's `scripts/publish-cezari.cjs` already had to special-case `shell: process.platform === "win32"` for `spawnSync("npx", …)`. Running publish on Linux removes that whole class of bug from the CI surface.
 
-SDK.init({
-  loaded: false,            // we'll call notifyLoadSucceeded() manually after data load
-  applyTheme: true,         // inherit ADO light/dark theme tokens
-});
+#### Why `actions/checkout@v5` (not v6)
 
-await SDK.ready();
-// ... fetch config + work item context ...
-SDK.notifyLoadSucceeded();
-```
+- `v5.0.0` (Aug 2025) bumped the action runtime to **Node 24** and requires runner **v2.327.1+**. GitHub-hosted `ubuntu-latest` runners are well past that floor as of May 2026.
+- `v6.0.0` (Nov 2025) added a `persist-credentials` separation refactor and `v6-beta`-line work; it is stable but newer. We do not need any v6-only feature in v1.1, and `git-auto-commit-action@v7` was released **after** `checkout@v5` and is documented to work with `v4`/`v5`. Pinning **v5** gives us the minimal blast radius.
+- Concrete need for the Story Point Extension: `fetch-depth: 0` (so `git tag` can see prior tags and reject duplicates cleanly) and `persist-credentials: true` (default; required so `git-auto-commit-action` can push back via `GITHUB_TOKEN`).
 
-The v2 pattern (`VSS.init({ usePlatformScripts: true, ... })` from the legacy SDK) is **not** what v4 expects and will silently fail to register the contribution. This is the single most common porting mistake — call this out in PITFALLS.md.
+#### Why `actions/setup-node@v4` (not v5/v6)
 
-**Client services to use (from `azure-devops-extension-api`):**
+- `v6.0.0` (Oct 2025) introduced a **breaking change**: it limits automatic caching to npm only and changed the default behavior around `cache:` config. v6 is fine for our shape (we use `cache: 'npm'` already), **but** the breaking-change note in v6 release notes adds risk for a milestone whose only deliverable is "ship a publish workflow." We pick stability over recency.
+- `v4` is still receiving security backports and works with current Node 20/22 LTS.
+- Existing `.github/workflows/ci.yml` already pins `actions/setup-node@v4` with `node-version: 20` and `cache: 'npm'`. **Reuse the exact same line.** No drift between CI and Publish workflow keeps the npm cache hits maximal (cache key derives from `package-lock.json` + `runner.os` + `node-version`, so identical across both workflows means cache-warm fast paths).
 
-| Need | Service / Client | Method |
-|------|------------------|--------|
-| Get current work item ID + field values | `IWorkItemFormService` (via `SDK.getService("ms.vss-work-web.work-item-form")`) | `getId()`, `getFieldValues([...])`, `getWorkItemType()` |
-| Read/write Story Points field on the open form | Same `IWorkItemFormService` | `setFieldValue("Microsoft.VSTS.Scheduling.StoryPoints", value)` — preferred over REST when the form is open (writes to in-memory state, persists on user Save) |
-| Force-persist without user Save | `WorkItemTrackingRestClient.updateWorkItem(...)` from `azure-devops-extension-api/WorkItemTracking` | `updateWorkItem(patchDoc, id, project)` with JSON-Patch `{ op: "replace", path: "/fields/Microsoft.VSTS.Scheduling.StoryPoints", value }` |
-| Post comment | `WorkItemTrackingRestClient.addComment(request, project, workItemId)` (uses the v2 comments REST endpoint, not the legacy `System.History` field) | — |
-| Read user permissions / identity | `SDK.getUser()` for the current user; `CoreRestClient` for project info | — |
-| Read/write per-org and per-project config | `IExtensionDataService` (via `SDK.getService("ms.vss-features.extension-data-service")`), then `getExtensionDataManager(extId, accessToken)` and use `getValue/setValue` with `scopeType: "Default"` (org) or `scopeType: "Project"` (project) | — |
+If a v1.2+ milestone wants to bump to `setup-node@v6`, do it in CI first, then propagate to Publish.
 
-**Comment API caveat:** The v2 comments endpoint is in *preview* on some org configurations and is the modern path; the legacy approach (`System.History` patch on the work item) is deprecated for new code but still works as a fallback. (MEDIUM confidence — verify the preview status is no longer "preview" before publish.)
+#### Why `git-auto-commit-action@v6` for commit-back
 
-**DO NOT use:** `vss-web-extension-sdk` (legacy AMD SDK), `TFS.WorkItemTracking.Services` namespace (legacy global), or `VSS.getService` calls. These are v1-contribution-model artifacts.
+- Microsoft's `microsoft/azure-devops-extension-sample` repo does **not** ship a publish workflow we can copy — extension authors roll their own. The community-standard pattern for "auto-bump a JSON field, commit back, push tag" is one of:
+  1. Raw `git config user.email` + `git commit -am` + `git push` shell — works with `GITHUB_TOKEN`, requires manual auth fiddling.
+  2. `stefanzweifel/git-auto-commit-action` — wraps (1) with sensible defaults: bot identity, commit-message templating, `commit_options`, optional tagging.
+  3. `EndBug/add-and-commit` — same shape as (2), slightly less popular, similar maintenance velocity.
 
----
+- We pick (2) because:
+  - `v7.1.0` (Dec 2025) is current; `v6.0.1` (Jun 2025) is the last stable v6 — both maintained. We pin **v6** rather than v7 because v7 bumped its action runtime to Node 24 and tightened its `actions/checkout` dep to v5 — fine for us, but pin-to-v7 narrows our checkout flexibility. v6 still receives backports.
+  - Native `[skip ci]` support: just include the literal string in `commit_message`; GitHub's runner respects it for `push:`/`pull_request:` triggers (changelog 2021-02-08), so the version-bump commit will not retrigger the workflow.
+  - It will not push if the working tree is clean — idempotent, so a re-run of the publish workflow that hits the npm cache and produces no diff won't create empty commits.
 
-### UI Library
+If we end up wanting to drop the dependency: a 5-line shell block (`git config`, `git add`, `git commit -m "chore: bump … [skip ci]"`, `git push`) covers 100% of our use case. Documented as a fallback below.
 
-| Package | Version (floor) | Purpose | Choice / Version confidence |
-|---------|-----------------|---------|------|
-| `azure-devops-ui` | `^2.259.0` (or `^2.x` latest) | Native ADO components — `Dialog`, `Dropdown`, `Button`, `MessageCard`, `FormItem`, `Toggle`, `Spinner` | HIGH / MEDIUM |
-| `react` | `^18.3.1` | Required by `azure-devops-ui` | HIGH / HIGH |
-| `react-dom` | `^18.3.1` | Required by `azure-devops-ui` | HIGH / HIGH |
+### B. Version-Bump Tooling
 
-**Why `azure-devops-ui` over Fluent UI v9 or custom:**
+| Tool | Source | Purpose | Choice / Version confidence |
+|------|--------|---------|------|
+| `npm version patch --no-git-tag-version --allow-same-version` | Built into `npm` ≥ 6 | Bump `package.json` patch; do **not** create a git tag (we tag separately, after publish succeeds) | HIGH / HIGH |
+| Inline Node script (~15 lines, in workflow `run:` block) | Stdlib `fs` + `JSON.parse`/`JSON.stringify` | Read the new patch from `package.json`, write it into `vss-extension.json`, preserving 2-space indent + trailing newline | HIGH / HIGH |
+| `tfx extension publish` (without `--rev-version`) | `tfx-cli@^0.23.1` (already in devDependencies) | Publish a `.vsix` whose manifest version was bumped *before* the publish call, so the rev is committed in source control before it hits Marketplace | HIGH / HIGH |
 
-| Option | Native ADO look | Bundle size | Maintenance status | Verdict |
-|--------|-----------------|-------------|--------------------|---------|
-| `azure-devops-ui` | Yes — pixel-identical to ADO chrome, inherits theme via `applyTheme: true` | ~150–250 KB minified+gzipped depending on tree-shaking | Low-velocity but Microsoft still publishes patches (~quarterly); used by Microsoft's own sample repo | **Use this** |
-| Fluent UI v9 (`@fluentui/react-components`) | Close but not identical (Fluent v9 is the Microsoft 365 design language; ADO has its own derivative) | Heavier (~400 KB+ for full set) | Actively maintained | Don't — visual mismatch with surrounding form chrome |
-| Fluent UI v8 (`@fluentui/react`) | Closer than v9 (older shared lineage with ADO UI) | Heavy (~500 KB) | Maintenance mode | Don't — being phased out |
-| Custom CSS / headless | Total control | Smallest possible | You own it | Don't — a 30-second utility doesn't justify a custom design system, and you'd lose theme inheritance |
+#### Why "manual sync" not `--rev-version`
 
-**`azure-devops-ui` known weaknesses (HIGH confidence):**
-- **Not actively developed** — release cadence has slowed since ~2022. Issues on the GitHub repo go unanswered for months. Treat it as "stable but frozen" — fine for a small extension, painful for a large product.
-- **Sass + CSS modules** at build time. Your bundler MUST handle `.scss` imports from `node_modules/azure-devops-ui/...`. With webpack this means `sass-loader` + `css-loader` + `style-loader`; with vite it's built-in.
-- **No types for some sub-paths** — occasional `// @ts-ignore` needed when importing leaf components.
-- **React 18 only** — does NOT support React 19 as of this research. If npm shows a 2.260+ that adds React 19 peer support, use it; otherwise pin React 18.
+`tfx extension publish --rev-version` exists and increments the patch in `vss-extension.json` automatically. We do **not** use it because:
+1. `--rev-version` only updates `vss-extension.json`, not `package.json`. We'd still need a sync step. Pre-bumping both files manually keeps a single source of truth (the Node script) and makes the commit-back diff unambiguous.
+2. `--rev-version` runs on the CI runner and writes to the runner's filesystem; the next bump would race against the source-of-truth in `master` if the workflow runs concurrently or if the commit-back fails after the Marketplace POST succeeded. Pre-bump → commit → publish is a more atomic ordering: if commit-back fails, we abort *before* the Marketplace mutation. (Mirrors v1's CONTEXT.md D-01 "atomicity ordering" reasoning at the milestone-tooling layer.)
+3. `--rev-version` was the source of microsoft/tfs-cli issue #262 ("yields a new extension version without revving the tasks") — it's an opinionated helper aimed at extensions with build-tasks, which we don't have, but it suggests the flag is not the canonical path for fine-grained control.
 
-**Why not Angular** (per `<downstream_consumer>` instruction): GPIH's org standard is Angular 19, but `azure-devops-ui` is React-only and there is no maintained Angular component library that mirrors ADO chrome. Building an Angular extension would mean either (a) using Fluent UI's experimental Angular bindings (visually wrong, immature) or (b) writing a custom design system to match ADO (massive yak-shave for a 30-second utility). React + `azure-devops-ui` is the *only* sensible choice for a single-purpose ADO extension. This is a one-off divergence from the org standard, justified by surface alignment with the host product.
+Concretely, the workflow does this in order:
+1. Read current `package.json` version → compute new patch → write back. Use `npm version patch --no-git-tag-version --allow-same-version`. (`--allow-same-version` is a defensive flag; a re-run with a now-stale lockfile shouldn't error out the workflow before the diff guard.)
+2. Inline Node `fs` script: read `package.json.version`, set `vss-extension.json.version` to the same string, write with `JSON.stringify(..., null, 2) + '\n'`.
+3. `git-auto-commit-action` commits both files with message `chore(release): vX.Y.Z [skip ci]`.
+4. `tfx extension publish --manifest-globs vss-extension.json --auth-type pat --token $TFX_PAT --no-wait-validation` (no `--rev-version`).
+5. On publish success → `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
----
+#### Why **not** dedicated bump tooling (release-please, semantic-release, phips28/gh-action-bump-version, changesets)
 
-### Build Tooling
+| Tool | Why not |
+|------|---------|
+| `googleapis/release-please-action` | Driven by Conventional Commits + a release-PR workflow; opinionated about CHANGELOG.md generation; overkill for a single-package extension where bump policy is "every merge to master = patch." Adds two PRs and a bot to the workflow surface. |
+| `semantic-release` | Same shape: commit-message-driven version inference. We've explicitly chosen "every push = patch" not "infer from commit type" — the milestone scope is "automate what we already do manually," not "introduce a new bump policy." |
+| `phips28/gh-action-bump-version` | Parses commit messages for `#major`/`#minor` keywords. Same objection: introduces a policy decision the milestone hasn't scoped. |
+| `changesets/changesets` | Designed for monorepos with multiple packages and humans deciding bump scope per change. Single-package + automated patch makes this 10× the moving parts we need. |
 
-| Tool | Version (floor) | Purpose | Choice / Version confidence |
-|------|-----------------|---------|------|
-| `webpack` | `^5.97.0` | Bundler — produces one IIFE per HTML entry (modal, settings hub) | HIGH / MEDIUM |
-| `webpack-cli` | `^5.1.4` | CLI | HIGH / HIGH |
-| `ts-loader` | `^9.5.1` | TypeScript transpilation | HIGH / MEDIUM |
-| `sass-loader` | `^16.0.0` | Required by `azure-devops-ui` SCSS | HIGH / MEDIUM |
-| `css-loader` | `^7.1.2` | CSS module resolution | HIGH / HIGH |
-| `style-loader` | `^4.0.0` | Inject CSS at runtime (extension iframes can't share a stylesheet with the host) | HIGH / HIGH |
-| `html-webpack-plugin` | `^5.6.3` | One HTML file per contribution entry (calculator modal, org settings, project settings) | HIGH / HIGH |
-| `copy-webpack-plugin` | `^12.0.2` | Copy `vss-extension.json`, `images/`, `README.md` into `dist/` for `tfx-cli` to package | HIGH / HIGH |
+A 4-line `run:` block does the same job. Stay simple.
 
-**Why webpack over vite or esbuild:**
+### C. Marketplace Publishing
 
-| Bundler | Pros for ADO extension | Cons | Verdict |
-|---------|------------------------|------|---------|
-| **webpack 5** | Microsoft's official sample (`microsoft/azure-devops-extension-sample`) uses webpack; multi-entry HTML support is mature; `azure-devops-ui` SCSS pipeline is webpack-tested | Slower dev rebuilds; verbose config | **Use this** for v1 — least friction, exact match to Microsoft sample |
-| vite | Faster dev, modern defaults | Multi-HTML-entry pattern works but isn't as documented for extensions; `azure-devops-ui` SCSS imports occasionally need vendor pre-bundle hints; smaller community of "vite + ADO extension" examples | Defer to v2 if perf becomes an issue |
-| esbuild (raw) | Fastest | No HTML plugin story; no SCSS out of the box; you'd reinvent what webpack gives you | Don't |
+| Component | Version (floor) | Purpose | Choice / Version confidence |
+|-----------|-----------------|---------|------|
+| `tfx-cli` | `0.23.1` (current latest, published 2026-01-07) — keep current pin | `tfx extension publish` to Marketplace | HIGH / HIGH |
+| Node.js (CI) | `20.x` (matches existing CI; matches `tfx-cli` engines `>=20.0.0`) | Runtime for `tfx-cli` and webpack | HIGH / HIGH |
+| Marketplace PAT | Personal Access Token with `Marketplace (publish)` scope, organization "All accessible organizations" | Auth credential for `tfx extension publish` | HIGH / HIGH |
+| Storage | GitHub Repository Secret named `TFX_PAT` (or `MARKETPLACE_PAT`) | Token at rest | HIGH / HIGH |
 
-**Output format:** Each contribution entry compiles to a single self-contained HTML + JS bundle. The work-item modal and the (v2) settings hubs are separate entries because ADO loads each contribution in its own iframe. Target `web` with `output.publicPath: ""` (relative paths — the iframe is served from a Microsoft CDN with a unique per-extension path).
+#### tfx-cli install pattern in CI
 
-**Polyfills:** None required. Azure DevOps targets evergreen Chromium, Firefox, Safari (per the project Constraints). Set `target: "es2020"` in webpack and TypeScript; skip core-js. (HIGH confidence.)
+The repo already has `tfx-cli@0.23.1` in `devDependencies` (locked via `package-lock.json`). The CI workflow runs `npm ci` to install all devDeps, then can invoke `tfx` via `npx tfx ...` (resolves to `node_modules/.bin/tfx`).
 
----
+| Pattern | Pros | Cons | Verdict |
+|---------|------|------|---------|
+| **Local devDep (current) + `npx tfx`** | Version pinned in `package-lock.json`; reproducible; same as the local `scripts/publish-cezari.cjs` shape; no extra install step in CI; cached automatically by `setup-node@v4 cache: 'npm'` | Slightly more nodes_modules disk in CI | **Use this** |
+| `npm install -g tfx-cli` in workflow | Familiar pattern from MS Learn docs | Bypasses the lockfile; floats to `latest`; one extra step; not cached by `setup-node` | Don't |
+| `npx --yes tfx-cli@0.23.1` | Pins per-call; no devDep | Re-resolves on every run unless cached; npx cold-start adds 5–15 s; bypasses the lockfile we already maintain | Don't |
+| Microsoft `TfxInstaller@5` task | Standard for Azure Pipelines | **Azure Pipelines task — not a GH Action**, doesn't apply | N/A |
 
-### Language / Type System
+The existing pattern (`tfx-cli` as a devDep, invoked through `npx tfx` after `npm ci`) is already the one used by `scripts/publish-cezari.cjs`. The publish workflow should reuse it verbatim. **No new tooling.**
 
-| Package | Version (floor) | Purpose | Choice / Version confidence |
-|---------|-----------------|---------|------|
-| `typescript` | `^5.6.3` | Language | HIGH / MEDIUM |
-| `@types/react` | `^18.3.12` | React 18 types | HIGH / MEDIUM |
-| `@types/react-dom` | `^18.3.1` | React 18 DOM types | HIGH / MEDIUM |
+#### Marketplace PAT — scopes, storage, passing
 
-**`tsconfig.json` shape that the SDK expects:**
+**Scope:** `Marketplace (publish)` only. Do **not** add `Marketplace (manage)` or `Marketplace (acquire)`. The publish API endpoint accepts the publish-only scope and rejects anything broader-than-needed.
 
-```jsonc
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",   // "Node" also works; Bundler is cleaner for webpack 5
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "jsx": "react-jsx",              // React 18 automatic runtime
-    "strict": true,                  // required by GPIH .NET house style; harmless here
-    "esModuleInterop": true,
-    "skipLibCheck": true,            // azure-devops-ui has occasional stale types
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "types": ["node"]
-  },
-  "include": ["src/**/*"]
-}
-```
+**Organization:** "All accessible organizations" is required by tfx-cli per Microsoft Learn — selecting a single organization causes a 401 even with a valid PAT, because the Marketplace publishing API operates outside any organization context.
 
-**`skipLibCheck: true` is not optional** — `azure-devops-ui` ships occasionally-broken `.d.ts` files and will fail strict library-check. (HIGH confidence — well-known issue.)
+**Lifetime:** Set to the maximum allowed (1 year). Document the expiry in `.planning/REQUIREMENTS.md` so v1.x renews it before expiry. (Microsoft is retiring **global** PATs Dec 1, 2026 — but `Marketplace (publish)` PATs are explicitly carved out per the Jul 2025 "Issue with extension publishing" blog: any PAT with that scope continues to work post-retirement.)
 
----
+**Storage:** GitHub repository secret. Settings → Secrets and variables → Actions → New repository secret. Name: `TFX_PAT` (matches the existing local-script env var, so the WTF surface for a developer reading both is zero). **Repository secret, not environment secret** — environment secrets add a manual approval gate which we explicitly don't want for "every push to master ships."
 
-### Testing
+**Passing to tfx:** Two equivalent options:
 
-| Package | Version (floor) | Purpose | Choice / Version confidence |
-|---------|-----------------|---------|------|
-| `vitest` | `^2.1.0` | Unit tests for pure calc logic | HIGH / MEDIUM |
-| `@vitest/coverage-v8` | `^2.1.0` | Coverage | HIGH / MEDIUM |
+| Option | Form | Verdict |
+|--------|------|---------|
+| `--token "$TFX_PAT"` CLI arg | `tfx extension publish ... --auth-type pat --token "${{ secrets.TFX_PAT }}"` | **Use this.** Matches `scripts/publish-cezari.cjs` exactly. GitHub Actions auto-redacts secret values from logs. |
+| `AZURE_DEVOPS_EXT_PAT` env var | `env: { AZURE_DEVOPS_EXT_PAT: ${{ secrets.TFX_PAT }} }` | Don't — that env var is for the **Azure CLI** (`az devops ...`), not `tfx-cli`. tfx-cli reads `TFX_*` env vars but the documented `--token` flag is the canonical input. Mixing the two is a footgun. |
 
-**Why vitest over jest:**
-- The thing under test is a *pure function* (level → score → weighted sum → Fibonacci round). No DOM, no SDK, no React. Either runner works.
-- Vitest is faster, has zero-config TypeScript, and uses the same ESM module graph as the production build (no `transform-jest` jiggery-pokery for ESM). Jest is fine but adds `ts-jest` or `babel-jest` configuration that you don't need.
-- The project has explicitly scoped UI/E2E tests as out-of-scope (manual QA per company standard), so you don't need jest's ecosystem of React Testing Library plugins.
+`--auth-type pat` is required because `tfx-cli` defaults to interactive auth otherwise; the existing local script already passes it.
 
-**DO NOT install** `@testing-library/react`, `jsdom`, or `playwright` in v1 — they're not needed for pure-logic tests and will inflate `node_modules` and CI time. Add only when (a) a UI bug is reported and reproduces only in browser, or (b) the company standard for manual QA changes.
+### D. Commit-Back / Tag Push — GitHub-side Token
 
-**Type-checking in CI:** Run `tsc --noEmit` as a separate CI step from `vitest run`. Don't rely on the bundler's transpile to catch type errors (`ts-loader` with `transpileOnly: true` skips them; `transpileOnly: false` is slow).
+**The crux:** We need to push two things back to `master`: (a) the version-bump commit, (b) the `vX.Y.Z` git tag. Two separate questions: which token, and does it trigger our own CI?
 
----
+| Operation | Token needed | GH-side scope | Triggers CI on `push: branches: [master]`? |
+|-----------|--------------|---------------|--------------------------------------------|
+| Commit-back of version bump | `GITHUB_TOKEN` works | `permissions: contents: write` at job level | **No** — pushes by `GITHUB_TOKEN` are deliberately suppressed from re-triggering workflows on the same repo (GitHub's documented anti-loop guard). The `[skip ci]` token in the message is **belt-and-suspenders**, not strictly needed when using `GITHUB_TOKEN`, but cheap insurance and visible in `git log` for humans. |
+| Push `vX.Y.Z` tag | `GITHUB_TOKEN` works | Same `contents: write` (write includes tags) | **No** — same anti-loop guard. We don't have a `push: tags:` trigger anywhere, so this is moot, but worth noting if a future "release on tag" workflow is added. |
+| If branch protection blocks bot pushes to `master` | A PAT or a GitHub App installation token with the bot in an "allowed actors to bypass" list, **or** the workflow-as-actor needs to be in the bypass list | App > more capability; PAT > simpler but tied to a human | Use App if available; PAT if not. |
 
-### Packaging & Publishing
-
-| Tool | Version (floor) | Purpose | Choice / Version confidence |
-|------|-----------------|---------|------|
-| `tfx-cli` | `^0.21.0` (or latest `^0.x`) | Pack `.vsix`, publish to Marketplace | HIGH / MEDIUM |
-
-Install `tfx-cli` as a dev dependency (`npm i -D tfx-cli`), not globally — pinning the version in `package.json` keeps local and CI builds reproducible.
-
-**`vss-extension.json` manifest schema for our contribution:**
-
-```jsonc
-{
-  "manifestVersion": 1,
-  "id": "story-point-calculator",
-  "version": "1.0.0",
-  "name": "Story Point Calculator",
-  "publisher": "<publisher-id>",     // Marketplace publisher; resolved Phase 1
-  "public": true,
-  "targets": [
-    { "id": "Microsoft.VisualStudio.Services" }   // Azure DevOps Services (cloud); add "Microsoft.TeamFoundation.Server" only if Server support is in scope
-  ],
-  "categories": ["Azure Boards"],
-  "tags": ["story points", "estimation", "scrum", "agile"],
-  "description": "Structured Story Point estimation using Complexity, Uncertainty, Effort.",
-  "icons": {
-    "default": "images/icon.png"     // 128x128 PNG
-  },
-  "scopes": [
-    "vso.work_write"                 // read+write work items; covers field write + comment
-  ],
-  "files": [
-    { "path": "dist", "addressable": true },
-    { "path": "images", "addressable": true },
-    { "path": "README.md", "addressable": true }
-  ],
-  "content": {
-    "details": { "path": "README.md" }
-  },
-  "contributions": [
-    {
-      "id": "calculate-sp-toolbar-button",
-      "type": "ms.vss-work-web.work-item-form-toolbar-button",
-      "description": "Toolbar button on the work item form that opens the SP calculator.",
-      "targets": ["ms.vss-work-web.work-item-form"],
-      "properties": {
-        "name": "Calculate Story Points",
-        "uri": "dist/calculator.html",
-        "icon": "images/icon-toolbar.png",
-        "registeredObjectId": "calculate-sp-action"
-      }
-    }
-    // v2 adds:
-    // - ms.vss-web.hub targeting ms.vss-admin-web.collection-admin-hub (Org Settings)
-    // - ms.vss-web.hub targeting ms.vss-admin-web.project-admin-hub (Project Settings)
-  ]
-}
-```
-
-**Scope choice — `vso.work_write` is sufficient and minimum-required:** Covers reading the work item, writing fields, posting comments. Do NOT request `vso.work_full` (we don't need bypass-rules write) or `vso.profile` (we get the user via `SDK.getUser()` which doesn't need extra scope). Smaller scope set = fewer Marketplace install warnings = better install conversion. (HIGH confidence.)
-
-**Extension Data scope is implicit** — `IExtensionDataService` does not require an additional manifest scope; it's granted automatically when the extension is installed.
-
----
-
-### Publisher Registration & First Publish (One-Time, ~30 min)
-
-1. Sign in at `https://marketplace.visualstudio.com/manage` with the GPIH Microsoft Entra ID that owns the publishing identity.
-2. Create a publisher: choose a publisher ID (lowercase, hyphenated; e.g., `gpih`), display name, contact email. Publisher ID is **immutable** and appears in every install URL. Verification is automatic for personal MS accounts; org accounts may need a `mailto:` round-trip (typically <24h).
-3. Generate a Personal Access Token (PAT) with **Marketplace → Manage** scope (and only that scope). Note: this PAT is for *publishing*, distinct from the `vso.work_write` scope the extension itself requests at runtime.
-4. Local-publish smoke test: `npx tfx extension publish --manifest-globs vss-extension.json --token <PAT> --share-with <test-org>` — publishes to the publisher account but only shares with one org so it's not visible to the public.
-5. After the first published version, you can mark it `public: true` in the manifest and re-publish; that surfaces it on the Marketplace search.
-
-(MEDIUM confidence on UI labels — the Marketplace management UI changes annually; the underlying flow has been stable for years.)
-
----
-
-### CI/CD (Azure Pipelines)
-
-| Task / Tool | Purpose | Confidence |
-|-------------|---------|------------|
-| `npm ci` | Reproducible install | HIGH |
-| `npm run typecheck` (`tsc --noEmit`) | Type gate | HIGH |
-| `npm test` (`vitest run`) | Unit gate | HIGH |
-| `npm run build` (`webpack --mode production`) | Bundle | HIGH |
-| `TfxInstaller@5` Azure Pipelines task | Install `tfx-cli` on the agent | HIGH |
-| `PackageAzureDevOpsExtension@5` task | Pack `.vsix` from `vss-extension.json` (auto-bumps patch version if configured) | HIGH |
-| `PublishAzureDevOpsExtension@5` task | Push `.vsix` to Marketplace using a service connection (PAT-backed) | HIGH |
-
-These tasks live in the **Azure DevOps Extension Tasks** extension (publisher: `ms-devlabs`) — install it once on the build org. (HIGH confidence — has been the canonical pipeline since 2018.)
-
-**Trigger pattern matching the project's "publish on tag" requirement:**
+**Recommended pattern (no branch protection on `master` blocking bot pushes — current state):**
 
 ```yaml
-trigger:
-  tags:
-    include: ['v*.*.*']     # publish only when a semver tag is pushed
-  branches:
-    include: ['master']     # CI builds on every master push but skip publish step
+permissions:
+  contents: write   # required for commit-back + tag push
 
-variables:
-  isTaggedRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/tags/v')]
-
-stages:
-  - stage: BuildAndTest
-    jobs:
-      - job: Validate
-        steps:
-          - task: NodeTool@0
-            inputs: { versionSpec: '20.x' }
-          - script: npm ci
-          - script: npm run typecheck
-          - script: npm test -- --run
-          - script: npm run build
-
-  - stage: Publish
-    condition: and(succeeded(), eq(variables.isTaggedRelease, 'true'))
-    jobs:
-      - job: PublishToMarketplace
-        steps:
-          - task: NodeTool@0
-            inputs: { versionSpec: '20.x' }
-          - script: npm ci
-          - script: npm run build
-          - task: TfxInstaller@5
-            inputs: { version: 'v0.x' }
-          - task: PackageAzureDevOpsExtension@5
-            inputs:
-              rootFolder: '$(Build.SourcesDirectory)'
-              outputPath: '$(Build.ArtifactStagingDirectory)/extension.vsix'
-              extensionVersion: $(Build.SourceBranchName)   # tag = version
-              updateTasksVersion: false
-          - task: PublishAzureDevOpsExtension@5
-            inputs:
-              connectedServiceName: 'marketplace-publish'   # service connection holding the PAT
-              fileType: 'vsix'
-              vsixFile: '$(Build.ArtifactStagingDirectory)/extension.vsix'
-              extensionVisibility: 'public'
-              extensionPricing: 'free'
+# ...later in steps:
+- uses: stefanzweifel/git-auto-commit-action@v6
+  with:
+    commit_message: "chore(release): v${{ env.NEW_VERSION }} [skip ci]"
+    commit_user_name: "github-actions[bot]"
+    commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+    commit_author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+    file_pattern: "package.json package-lock.json vss-extension.json"
 ```
 
-(HIGH confidence on shape; MEDIUM on task version `@5` — verify in the Marketplace listing for `ms-devlabs.vsts-developer-tools-build-tasks` that v5 is current. v4 also works.)
+The user/email above is GitHub's documented identity for the `github-actions[bot]` actor — using it makes the commit show up as the bot in the GitHub UI, attributable, with a verified GPG signature provided by GitHub's auto-signing. (Don't use a custom email or you lose the verified-signature badge.)
+
+**If branch protection ever lands on `master` blocking direct pushes:**
+1. **Preferred:** create a GitHub App with `contents: write`, install it on this repo, store its app ID + private key as secrets, exchange for an installation token in the workflow (`tibdex/github-app-token@v2` or the official `actions/create-github-app-token@v2`), pass that token as the GITHUB_TOKEN equivalent. Add the App to the protection-rule bypass list.
+2. **Fallback:** create a PAT (`contents: write` repo scope), store as `RELEASE_PAT`, pass as the action's `token:` input. Add the PAT-owning user to the protection-rule bypass list. Lower-effort, but PATs are tied to one human and the workflow loses the bypass when that human leaves.
+
+We do **not** need this in v1.1 (no branch protection on `master` is documented in current state). Track as a v1.2 contingency.
+
+### E. Bundle Size Gate Reuse
+
+The existing `npm run check:size` (in `scripts/check-bundle-size.cjs`) runs after `npm run build` and asserts ≤ 250 KB gzipped. The publish workflow MUST run this gate **before** the Marketplace POST. No new tooling — copy the step verbatim from `.github/workflows/ci.yml`.
+
+### F. Workflow-Level Concurrency
+
+```yaml
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false   # do NOT cancel an in-flight publish
+```
+
+Note `cancel-in-progress: false` — different from CI's `true`. If two pushes land 10 seconds apart, we want the first publish to finish (otherwise we'd publish v1.0.8 and abort v1.0.9, leaving an orphaned bump commit). The second run queues, sees the bump commit from the first via `[skip ci]`, and either no-ops or runs cleanly.
 
 ---
 
-## Alternatives Considered (Summary)
+## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Extension SDK | `azure-devops-extension-sdk` v4 | `vss-web-extension-sdk` v5 | Legacy AMD/RequireJS; Microsoft samples have moved on |
-| UI library | `azure-devops-ui` 2.x | Fluent UI v9 | Visual mismatch with ADO chrome |
-| UI library | `azure-devops-ui` 2.x | Fluent UI v8 | Maintenance mode; same visual issue |
-| UI framework | React 18 | Angular 19 (org standard) | `azure-devops-ui` is React-only; no Angular path to native ADO look |
-| Bundler | webpack 5 | vite | Less established for multi-HTML-entry ADO extensions |
-| Bundler | webpack 5 | esbuild raw | Missing HTML/SCSS plugins |
-| Test runner | vitest | jest | More config for ESM/TS; no advantage for pure-logic tests |
-| Packaging | `tfx-cli` | (none — no real alternative) | Microsoft's only `.vsix` packager |
+| Runner | `ubuntu-latest` | `windows-latest` | 2× CI minutes on private repos; Windows-only `spawnSync({shell})` quirks already burned us once in `publish-cezari.cjs`; `tfx-cli` is fully supported on Linux |
+| `actions/checkout` major | `v5` | `v4` | Old; runner Node 20 (vs v5's Node 24); no security backports prioritized |
+| `actions/checkout` major | `v5` | `v6` | Stable but newer; no v6-only feature needed; risk surface for a single-purpose milestone |
+| `actions/setup-node` major | `v4` | `v6` | v6 has a documented breaking change in cache defaults; CI already runs `v4`, drift = lower cache hits |
+| Commit-back action | `git-auto-commit-action@v6` | `EndBug/add-and-commit@v9` | Equivalent feature set; less battle-tested in our exact shape; smaller community |
+| Commit-back action | `git-auto-commit-action@v6` | Inline `git commit + git push` shell | Works fine, but redoes the action's identity-config + clean-tree-skip logic in 15 lines of workflow YAML for marginal control. Pick the action; document the shell fallback. |
+| Bump tool | `npm version patch` + 15-line Node sync script | `googleapis/release-please-action` | Adds a release-PR workflow; introduces CHANGELOG generation we don't have a policy for; mismatched to "every merge ships" semantics |
+| Bump tool | `npm version patch` | `phips28/gh-action-bump-version` | Drives bumps from commit-message keywords (`#major`, `#minor`); we want strict patch-on-merge, not a per-commit policy |
+| Bump tool | `npm version patch` | `semantic-release` | Conventional-commits-driven; introduces a new bump policy the milestone hasn't scoped |
+| tfx install | Local devDep + `npx tfx` | `npm install -g tfx-cli` | Bypasses lockfile; not cached by `setup-node` |
+| tfx install | Local devDep + `npx tfx` | `npx --yes tfx-cli@0.23.1` | Re-resolves per call; cold-start cost; bypasses lockfile |
+| tfx install | Local devDep + `npx tfx` | Microsoft `TfxInstaller@5` | Azure Pipelines task — not GH Actions; doesn't apply |
+| Auth | Marketplace PAT in GH secret | Microsoft Entra workload identity / OIDC | Available for Azure Pipelines (federated service connection); GH Actions OIDC → Marketplace path is not documented as supported by tfx-cli; defer to v1.2+ |
+| Auth | `--token` CLI arg | `AZURE_DEVOPS_EXT_PAT` env | That env var is for `az devops`, not `tfx-cli` |
+| Tag push | Same job, after publish | Separate "release" workflow on tag | We don't act on tags; one workflow keeps the success-condition single |
+| Token for commit-back | `GITHUB_TOKEN` + `permissions: contents: write` | PAT in `RELEASE_PAT` secret | PAT-owner attribution, harder to rotate, not needed without branch protection |
 
 ---
 
-## Installation (Phase 1 Bootstrap)
+## What NOT to Add
 
-```bash
-# Core runtime + SDK
-npm install \
-  react@^18.3.1 \
-  react-dom@^18.3.1 \
-  azure-devops-extension-sdk@^4 \
-  azure-devops-extension-api@^4 \
-  azure-devops-ui@^2
-
-# Build / dev tooling
-npm install -D \
-  typescript@^5.6 \
-  @types/react@^18.3 \
-  @types/react-dom@^18.3 \
-  webpack@^5 \
-  webpack-cli@^5 \
-  ts-loader@^9 \
-  sass-loader@^16 sass@^1.79 \
-  css-loader@^7 \
-  style-loader@^4 \
-  html-webpack-plugin@^5 \
-  copy-webpack-plugin@^12
-
-# Test
-npm install -D vitest@^2 @vitest/coverage-v8@^2
-
-# Packaging
-npm install -D tfx-cli@^0.21
-```
-
-**Phase 1 verification step (mandatory):** Before committing this `package.json`, run
-
-```bash
-npm view azure-devops-extension-sdk version
-npm view azure-devops-extension-api version
-npm view azure-devops-ui version
-npm view tfx-cli version
-```
-
-and adjust the floors above if any are behind. This compensates for the verification gap noted at the top.
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `actions/cache` as a separate step | `setup-node@v4` with `cache: 'npm'` already does this and is the documented path; double-caching can produce stale-cache bugs | Trust `setup-node`'s cache |
+| `--rev-version` flag on `tfx extension publish` | Bumps `vss-extension.json` only, not `package.json`; runs after the publish flow has started, so commit-back-failure can't abort the Marketplace mutation | Pre-bump both files in the workflow before the publish step |
+| `release-please-action` / `semantic-release` / `changesets` | Single package + "every merge = patch" policy makes these 10× the moving parts; they assume Conventional Commits or release-PR review gates we don't have | 4-line `run:` block: `npm version patch --no-git-tag-version` + Node sync script |
+| `EndBug/add-and-commit`, `phips28/gh-action-bump-version` | Either the same shape as our pick (`git-auto-commit-action`) or driven by a commit-message bump policy we haven't scoped | `stefanzweifel/git-auto-commit-action@v6` (or inline shell) |
+| `windows-latest` runner | 2× minute cost; `tfx-cli` Windows-`spawnSync({shell})` quirk already worked around once | `ubuntu-latest` |
+| Slack / Teams / email notifications | Out-of-scope per milestone goals ("no notification surface") | GitHub's built-in workflow-failure email to the repo owner is sufficient |
+| Auto-retry on publish failure | Out-of-scope per milestone goals ("fail-fast on errors with manual re-run") | The workflow fails red; humans re-run from the GH Actions UI |
+| Microsoft Entra / OIDC publishing path | Documented for Azure Pipelines (federated service connection); GH Actions story is undocumented for `tfx extension publish`; would extend the v1.1 milestone scope significantly | Marketplace PAT in GH secret. Track Entra/OIDC for v1.2+ |
+| `actions/checkout@v6` | No v6-only feature needed; pinning v5 narrows risk surface | `actions/checkout@v5` |
+| `actions/setup-node@v6` | Breaking change in cache defaults; CI already on v4 (cache-key drift) | `actions/setup-node@v4` |
+| GitHub App installation tokens / `RELEASE_PAT` | Not needed — `master` has no branch protection blocking bot pushes today | `GITHUB_TOKEN` + `permissions: contents: write` |
 
 ---
 
-## Sources & Confidence Notes
+## Installation Notes
 
-| Claim | Source class | Confidence |
-|-------|--------------|------------|
-| Use `azure-devops-extension-sdk` v4 over `vss-web-extension-sdk` v5 | Microsoft's `microsoft/azure-devops-extension-sample` repo (training data) | HIGH |
-| `azure-devops-ui` is React-only and not actively developed | GitHub repo issue activity (training data) | HIGH |
-| Webpack 5 is the de facto bundler for ADO extensions | Microsoft sample repo (training data) | HIGH |
-| `vso.work_write` covers field write + comment posting | ADO REST API scopes documentation (training data) | HIGH |
-| Exact npm version numbers in tables | npm registry — **NOT re-verified** in this run | MEDIUM (treat as floors) |
-| Marketplace publisher flow steps | Marketplace docs (training data, UI may have changed) | MEDIUM |
-| `PublishAzureDevOpsExtension@5` task version | `ms-devlabs` extension catalog | MEDIUM (could be @4 or @5) |
-| ADO supports only evergreen browsers (no polyfills) | ADO system requirements page (training data) | HIGH |
+### What changes in the repo
 
-**Verification budget for Phase 1:** ~15 minutes of `npm view` calls + 5 minutes confirming the Marketplace task version closes the MEDIUM-confidence gaps. Do this before locking versions.
+**No new npm dependencies.** Everything required is already in `devDependencies`:
+- `tfx-cli@0.23.1` ✓
+- `webpack@^5.97.0` ✓
+- `vitest@^2.1.0` ✓
+
+**One new file:** `.github/workflows/publish.yml` (created in the milestone, not by this research).
+
+**One file modified:** `package.json` — remove the `publish:cezari` script per milestone goals (`scripts/publish-cezari.cjs` itself can either be deleted or kept as a local-fallback for emergencies; that's a milestone decision, not a stack decision).
+
+**One repo secret added** (manual, by repo owner):
+1. https://github.com/tsmshvenieradze/StoryPointExtension/settings/secrets/actions → New repository secret
+2. Name: `TFX_PAT`
+3. Value: PAT created at https://dev.azure.com/<your-org>/_usersSettings/tokens with scope = `Marketplace (publish)` and org = "All accessible organizations"
+
+### What changes on Azure DevOps side
+
+Just the PAT creation. No publisher work needed (publisher `TsezariMshvenieradzeTfsAiReviewTask` is already verified and the listing is live).
+
+### Validation gates (existing CI, reused before publish)
+
+| Gate | Command | Source |
+|------|---------|--------|
+| Typecheck | `npm run typecheck` | Existing CI |
+| Unit tests + 100% coverage on `src/calc/` + `src/audit/` | `npm test -- --run` | Existing CI |
+| Production build | `npm run build` | Existing CI |
+| Bundle size ≤ 250 KB gzipped | `npm run check:size` | Existing CI; `scripts/check-bundle-size.cjs` |
+
+The publish workflow runs all four before any version bump or publish step. If any fails, no commit-back, no tag, no Marketplace POST.
+
+---
+
+## Version Compatibility
+
+| Combination | Notes |
+|-------------|-------|
+| `tfx-cli@0.23.1` + Node 20.x | OK — `tfx-cli` engines `>=20.0.0`; existing CI runs Node 20 |
+| `tfx-cli@0.23.1` + Node 22.x | OK in practice — npm registry shows no engines constraint above 20; but unverified for our use, so keep CI on Node 20 to match local dev (`engines.node: >=20.10.0` in `package.json`) |
+| `actions/checkout@v5` + `actions/setup-node@v4` | Verified compatible (existing CI uses both shapes) |
+| `actions/checkout@v5` + `git-auto-commit-action@v6` | Verified — `git-auto-commit-action@v7.0.0` release notes call out checkout v5 as compatible; v6 is older and worked with checkout v4/v5 |
+| `git-auto-commit-action@v6` runtime | Node 20 internally — fine on any current GH-hosted runner |
+| GitHub-hosted `ubuntu-latest` (May 2026) | Ubuntu 24.04 + Node preinstalled (overridden by `setup-node`); runner v2.327.1+ (well past `checkout@v5`'s floor) |
+
+---
+
+## Security Notes
+
+- **PAT exposure in logs:** GitHub Actions auto-redacts secret values from job logs. The `--token "${{ secrets.TFX_PAT }}"` form is safe. Do not `echo` the secret. Do not `set -x` in the publish step.
+- **PAT scope minimization:** `Marketplace (publish)` only. No `Marketplace (manage)`. No work-tracking scopes. The PAT cannot read code, work items, or repo data.
+- **PAT rotation:** Set 1-year expiry. Document the rotation procedure in `.planning/REQUIREMENTS.md`. A v1.x patch milestone (whichever comes ~10 months out) should rotate proactively.
+- **Bot identity for commits:** Use the `github-actions[bot]` identity (`41898282+github-actions[bot]@users.noreply.github.com`). Commits made by this identity get GitHub's verified-signature badge automatically — provenance + tamper evidence with zero crypto setup on our side.
+- **`[skip ci]` token in commit message:** Belt-and-suspenders against an infinite CI loop. `GITHUB_TOKEN`-driven pushes already don't re-trigger workflows in the same repo, but a future migration to a PAT or App token would re-enable triggering. The `[skip ci]` token defends both today and future.
+- **`master` branch protection:** Currently absent. If added, see Section D fallback (App or PAT, plus bypass list). Note explicitly in v1.1 REQUIREMENTS that adding branch protection requires re-evaluating the publish-token strategy.
+
+---
+
+## Sources & Confidence
+
+| Claim | Source | Confidence |
+|-------|--------|------------|
+| `tfx-cli` latest is 0.23.1 (2026-01-07) | `npm view tfx-cli time --json` (live, 2026-05-04) | HIGH |
+| `tfx-cli` engines `node >=20.0.0` | `npm view tfx-cli engines` (live) | HIGH |
+| `actions/checkout` latest is v6.0.0 (Nov 2025); v5.0.0 (Aug 2025) is the "Node 24 / runner v2.327.1" line | GitHub Releases API live response | HIGH |
+| `actions/setup-node` latest is v6.4.0 (Apr 2026); v6.0.0 (Oct 2025) introduced cache-default breaking change | GitHub Releases API live + v6.0.0 release notes | HIGH |
+| `actions/cache` latest is v5.0.5 (Apr 2026) | GitHub Releases API live | HIGH |
+| `stefanzweifel/git-auto-commit-action` v7.1.0 (Dec 2025); v6.0.1 stable (Jun 2025) | GitHub Releases API live + v7.0.0 changelog | HIGH |
+| Marketplace PAT must use scope `Marketplace (publish)` and org "All accessible organizations" | Microsoft Learn — [Publish from the command line](https://learn.microsoft.com/en-us/azure/devops/extend/publish/command-line?view=azure-devops) | HIGH |
+| Marketplace publishing accepts non-global PATs with `Marketplace (publish)` scope (post-July 2025) | Azure DevOps Blog — [Issue with extension publishing (resolved)](https://devblogs.microsoft.com/devops/publishing-extensions-to-marketplace-issue-resolved/) | HIGH |
+| Global PAT retirement Mar 15 → Dec 1, 2026 | Azure DevOps Blog — [Retirement of Global Personal Access Tokens](https://devblogs.microsoft.com/devops/retirement-of-global-personal-access-tokens-in-azure-devops/) | HIGH |
+| `GITHUB_TOKEN`-driven pushes do not re-trigger workflows on the same repo | GitHub Docs — [Authenticating with GITHUB_TOKEN](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token) | HIGH |
+| `[skip ci]` token suppresses `push:`/`pull_request:` triggers | GitHub Changelog — [2021-02-08 skip ci](https://github.blog/changelog/2021-02-08-github-actions-skip-pull-request-and-push-workflows-with-skip-ci/) | HIGH |
+| `github-actions[bot]` user ID `41898282` for verified-signature commits | GitHub Docs (community-canonical pattern) | HIGH |
+| `tfx --rev-version` only updates `vss-extension.json`, not package.json; not aware of build-tasks (microsoft/tfs-cli #262) | microsoft/tfs-cli docs + issue #262 | HIGH |
+| `--auth-type pat --token <PAT>` is the canonical CLI form | Microsoft Learn (publish from CLI) + existing `scripts/publish-cezari.cjs` | HIGH |
+| `AZURE_DEVOPS_EXT_PAT` is for the Azure CLI (`az devops`), not tfx-cli | Azure CLI docs (cross-checked); tfx-cli doesn't read this env | MEDIUM (negative claim — search returned no tfx-cli source treating it as primary; existing in-repo script also uses `--token` not env) |
+| Publish runner `ubuntu-latest` over `windows-latest` (cost + tfx-cli OS quirks) | GitHub Actions billing docs + repo's existing `scripts/publish-cezari.cjs` Windows-only `shell` workaround | HIGH |
+
+---
+
+*Stack research for: GitHub Actions auto-publish workflow for an Azure DevOps Marketplace extension*
+*Researched: 2026-05-04*
+*Verified: live npm registry + live GitHub Releases API on the research date*

@@ -1,85 +1,99 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: milestone-archived
-stopped_at: "v1.0 milestone archived; ready for /gsd-new-milestone to scope v1.1+"
-last_updated: "2026-05-04T00:00:00.000Z"
-last_activity: "2026-05-04 -- /gsd-complete-milestone v1.0 — archived ROADMAP + REQUIREMENTS + AUDIT to .planning/milestones/v1.0-*.md; ROADMAP.md collapsed; PROJECT.md migrated v1 reqs to Validated; MILESTONES.md created; git tag v1.0 pushed"
+milestone: v1.1
+milestone_name: Auto-Publish CI/CD
+status: executing
+stopped_at: "Phase 6 Wave 1 complete; Wave 2 (06-03) pending live PR merges"
+last_updated: "2026-05-07T00:00:00.000Z"
+last_activity: "2026-05-07 -- Phase 6 CONTEXT.md refined post-Wave-1: D-5 rewritten (binary → best-effort tri-state probe), D-5a added (P7 reads branch-protection-probe-result.md as source of truth, not CONTEXT or workflow step summary), D-5b added (workflow vs developer probe disagreement → developer wins). Anchored to PR #2 / commit 8e1d65f (administration: read is not a valid workflow permissions scope). Wave 2 (06-03) still pending live PR merges. 2026-05-05 -- Phase 6 Wave 1 complete: 06-01 (ci.yml on:-block edit, push: trigger removed) + 06-02 (publish.yml scaffolded, 109 lines, all anti-pattern checks pass). Both worktrees merged. Post-merge gates green: typecheck OK, 398/398 tests pass, build OK, bundle 148.4 KB / 250 KB (101.6 KB headroom). Wave 2 (06-03) is non-autonomous and needs user to push branch + merge two no-op PRs to master."
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-01)
+See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** v1.0 milestone — COMPLETE. Extension live on Visual Studio Marketplace under publisher `TsezariMshvenieradzeTfsAiReviewTask`.
+**Current focus:** v1.1 milestone — Auto-Publish CI/CD. GitHub Actions workflow that ships a new patch to Marketplace on every PR-merge to master. Roadmap created (Phases 6–8); next step `/gsd-plan-phase 6`.
 
 ## Current Position
 
-Milestone: v1.0 — **COMPLETE** (shipped 2026-05-02 v1.0.0; latest 2026-05-04 v1.0.3)
-Phase: 05 (polish-marketplace-publish) — Complete
-Plan: 5 of 5 (all five Phase 5 plans closed; 05-01 MOOT, 05-02 PASS, 05-03 PARTIAL, 05-04 DEFERRED, 05-05 PASS)
-Status: v1.0 shipped public; ready for `/gsd-complete-milestone` (retrospective + v2 milestone planning).
+Phase: 6 — Workflow Scaffold & Pre-flight Gates (Wave 1 complete; Wave 2 pending)
+Plan: 2 of 3 complete (06-01 ✓, 06-02 ✓, 06-03 pending live PR merges)
+Status: Awaiting Wave 2 — user pushes `milestone1.1` branch and merges two no-op PRs to master so 06-03 can verify the trigger plumbing live
+Last activity: 2026-05-07 — Phase 6 CONTEXT.md refined (D-5 → tri-state, D-5a/D-5b added) post-PR #2 Copilot review; Wave 2 (06-03) still pending live PR merges
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
-Progress: [██████████] 100% (19 of 19 plans complete; 6 of 6 phases complete)
+Progress: [██████    ] 67% (2 of 3 plans complete in Phase 6; 0 of 3 phases complete)
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (cumulative across milestones):**
 
-- Total plans completed: 19 (Phase 0..5 fully closed)
-- Phases shipped: 6 (Phase 0 through Phase 5; v1.0 milestone)
-- Total execution time: ~4 days calendar (2026-05-01 through 2026-05-04)
+- Total plans completed: 19 (v1.0 Phase 0..5 fully closed)
+- Phases shipped: 6 (v1.0 Phase 0 through Phase 5)
+- Total execution time: ~4 days calendar (v1.0: 2026-05-01 → 2026-05-04)
 
-**By Phase:**
+**v1.1 milestone (in progress):**
+
+| Phase | Plans | Status | Completed |
+|-------|-------|--------|-----------|
+| 6. Workflow Scaffold & Pre-flight Gates | 2/3 | In progress (Wave 1 complete; Wave 2 pending live verification) | — |
+| 7. Bump, Publish, Tag | 0/0 | Not started — phases not yet planned | — |
+| 8. Cleanup & Runbooks | 0/0 | Not started — phases not yet planned | — |
+
+**v1.0 milestone (closed):**
 
 | Phase | Plans | Status | Completed |
 |-------|-------|--------|-----------|
 | 0. Bootstrap & Prerequisites | 1/1 | Complete | 2026-05-01 |
 | 1. Calc Engine & Audit Parser | 2/2 | Complete | 2026-05-01 |
 | 2. Manifest Shell & SDK Integration | 1/1 | Complete | 2026-05-02 |
-| 3. Modal UI & Read Path | 4/4 | Complete | 2026-05-02 |
-| 4. Write Path & Edge Cases | 6/6 | Complete | 2026-05-02 |
-| 5. Polish & Marketplace Publish | 5/5 | Complete (PARTIAL PASS — see `05-VERIFICATION.md`) | 2026-05-04 |
+| 3. Modal UI & Read Path | 4/4 | Complete (PARTIAL PASS) | 2026-05-02 |
+| 4. Write Path & Edge Cases | 6/6 | Complete (PARTIAL PASS) | 2026-05-02 |
+| 5. Polish & Marketplace Publish | 5/5 | Complete (PARTIAL PASS) | 2026-05-04 |
 
 **Recent Trend:**
 
-- Phase 5 closed via 5 plans: 05-01 MOOT (publisher gate bypassed by publisher swap), 05-02 PASS (CI + bundle gate + Windows publish fix), 05-03 PARTIAL (listing assets — screenshots deferred to v1.0.1+), 05-04 DEFERRED (cross-process smoke deferred to v1.0.1+), 05-05 PASS (public publish v1.0.0 + 3 patch releases through v1.0.3).
-- Phase 5 verdict: **PARTIAL PASS** per `.planning/phases/05-polish-marketplace-publish/05-VERIFICATION.md`. Shipped public; carry-overs (screenshots, cross-process smoke, old-publisher cleanup) tracked for v1.0.1+ work.
-- v1.0.x patch sequence after 1.0.0 ship: v1.0.1 (`6592590`) icon refresh, v1.0.2 (`06f1ed0`) modal-bg fix, v1.0.3 (`311e90d`) Marketplace privacy gate.
-- Bundle: 146.8 KB / 250 KB gzipped (103.2 KB headroom). CI green throughout.
+- v1.0 milestone closed 2026-05-04. v1.0 carry-overs (screenshots, cross-process smoke, APPLY-03 wire-format fix) are explicitly OUT OF SCOPE for v1.1.
+- v1.1 bootstrapped 2026-05-05: questioning → research (4 sub-agents) → REQUIREMENTS.md (38 reqs across 8 categories) → ROADMAP.md (3 phases mapping all 38).
+- Bundle: 147.9 KB / 250 KB gzipped. CI green at v1.0.7.
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table. Phase-5-specific decisions captured in `.planning/phases/05-polish-marketplace-publish/05-CONTEXT.md` (D-1 through D-11). Phase 5 deviations from plan documented in `.planning/phases/05-polish-marketplace-publish/05-VERIFICATION.md`.
+Decisions are logged in PROJECT.md Key Decisions table. v1.1 milestone-scope decisions are forming inside research artifacts at `.planning/research/{SUMMARY,STACK,FEATURES,ARCHITECTURE,PITFALLS}.md`; phase-level CONTEXT.md files will distill them per phase during plan-phase.
 
-Notable Phase 5 decisions:
+Already-locked v1.1 decisions (from research synthesis):
 
-- Phase 5 publisher swap: original `TsezariMshvenieradzeExtensions` abandoned (server-side stuck private state); shipped under `TsezariMshvenieradzeTfsAiReviewTask` instead. Plan 05-01 verification gate became MOOT.
-- Phase 5 D-5 / D-7: cross-process smoke (Agile + CMMI) and Contributor non-admin test deliberately deferred for speed-to-ship; risk classified as low (FieldResolver code path 100% unit-tested).
-- Phase 5 v1.0.0 ship excluded screenshots from manifest `screenshots[]` to unblock the public publish; carried over to v1.0.1+.
-- Phase 5 post-publish patches: v1.0.1 icon, v1.0.2 modal-bg, v1.0.3 privacy URL — each shipped atomically with its own commit and manifest version walk.
+- **Two-workflow split:** existing `ci.yml` becomes PR-only (drop `push: [master]`); new `publish.yml` triggers on `push: [master]` + `workflow_dispatch`. Defense-in-depth: a PR run physically cannot reach the publish step.
+- **Single sequential job in publish.yml** (~13 steps): checkout → setup-node → npm ci → typecheck → test → build → check:size → bump (in-memory) → tfx create → upload-artifact → publish → commit-back → tag.
+- **Option B state-flow:** bump in-memory, publish FIRST, commit + tag LAST. Marketplace less reliable than git push → put the unreliable side first; failure of publish leaves master untouched (self-healing).
+- **Auth model:** Marketplace PAT scope `Marketplace (publish)` only, "All accessible orgs", 1-year lifespan, stored as repo secret `TFX_PAT` (matches existing `publish-cezari.cjs` env var name). Commit-back uses default `GITHUB_TOKEN` + `permissions: contents: write` (no PAT/App while master is unprotected).
+- **Loop-guard triple defense:** `GITHUB_TOKEN` anti-loop guarantee + `[skip ci]` token in commit message + actor-guard `if: github.actor != 'github-actions[bot]'` on the publish job.
+- **Concurrency:** `group: publish-master, cancel-in-progress: false` (queue, never cancel mid-publish).
+- **Bump tooling:** `scripts/bump-version.mjs` (ESM, ~30 lines, atomic two-file write of `package.json` + `vss-extension.json`). Reject `tfx --rev-version` (manifest-only) and `release-please` / `semantic-release` / `changesets` (assume conventional-commits which v1.1 does not adopt).
+- **Runner:** `ubuntu-latest` (matches existing CI; sidesteps Windows `tfx-cli spawnSync({shell})` quirks burned in `publish-cezari.cjs`).
 
 ### Pending Todos
 
-None. v1.0 milestone closed.
+| Item | Where | When |
+|------|-------|------|
+| Plan 06-03 live verification (negative + positive PR merges) | Phase 6 Wave 2 | Awaiting user-side merges on PR #2 + verification PRs |
+| Re-verify `tfx extension publish --help` flag spelling | Phase 7 plan task | Just-in-time at Phase 7 execution |
 
 ### Blockers/Concerns
 
-None active. v1.0 milestone closed.
+None active.
 
 ### Quick Tasks Completed
 
@@ -88,37 +102,34 @@ None active. v1.0 milestone closed.
 | 260504-cl1 | Programmatic close spike + wire (Cancel + post-Saved auto-close + Esc keydown); 1.0.3 → 1.0.4 | 2026-05-04 | 7b4d00e | [260504-cl1-programmatic-close-spike](./quick/260504-cl1-programmatic-close-spike/) |
 | 260504-uk5 | Close out Phase 5: 3 SUMMARYs (05-01 MOOT, 05-04 DEFERRED, 05-05 PASS), commit 05-VERIFICATION.md, REQUIREMENTS PKG-02..07 [x], STATE rewrite, ROADMAP Phase 5 [x] | 2026-05-04 | 0996b14 | [260504-uk5-close-out-phase-5-write-summarys-for-05-](./quick/260504-uk5-close-out-phase-5-write-summarys-for-05-/) |
 
-v1.0.1+ backlog (carried forward; not blockers):
-
-- **Screenshots** — capture light + dark via DevTools, restore `screenshots[]` in manifest (Plan 05-03 carry-over).
-- **Cross-process smoke** — exercise FieldResolver fallback empirically on Agile (`User Story` → `StoryPoints`) + CMMI (`Requirement` → `Size`) per Plan 05-04 procedure.
-- **Old publisher cleanup** — unpublish / delete stuck private extension on `TsezariMshvenieradzeExtensions` (low-priority housekeeping).
-- **Custom SP field rename support** — some orgs rename `StoryPoints` via process customization; FieldResolver covers standard fields only. Revisit if reported.
-- **Esc-dismissal limitation** — Quick task 260504-cl1 (2026-05-04) revisited Phase 4 D-10 NO-PROGRAMMATIC-CLOSE LOCK, found that Plan 04-01 Probe 3 missed `IGlobalMessagesService.closeDialog()` (service id `ms.vss-tfs-web.tfs-global-messages-service`); v1.0.4 wires it into Cancel + post-Saved auto-close + iframe Escape with try/catch + diagnostic logs (no regression if the call no-ops). Pending user cezari verification before public publish.
-- **Network-failure D-17 scenarios 3/5/7** — offline / Stakeholder license / slow-3G manual scenarios deferred (orchestrator code paths covered by 398/398 unit tests).
-
 ## Deferred Items
 
-v1.0.1+ items (carried from Phase 5 close):
+v1.0.1+ items (carried from v1.0 close — explicitly OUT OF SCOPE for v1.1):
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Listing | Light + dark screenshots in `screenshots[]` | Open (Plan 05-03 carry-over) | 2026-05-02 |
 | Verification | Cross-process Agile + CMMI smoke on cezari | Open (Plan 05-04 deferred) | 2026-05-02 |
 | Housekeeping | Unpublish stuck private extension on `TsezariMshvenieradzeExtensions` publisher | Open (low priority) | 2026-05-02 |
-| UX | Esc-key dismissal of modal | Candidate fix in v1.0.4 (Quick 260504-cl1) — pending cezari verification | Phase 4 (revisited 2026-05-04) |
+| Code | APPLY-03 wire-format mismatch (parse.ts widening or `serialize` strip) | Open (separate code-fix milestone) | Phase 4 (revisited 2026-05-04) |
+| Code | closeProgrammatically defense-in-depth + shared SAVING_DATASET_KEY constant | Open (cross-phase integration) | 2026-05-04 |
+| Code | Strip dead `PermissionWarnBanner` if no probe lands | Open (cross-phase integration) | 2026-05-04 |
+
+v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
+
+| Item | Reason | Source |
+|------|--------|--------|
+| Conventional-commits semver | Patch-only is v1.1 explicit policy | REQUIREMENTS.md / Future |
+| CHANGELOG.md auto-generation | Pair with conventional-commits | REQUIREMENTS.md / Future |
+| PAT-smoke cron (weekly) | First-pass v1.1 ships without it | REQUIREMENTS.md / Future |
+| Branch-protection-aware push (App / RELEASE_PAT) | Not needed while master unprotected | REQUIREMENTS.md / Future |
+| Marketplace-version reconciliation pre-flight | Not needed in fail-fast policy | REQUIREMENTS.md / Future |
+| Bundle size trend on PRs | Hard gate already covers regression | REQUIREMENTS.md / Future |
+| Multi-environment staged promote (private → public) | Single maintainer; manual smoke acceptable | REQUIREMENTS.md / Future |
 
 ## Session Continuity
 
-Last session: 2026-05-04T00:00:00.000Z
-Stopped at: v1.0 milestone archived; ready for /gsd-new-milestone
-Resume file: `.planning/MILESTONES.md` for the v1.0 record + carry-overs. Archive lives at `.planning/milestones/v1.0-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Next workflow: `/gsd-new-milestone` to scope v1.1+ — questioning → research → requirements → roadmap.
-
-v1.0.1+ tech debt (rolled forward to v1.1+ planning):
-- APPLY-03 production wire-format mismatch (parse.ts widening vs orphan stripping)
-- closeProgrammatically defense-in-depth + shared SAVING_DATASET_KEY constant
-- Strip dead PermissionWarnBanner if no probe lands by v1.2
-- Remove or guard dead `publish:cezari` script
-- Phase 5 carry-overs: light + dark screenshots, Contributor non-admin smoke, cross-process Agile + CMMI smoke
-- Old publisher cleanup (TsezariMshvenieradzeExtensions stuck-private)
-- Custom SP field rename support (out-of-scope per CLAUDE.md; revisit if reported)
+Last session: 2026-05-07T00:00:00.000Z
+Stopped at: Phase 6 CONTEXT.md refined post-Wave-1 (D-5 tri-state, D-5a artifact location, D-5b disagreement rule); Wave 2 (06-03) still pending live PR merges
+Resume file: `.planning/phases/06-workflow-scaffold-and-gates/06-CONTEXT.md` (revised D-5 + new D-5a/D-5b) + `.planning/phases/06-workflow-scaffold-and-gates/06-03-PLAN.md` (verification dance — non-autonomous, needs user to merge two no-op PRs)
+Next workflow: user merges the two no-op PRs (chore/p6-verify-negative-case + chore/p6-verify-positive-case) per 06-03-PLAN.md, then `/gsd-execute-phase 6` finishes Plan 06-03 Task 3 (capture branch-protection-probe-result.md per the new D-5a/D-5b shape).

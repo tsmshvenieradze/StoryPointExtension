@@ -1,188 +1,178 @@
-# Project Research Summary
+# Research Summary — v1.1 Auto-Publish CI/CD
 
 **Project:** Story Point Calculator (Azure DevOps Extension)
-**Domain:** Azure DevOps work item web extension — public Visual Studio Marketplace
-**Researched:** 2026-05-01
-**Confidence:** MEDIUM-HIGH (architecture HIGH; stack/features/pitfalls MEDIUM due to no live web access during research)
+**Milestone:** v1.1 — every PR merge to master ships a Marketplace patch automatically
+**Researched:** 2026-05-04 / 05
+**Overall confidence:** HIGH (live npm + GitHub Releases verification on stack; HIGH on flow primitives; MEDIUM on a few `tfx-cli` flag-by-flag specifics)
+**Inputs synthesized:** STACK.md (fbc728a), FEATURES.md (e82bba6), ARCHITECTURE.md (e146309), PITFALLS.md
 
 ---
 
-## Executive Summary
+## TL;DR
 
-This is a single-purpose Azure DevOps work item extension: a toolbar button that opens a modal calculator, accepts three dimension inputs (Complexity, Uncertainty, Effort), computes a Fibonacci story point value via a weighted formula, writes it to the work item's Story Points field, and posts a structured audit comment. The extension ships as a static `.vsix` bundle to the Visual Studio Marketplace — no backend, no infra. The entire runtime consists of sandboxed iframes coordinated through Microsoft's ADO Extension SDK postMessage bridge.
-
-The recommended approach is to build the pure calculation engine first (zero ADO dependencies, fully unit-tested against the existing `sp_calculator.xlsx`), then establish the iframe shell and toolbar contribution early in Phase 1 because the manifest/SDK integration is the single highest-risk step — it must fail fast, not late. All user-facing React UI and ADO bridge work follows once the iframe lifecycle is confirmed. The comment format must be specified and locked in Phase 1 as a wire format, not deferred to polish; choosing the wrong shape now creates a data-migration problem across every install. Research identifies five hard blockers that must not slip past Phase 1: FieldResolver abstraction (CMMI support), sentinel comment format, manifest scope lock, SDK lifecycle correctness, and pre-flight permission checks.
-
-The primary risk is invisible integration failure: the ADO Extension SDK silently does nothing when misconfigured (wrong contribution IDs, missing `await SDK.ready()`, wrong `register()` ID, missing `notifyLoadSucceeded()`). A secondary risk is marketplace-first-publish failure from unverified publisher account, incorrect contribution IDs in the manifest, or scope additions post-publish triggering forced re-consent. Both risks are mitigated by failing fast on integration (step 3 of 10 in the recommended build order) and treating publisher account setup as Phase 0 / Phase 1 work, not a publish-time task.
-
----
-
-## Stack
-
-The ADO extension stack is React-specific and non-negotiable for this type of project. `azure-devops-ui` is React-only with no Angular equivalent that matches ADO chrome — this is the justified divergence from GPIH's Angular 19 org standard. The new SDK pair (`azure-devops-extension-sdk` v4 + `azure-devops-extension-api` v4) is the current Microsoft-recommended path; the legacy `vss-web-extension-sdk` (v5, AMD/RequireJS) must not be used for greenfield projects.
-
-**Core technologies:**
-- `azure-devops-extension-sdk` v4 — host-iframe handshake, service access — only modern SDK with ES module support
-- `azure-devops-extension-api` v4 — typed REST clients (WorkItemTracking, ExtensionData) — eliminates hand-rolled fetch/auth
-- `azure-devops-ui` v2 + React 18 — pixel-identical ADO chrome, theme inheritance — only option for native look
-- webpack 5 — bundler — exact match to Microsoft's official sample repo; multi-HTML-entry support is mature
-- vitest v2 — unit test runner — zero-config TypeScript, ESM-native, correct for pure-function tests
-- `tfx-cli` v0.21+ — `.vsix` packager — Microsoft's only packaging tool
-
-**Version caveat (mandatory Phase 1 gate):** All version numbers are training-data-derived floors. Before writing `package.json`, run `npm view <pkg> version` for `azure-devops-extension-sdk`, `azure-devops-extension-api`, `azure-devops-ui`, and `tfx-cli`.
+- **Add** `.github/workflows/publish.yml` triggered on `push: [master]` + `workflow_dispatch`; **modify** existing `ci.yml` to drop `push: [master]` (PR-only). Two workflows; deliberate split so a PR run physically cannot publish.
+- **Single sequential job** in publish.yml: checkout → setup-node → npm ci → typecheck → test → build → check:size → bump (in-memory) → tfx create → publish → commit-back → tag.
+- **Option B state-flow:** bump files in-memory, publish FIRST, commit + tag LAST. Failure of publish leaves master untouched (self-healing); failure of commit-back leaves Marketplace ahead of repo (rare; recoverable with manual `git tag` + `git push`).
+- **No new npm deps.** All tooling (`tfx-cli@0.23.1`, webpack, vitest) already in devDependencies. New script: `scripts/bump-version.mjs` (~30 lines, ESM, atomic write of both `package.json` + `vss-extension.json`).
+- **Auth:** Marketplace PAT (scope `Marketplace (publish)`, "All accessible orgs", 1-year max) stored as repo secret `TFX_PAT`; commit-back uses default `GITHUB_TOKEN` with `permissions: contents: write` (loop-guard by design + `[skip ci]` belt-and-suspenders).
 
 ---
 
-## Differentiators
+## Stack Additions
 
-The ADO estimation marketplace is dominated by multi-user Planning Poker rooms. No widely-installed extension uses a dimension-weighted formula (Complexity × Uncertainty × Effort → Fibonacci). This formula UX is the genuine moat.
+No new runtime deps. The publish workflow uses only Actions and devDeps that already ship in v1.0.
 
-**Must-have (table stakes):** opens from inside work item form, writes `Microsoft.VSTS.Scheduling.StoryPoints`, Fibonacci output scale, works on User Story/Bug/Task/Feature/Epic, loads in under 2 seconds, confirm-before-overwrite showing "Current: X / New: Y", graceful handling when SP field missing (disable + tooltip), permission-aware disabled state.
+| Component | Pin | Source | Purpose |
+|-----------|-----|--------|---------|
+| `ubuntu-latest` runner | (Ubuntu 24.04 floor as of May 2026) | GitHub-hosted | Match existing `ci.yml`; sidesteps Windows `spawnSync({shell})` quirks already burned in `publish-cezari.cjs` |
+| `actions/checkout` | `@v5` | GitHub | `fetch-depth: 0` (tag visibility); `persist-credentials: true` (default; required for push-back) |
+| `actions/setup-node` | `@v4` (NOT v5/v6) | GitHub | Node 20 LTS + `cache: 'npm'`; matches `ci.yml` exactly to keep cache key identical (warm hits across both workflows). v6 has a breaking cache-default change — defer to a future quality milestone. |
+| `actions/upload-artifact` | `@v4` | GitHub | Upload `.vsix` between create and publish, retention 90d, for post-mortem inspection |
+| `stefanzweifel/git-auto-commit-action` | `@v6` | Marketplace | Commit-back the bumped manifest as `github-actions[bot]` (verified-signature commit). v7 exists but bumps to Node 24 + tightens checkout dep — pin v6. |
+| `tfx-cli` | `0.23.1` (already devDep, do not bump) | npm | `tfx extension create` + `tfx extension publish`; invoked via `npx tfx`, NOT global install |
+| Marketplace PAT | scope `Marketplace (publish)` only, all-orgs, 1-year | aex.dev.azure.com | Stored as repo secret `TFX_PAT` (single canonical name; matches local `publish-cezari.cjs` env var) |
 
-**Differentiators this extension can own:** intermediate value display (W, Raw SP, formula), sentinel audit comment with round-trip parsing, pre-fill from prior comment, single-user async flow (no room required), keyboard-only Tab/Enter navigation, dark-theme parity.
-
-**Defer to v2:** configurable weights, dimensions, level labels, Fibonacci thresholds, Org/Project Settings hubs.
-
----
-
-## Critical Pitfalls
-
-1. **Hardcoded Story Points field reference name (Pitfalls 1, 17)** — CMMI uses `Microsoft.VSTS.Scheduling.Size`. Without `FieldResolver`, v1 breaks on first CMMI customer. Mandatory v1, not v2. Probe type definition at runtime, cache per (project, type), disable button with tooltip if no field found.
-
-2. **Fragile audit comment format (Pitfall 2)** — The naive `SP=5 (C=Hard, U=Medium, E=Easy)` format in PROJECT.md is too fragile. ADO HTML-wraps comment text, users edit comments, NBSP substitution breaks parsing. Wire format: `<!-- sp-calc:v1 {"sp":5,"c":"Hard","u":"Medium","e":"Easy","schemaVersion":1} -->` plus human-readable line. This is a Phase 1 spec decision — wrong shape now = data migration across every install later.
-
-3. **SDK silent failure patterns (Pitfalls 6, 20, 21)** — Wrong contribution IDs, services called before `await SDK.ready()`, wrong registration instance ID, missing `notifyLoadSucceeded()`, double `SDK.init()` all fail silently. Mitigation: single bootstrap function per iframe, fail-fast integration test as step 3 of build order (before any React UI work).
-
-4. **Manifest contribution IDs incorrect in PROJECT.md** — Six errors in the current PROJECT.md Context section use IDs that do not exist in Microsoft's documentation. Using them means the extension will not load. All corrections are listed in the PROJECT.md Corrections section below.
-
-5. **Manifest scope lock before first publish (Pitfall 3)** — Adding or changing scopes post-publish forces re-consent across every install; extensions are auto-disabled until reauthorized. Lock `["vso.work_write"]` as the only scope before first public publish.
+**Reject list:** `windows-latest` (2× cost + Windows quirks); `actions/checkout@v6`, `actions/setup-node@v6` (no v6-only feature needed; cache breaking change in setup-node v6); `release-please`/`semantic-release`/`changesets`/`phips28/gh-action-bump-version` (all assume conventional-commits or release-PR policy this milestone hasn't scoped — patch-on-every-merge is a 4-line `run:` block); `tfx --rev-version` (only mutates `vss-extension.json`, not `package.json`); `--override "{...}"` JSON (shell-quoting fragility); Microsoft Entra OIDC (documented for Azure Pipelines, NOT GH Actions; defer to v1.2+); `actions/cache` standalone (already provided by `setup-node`).
 
 ---
 
-## Architecture Highlights
+## Feature Decomposition
 
-The extension is four sandboxed iframes with no shared memory — coordination is exclusively through the SDK postMessage bridge. Each iframe runs `SDK.init()` independently with its own webpack bundle entry.
+| Table stakes (MUST ship in v1.1) | Differentiators (defer to v1.2+) | Anti-features (NEVER for this extension) |
+|----------------------------------|----------------------------------|------------------------------------------|
+| `push: [master]` trigger + `workflow_dispatch` | Conventional-commit-driven semver (feat/fix/breaking) | GitHub Releases auto-creation (Marketplace listing IS the user-facing release surface) |
+| `paths-ignore: ['**.md', '.planning/**', '.claude/**', 'docs/**']` (skips docs-only commits) | CHANGELOG.md auto-generation | Auto-merge of Dependabot PRs into publish flow |
+| Concurrency `group: publish-master, cancel-in-progress: false` | Slack/Teams/email beyond GH default failure email | Codecov/coverage upload (already 100% via vitest threshold) |
+| Single-job sequential gates: typecheck → test → build → check:size (reuses v1.0 npm scripts verbatim) | Multi-environment private→public staged promote | ESLint/Prettier addition (separate concern from auto-publish) |
+| `scripts/bump-version.mjs` (ESM, ~30 lines) bumps BOTH `package.json` + `vss-extension.json` atomically | Bundle size trend reporting on PRs | E2E/Playwright against live ADO org |
+| `[skip ci]` token in bump-commit message + `if: github.actor != 'github-actions[bot]'` job-level guard | Auto-retry on transient Marketplace 5xx | Rollback automation (Marketplace doesn't support un-publish) |
+| `tfx extension create` → upload artifact → `tfx extension publish --auth-type pat --token ... --no-prompt --no-wait-validation` (two-step pattern) | PAT-smoke cron workflow (weekly) | Pinning runner OS to SHA |
+| Annotated git tag `vX.Y.Z` pushed AFTER successful publish (best-effort, idempotent) | Marketplace-version reconciliation step | Auto-major/minor bump on `BREAKING CHANGE:` footer |
+| Cleanup: remove `publish:cezari` + `publish:public` npm scripts AFTER first green auto-publish | Pre-flight Marketplace-version drift check | Marketplace screenshot regen (carry-over PKG-05; orthogonal milestone) |
+| Operations runbook: PAT rotation, manual emergency publish, what-to-do-when-X-fails | Branch-protection-aware push (App-token / PAT bypass) | Pre-fill APPLY-03 production fix (separate v1.0 carry-over milestone) |
 
-**Manifest contributions (verified IDs):**
+**Reconciliation on `paths-ignore`:** FEATURES says yes; ARCHITECTURE doesn't mention. Keep the ignore filter — `paths-ignore` only suppresses runs when ALL changed files match, so a code+docs PR still ships.
 
-```json
-{
-  "contributions": [
-    {
-      "id": "calc-sp-action",
-      "type": "ms.vss-web.action",
-      "targets": ["ms.vss-work-web.work-item-toolbar-menu"],
-      "properties": { "uri": "dist/toolbar.html", "registeredObjectId": "calc-sp-action" }
-    },
-    {
-      "id": "calc-sp-modal",
-      "type": "ms.vss-web.external-content",
-      "properties": { "uri": "dist/modal.html" }
-    }
-  ]
-}
+**Reconciliation on `[skip ci]`:** FEATURES correctly identifies native support (Feb 2021 changelog). ARCHITECTURE's manual `git log | grep` guard is over-engineered for the `GITHUB_TOKEN` path which already doesn't re-trigger. **Decision: rely on native parsing + actor guard; do NOT implement a manual skip step.**
+
+---
+
+## Architecture Flow
+
+```
+PR merged to master (push event)
+        │
+        ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ publish.yml — single job "publish-and-release"                             │
+│ concurrency: { group: publish-master, cancel-in-progress: false }          │
+│   step  1  actions/checkout@v5    (fetch-depth: 0, persist-credentials)    │
+│   step  2  actions/setup-node@v4  (node 20, cache: npm)                    │
+│   step  3  npm ci                                                          │
+│   step  4  npm run typecheck      ─┐                                       │
+│   step  5  npm test -- --run       │  pre-flight gates                     │
+│   step  6  npm run build           │  (any failure aborts BEFORE bump)     │
+│   step  7  npm run check:size     ─┘                                       │
+│   step  8  node scripts/bump-version.mjs   ← in-memory only, NO commit     │
+│   step  9  npx tfx extension create --output-path dist/                    │
+│   step 10  actions/upload-artifact@v4  (vsix-vX.Y.Z, retention 90d)        │
+│   step 11  npx tfx extension publish --vsix dist/*.vsix \                  │
+│              --auth-type pat --token "$TFX_PAT" \                          │
+│              --no-prompt --no-wait-validation                              │
+│            ◄═══ POINT OF NO RETURN. Above this line: master untouched.     │
+│   step 12  git-auto-commit-action@v6 ("chore(release): vX.Y.Z [skip ci]")  │
+│   step 13  git tag -a vX.Y.Z + git push origin vX.Y.Z (best-effort)        │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Atomicity:** `IWorkItemFormService.setFieldValue()` + `.save()` for field write (not REST PATCH — REST PATCH bypasses form validation and causes revision conflicts while the form is open). Comments via `WorkItemTrackingRestClient.addComment()`. Field write and comment are two separate calls and cannot be atomic.
-
-**Extension Data Service scopes:** Only `Default` (collection-wide) and `User` (per-user) exist. Project-level isolation requires key-prefixing (`sp-config-proj-<projectId>`), not a built-in scope.
-
-**Modal flow:** 3 coordinated iframes — hidden toolbar-action iframe calls `HostPageLayoutService.openCustomDialog('calc-sp-modal', { configuration: { workItemId } })` — modal reads `SDK.getConfiguration().workItemId` synchronously after `SDK.ready()`.
+**Option B rationale:** `tfx --rev-version` is rejected because it only edits `vss-extension.json`, not `package.json`. Our `bump-version.mjs` writes both files to the runner workspace but does NOT commit. If publish fails (network, PAT, 5xx, manifest validation), the runner is destroyed, the workspace dies, and master is still at the prior version — the next push retries cleanly with no orphan bump commit. The asymmetry making B better than A: GitHub push reliability is ~3 nines higher than Marketplace publish reliability, so the unreliable side runs first. The one residual hazard — publish OK, commit-back fails — leaves Marketplace one ahead of repo, recoverable with one manual command (documented in OPERATIONS.md).
 
 ---
 
-## PROJECT.md Corrections Required
+## Pitfalls + Mitigations (top 10, reconciled)
 
-| PROJECT.md says | Correct value |
-|---|---|
-| Contribution type `ms.vss-work-web.work-item-form-toolbar-button` | `ms.vss-web.action` targeting `ms.vss-work-web.work-item-toolbar-menu` |
-| Settings hub target `ms.vss-admin-web.collection-admin-hub` | `ms.vss-web.collection-admin-hub-group` |
-| Settings hub target `ms.vss-admin-web.project-admin-hub` | `ms.vss-web.project-admin-hub-group` |
-| Extension Data Service has project-level scope | No built-in project scope. Project isolation = key prefix `sp-config-proj-<projectId>` |
-| Modal loaded by opening its `uri` directly | Modal must be an `ms.vss-web.external-content` contribution; `openCustomDialog` takes contribution ID |
-| Apply uses REST PATCH to write the field | Use `IWorkItemFormService.setFieldValue()` + `.save()` — REST PATCH while form is open causes conflicts |
+| # | Pitfall | Mitigation | Phase |
+|---|---------|------------|-------|
+| 1 | **CI re-trigger loop** from auto-bump commit | Triple-defense: `GITHUB_TOKEN` for commit-back (anti-loop guard built in) + `[skip ci]` token in commit message + `if: github.actor != 'github-actions[bot]'` job guard | P1 |
+| 2 | **Concurrent merges race the bump** (two PRs merge in <5 min, both compute v1.0.8) | `concurrency: { group: publish-master, cancel-in-progress: false }`. Run B queues until A's commit-back lands; B then re-checks-out at v1.0.8 and ships v1.0.9. Document the "3+ rapid merges fold into one publish" GitHub limitation. | P1 |
+| 3 | **Publish OK but commit-back fails** (Option A would leave Marketplace ahead of master) | Adopt Option B ordering. Recovery for residual hazard: `git push origin master && git tag vX.Y.Z && git push origin vX.Y.Z`. | P2 |
+| 4 | **Marketplace PAT silently expires** | 1-year max lifespan + calendar reminder 7 days before expiry + emergency manual-publish runbook + (optional v1.2) weekly cron PAT-smoke workflow. | P2 / P3 |
+| 5 | **`tfx-cli` flag traps** — missing `--no-prompt` hangs CI 10 min; `--share-with` takes org names not booleans; `--token` rejects `Bearer ` prefix | Lock to a single reviewed shell line: `npx tfx extension publish --vsix dist/*.vsix --auth-type pat --token "$TFX_PAT" --no-prompt --no-wait-validation`. CODEOWNERS-pin the workflow file. | P2 |
+| 6 | **Listing-asset regression** on re-publish (icon, overview, screenshots not auto-preserved if `files[]` drifts) | Pre-publish asset-audit step: `jq` walks `vss-extension.json` for asset paths and asserts each exists on disk. v1.0 baseline (icon + overview, 0 screenshots) must be preserved, NOT fixed in v1.1. | P1 |
+| 7 | **Bundle-bloat gate bypassed** by misconfigured DAG or stray `continue-on-error: true` | Reuse v1.0's `npm run check:size` as a hard step. Lint workflow YAML for any `continue-on-error: true` in gate steps; fail PR review on it. | P1 |
+| 8 | **Test flakiness** tempts retry-band-aid → erodes signal | Hard rule: `vitest run` (no retries). Quarantine-with-7-day-deadline procedure documented in OPERATIONS.md. NO `retry: N` ever. | P1 |
+| 9 | **Over-broad `permissions:`** — default repo setting may be `write-all` | Top-level `permissions: contents: read`; expand at job-level to `contents: write` only on the publish job. No `actions:`/`pull-requests:`/`packages:`/`id-token:` scopes. | P1 |
+| 10 | **Tag push fails after publish** (network blip / tag exists from prior failed run) | Idempotent tag step: skip if tag exists locally or on origin; `continue-on-error: true` on the tag step ONLY (Marketplace + commit are load-bearing; tag is human-audit nice-to-have). | P2 |
 
-Also: Comments REST API is `7.0-preview.3` and has never graduated out of preview — document as accepted preview dependency.
-
----
-
-## Scope Expansions for v1
-
-### 1. FieldResolver (mandatory v1, not v2)
-PROJECT.md defers custom field support to out of scope. Research shows CMMI process uses `Microsoft.VSTS.Scheduling.Size`, not `StoryPoints` — this is a standard Microsoft process, not a customization. Without `FieldResolver`, v1 breaks on first CMMI customer. Implementation: probe type definition, check prioritized list (`StoryPoints` → `Size`), cache per (project, type), disable button with tooltip if absent. Approximately 2 hours of implementation.
-
-### 2. Sentinel comment format (mandatory v1)
-PROJECT.md specifies `SP=5 (C=Hard, U=Medium, E=Easy)`. Research shows this is too fragile for production. Required format:
-```
-<!-- sp-calc:v1 {"sp":5,"c":"Hard","u":"Medium","e":"Easy","schemaVersion":1} -->
-Story Points: 5 (Complexity=Hard, Uncertainty=Medium, Effort=Easy)
-```
-HTML comment block survives ADO renderer (hidden from display, preserved in API response). Users can edit the human-readable line without breaking machine-parseable payload. `schemaVersion` enables v2 dimension additions without breaking v1 comment parsing. Parser must be unit-tested against: HTML-wrapped, mid-comment edits, deleted comments, NBSP, multiple comments (take newest valid), `isDeleted: true` filtering.
+Pitfall 11 (failed publish post-bump) and 12 (branch protection) are subsumed: #11 is solved by Option B (#3 above); #12 is documented as a future contingency in a top-of-file YAML comment, no code in v1.1. Pitfall 13 (legacy script removal) is handled by P3 cleanup AFTER first green publish + runbook capture. Pitfall 7 (`GITHUB_TOKEN` no-trigger) is documentation-only.
 
 ---
 
-## Open Conflicts — Decisions to Make in Phase 1
+## Reconciled Phase Split — RECOMMEND 3 PHASES
 
-### Write Atomicity Ordering: comment-first vs field-first
+The four agents disagreed: STACK proposed 1–2, FEATURES 3, ARCHITECTURE 3, PITFALLS 5. **Recommendation: 3 phases.** PITFALLS' 5-phase split fragments tightly-coupled concerns (workflow scaffold, publish call, tag push) that share state and must be tested end-to-end together. STACK's 1-phase ships everything in one PR but loses the "verify gates work without touching Marketplace" safety net. The 3-phase split aligns FEATURES + ARCHITECTURE and gives a clean ladder of ascending blast radius.
 
-Two well-reasoned positions directly contradict each other:
+### Phase 1 (continued numbering: Phase 6): Workflow scaffold + pre-flight gates + dry-run
+- Modify `.github/workflows/ci.yml`: remove `push: [master]` from triggers (PR-only).
+- Create `.github/workflows/publish.yml` with steps 1–7 only (gates) + a stub final step echoing `would publish vX.Y.Z`.
+- Configure `concurrency`, `permissions: contents: read` at top, `paths-ignore`, actor-guard, `workflow_dispatch`.
+- Verify on a feature-branch PR (ci.yml runs) and a merge-to-master (publish.yml runs gates and stops without publishing).
+- **Prerequisite (NOT a phase task; one-time human action):** create `TFX_PAT` repo secret. Surface as a phase prerequisite, not a phase-2 surprise.
+- **Exit criteria:** end-to-end plumbing works; secret resolves; no Marketplace state changed; bundle gate enforced; pitfalls 1, 2, 6, 7, 8, 9 verified by inspection.
 
-**ARCHITECTURE.md recommends: comment first, then field write.**
-Rationale: A comment without a field write is recoverable — user re-opens modal, parser finds comment, pre-fills dropdowns, user clicks Apply again. A field write without a comment leaves SP set but with no provenance and no pre-fill source. Comment POST (REST) is more likely to fail than the in-memory field set.
+### Phase 2 (Phase 7): Bump + publish + tag (Marketplace state mutation)
+- Add `scripts/bump-version.mjs` (atomic write of `package.json` + `vss-extension.json`, ESM).
+- Add steps 8–13 to publish.yml.
+- Job-level `permissions: contents: write`.
+- First real merge ships v1.0.8 to Marketplace.
+- **Exit criteria:** Marketplace at v1.0.8, master has bump commit + tag, no loop, listing renders correctly per "Looks Done But Isn't" checklist.
 
-**PITFALLS.md (Pitfall 12) recommends: field write first, comment second.**
-Rationale: SP value is the primary outcome; comment is supplementary. "No audit comment" is recoverable — user can re-run. An orphan comment claiming SP=5 when the field write failed "lies" and erodes trust.
-
-The planner phase must decide based on what failure mode is more recoverable for THIS extension's audit comment scheme. Key question: how critical is the audit comment as the pre-fill source? If every lost comment means lost pre-fill context for the next user, comment-first is stronger. If comment failures are rare and the SP value matters more than the trail, field-first wins. This must be decided and documented before the ADO bridge is written.
+### Phase 3 (Phase 8): Cleanup + runbooks
+- Capture working `tfx` invocation in `.planning/runbooks/manual-publish.md` BEFORE deletion.
+- Remove `publish:cezari` and `publish:public` from `package.json`. Optionally archive `scripts/publish-cezari.cjs` to `scripts/.archive/`.
+- Write OPERATIONS.md: PAT rotation procedure, manual rollback note, branch-protection migration paths, what-to-do for each red workflow.
+- `git grep -F 'publish:cezari'` returns 0 hits in non-archive paths.
+- Update PROJECT.md "Validated" with v1.1 milestone summary.
+- **Exit criteria:** legacy path gone; runbooks tested; milestone closeable.
 
 ---
 
-## Verification Gates
+## Critical Decision Points (opinionated)
 
-| Gate | Phase | Action |
-|---|---|---|
-| npm version verification | Phase 0 (before writing package.json) | `npm view` for `azure-devops-extension-sdk`, `azure-devops-extension-api`, `azure-devops-ui`, `tfx-cli` |
-| Marketplace publisher account | Phase 0 (not publish time) | Verify GPIH publisher exists at `marketplace.visualstudio.com/manage`; 24h verification window if missing |
-| Manifest integration test | Phase 1 step 3 (before any React UI work) | Minimal manifest deployed to dev org; button appears; `execute()` fires on click |
-| Sentinel comment round-trip test | Phase 1 (before writing ADO bridge) | `serialize(parse(serialize(input))) === serialize(input)` passes with all edge case inputs |
-| Scope lock confirmation | Before first public publish | Manifest has exactly `["vso.work_write"]`; confirmed against Marketplace install prompt on trial org |
-| Private install smoke test | Before setting `public: true` | Install on fresh trial org as non-admin Contributor; toolbar appears, modal opens, Apply writes field and comment |
+| Decision | Recommendation | Rationale |
+|----------|----------------|-----------|
+| **Bump source of truth** | `vss-extension.json` (mirrored to `package.json`) | Manifest is what Marketplace reads. Git tags are nice-to-have audit. Marketplace API as truth source adds a 5xx-read failure mode for no benefit. |
+| **Bump tooling** | `scripts/bump-version.mjs` (ESM) — NOT `bump-patch.cjs` | ESM aligns with Node 20+ defaults and `engines.node: >=20.10.0`. Atomic write of both files. |
+| **Commit-back token** | Default `GITHUB_TOKEN` + `permissions: contents: write` | No branch protection on master today; loop-guard built in; tag pushes don't need to trigger downstream workflows in v1.1. PAT/App tokens are v1.2+ contingency. |
+| **Publish ordering** | Option B: bump in-memory → publish → commit-back → tag | Marketplace less reliable than git push; failure window of B is ~5–10× smaller than A. |
+| **Concurrency policy** | `group: publish-master, cancel-in-progress: false` (fixed group, no `${{ github.ref }}` dimension) | Only master triggers publish; ref dimension adds nothing. Cancelling in-flight publishes is unsafe (mid-Marketplace mutation). |
+| **`[skip ci]` guard** | Native parsing — DO NOT implement manual `git log` grep step | GitHub Actions parses `[skip ci]` natively since Feb 2021; manual step is redundant. Actor-guard is the one belt-and-suspenders. |
+| **Listing-asset preservation** | Pre-publish `jq`-based asset-audit step in P1 | Cheap insurance against `files[]` drift. Locks current baseline (icon + overview, 0 screenshots — v1.0 PKG-05 carry-over baseline). |
+| **PAT rotation cadence** | 1-year lifespan + calendar reminder + runbook entry | Microsoft caps at 1 year; weekly cron PAT-smoke is v1.2+, NOT v1.1 scope. Manual emergency-publish runbook is the safety net. |
+| **Cleanup timing** | P3, AFTER first green auto-publish AND runbook capture | "Don't delete-and-pray." Soft option: rename to `publish:cezari:legacy` for one cycle if extra caution desired. |
 
 ---
 
-## Recommended Phase Ordering
+## Watch Out For
 
-### Phase 0 — Prerequisites (1-2 days)
-Publisher verification (24h wait time), `npm view` version checks, write atomicity decision, PROJECT.md corrections.
+1. **Marketplace version drift from a manual `publish:cezari` run during the v1.1 dev window** — first auto-publish then 500s with "Version number must increase". Mitigation: announce manual-publish freeze; enforce by P3 deletion.
+2. **`master` becoming branch-protected mid-milestone** — would break commit-back silently. Verify state explicitly in P1 (one `gh api` call); document contingency in YAML comment.
+3. **Two-slot concurrency limitation** — if 3+ PRs merge in <5 min, queued slots get cancelled by latest. All CODE ships in latest run; intermediate VERSIONS get folded. Document as expected, NOT a bug.
+4. **`actions/checkout@v5` requires runner v2.327.1+** — GH-hosted is well past, but flag if any self-hosted runner is added later.
 
-### Phase 1 — Calc Engine + Parser (1-2 days)
-Pure `calcEngine.ts` unit-tested against `sp_calculator.xlsx`. Pure `auditComment.ts` serializer/parser with sentinel format and full edge-case unit test suite. `FieldResolver` stub. Locks wire format before any ADO surface is touched.
+---
 
-### Phase 2 — Manifest Shell + SDK Integration (1-2 days)
-Corrected manifest deployed to dev org. Toolbar button appears. Click fires `execute()`. `openCustomDialog` opens a Hello World modal with confirmed theme inheritance. This is the highest-risk integration point — fail fast here before any React UI work.
+## Open Questions for the User (resolve before plan-phase)
 
-### Phase 3 — Modal UI + Read Path (2-3 days)
-React UI wired to calc engine: 3 dropdowns, intermediate value display (W, Raw SP, formula), overwrite warning. ADO bridge read path: `IWorkItemFormService.getFieldValue()`, comment fetch, pre-fill from prior sentinel comment.
+> Items 1, 3, 4, 5, 6, 7 resolved 2026-05-05 during /gsd-new-milestone questioning. Item 2 resolved 2026-05-05 during /gsd-discuss-phase 6 (branch renamed local-only). Remaining items kept here only for historical traceability.
 
-### Phase 4 — Write Path + Edge Cases (2-3 days)
-`setFieldValue()` + `.save()`. Comment POST. Pre-flight permission check. `FieldResolver` CMMI support. Friendly error messages for all 4xx/412/RuleValidationException. Confirm-overwrite with diff. Disabled state when field absent. Stakeholder and read-only item handling.
-
-### Phase 5 — Polish + Performance + Marketplace Assets (2-3 days)
-Two-bundle architecture (toolbar shim + lazy modal). Tree-shaken `azure-devops-ui` imports. CI bundle size gate (250 KB gzipped). Dark theme verification. Keyboard-only flow. 128x128 icon. Marketplace listing assets. Private install smoke test before `public: true`.
-
-### Phase 6 — v2 Settings (future, separate motion)
-Org Settings hub, Project Settings hub, key-prefix scoping pattern, ETag concurrency, schema-versioned config documents.
-
-### Research Flags
-
-Phases needing deeper research during planning:
-- **Phase 2 (manifest shell):** Cross-check corrected contribution IDs against current `learn.microsoft.com/azure/devops/extend/reference/targets/overview` at implementation time — Marketplace target IDs have changed before.
-- **Phase 4 (write path):** Comments API `7.0-preview.3` — verify not deprecated at implementation time. Verify `IWorkItemFormService.setFieldValue()` return value behavior on current SDK version.
-- **Phase 6 (v2 settings):** EDS scoping and `__etag` semantics — re-verify against current docs before implementation.
-
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (calc engine):** Pure TypeScript with vitest; no ADO surface; well-documented patterns.
-- **Phase 5 (bundle/publishing):** webpack multi-entry, tfx-cli, Marketplace publish flow are stable.
+1. ~~**Branch name fix.** Current `milelstone1.1` (typo).~~ Resolved — renamed to `milestone1.1`.
+2. **`master` branch protection — current state?** No protection rules visible in commit history; one `gh api repos/:owner/:repo/branches/master/protection` call in P1 would confirm.
+3. **Repo secret name.** `TFX_PAT` (matches existing `scripts/publish-cezari.cjs` env var, recommended) or `MARKETPLACE_PAT` (FEATURES-suggested)? **Default: `TFX_PAT`** for zero-WTF parity with local script.
+4. **Precise gate names in workflow YAML.** Recommend: `Typecheck`, `Unit tests`, `Build`, `Bundle size gate`, `Bump version`, `Package vsix`, `Publish to Marketplace`, `Commit version bump`, `Tag release`. Confirm or specify alternatives (matters for status-check pinning if branch protection is added later).
+5. **First-publish smoke strategy.** Skip private `--share-with cezari` smoke and let P2's first run be the smoke (recommended; Option B makes failure recoverable), or do one private smoke first? **Default: skip; first publish IS the smoke.**
+6. **`scripts/publish-cezari.cjs` disposition in P3.** Delete outright or move to `scripts/.archive/`? **Default: archive; keeps grep-discoverable as institutional memory.**
+7. **OPERATIONS.md vs PROJECT.md section.** Standalone file (recommended) or new section under PROJECT.md? **Default: standalone `.planning/OPERATIONS.md`.**
 
 ---
 
@@ -190,32 +180,27 @@ Phases with standard patterns (skip research-phase):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM | Package choices HIGH; version numbers MEDIUM — require `npm view` in Phase 0 |
-| Features | MEDIUM-HIGH | Table stakes and differentiators HIGH; specific Marketplace install counts LOW |
-| Architecture | HIGH | Contribution IDs, SDK lifecycle, service names verified against Microsoft Learn docs (2026-04) |
-| Pitfalls | MEDIUM-HIGH | SDK/manifest pitfalls HIGH; Marketplace edge cases and tenant field variation MEDIUM |
+| Stack | HIGH | npm registry + GH Releases API verified live on research date |
+| Features | HIGH | Flow primitives well-documented; `[skip ci]` + concurrency + `paths-ignore` confirmed via official changelog/docs |
+| Architecture | HIGH on structural decisions, MEDIUM on specific `tfx-cli` flag names (verify at execution by `npx tfx extension publish --help`) |
+| Pitfalls | HIGH on flow primitives, MEDIUM on `tfx-cli` flag-by-flag and listing-asset re-publish behavior |
 
-**Overall confidence:** MEDIUM-HIGH
-
-### Gaps to Address
-
-- Version numbers are training-data floors — Phase 0 `npm view` mandatory
-- Publisher account status unknown — confirm before Phase 1 begins
-- CMMI process FieldResolver behavior should be validated against a real CMMI org before GA
-- Comments API `7.0-preview.3` — verify not deprecated at implementation time
-- Sentinel comment behavior in markdown-mode ADO orgs — test both markdown-on and markdown-off before publish
-- Write atomicity ordering — unresolved conflict; must be decided in Phase 0
+**Overall confidence:** HIGH for proceeding to roadmap. MEDIUM areas verifiable in <5 minutes during P2 execution.
 
 ---
 
 ## Sources
 
-**Primary (HIGH):** Microsoft Learn — Extend the work item form, Extensibility Points reference, Extension Manifest reference, Data and Setting Storage, SDK JS API reference, IWorkItemFormService reference, Comments REST API, CommonServiceIds reference (all verified 2026-04). `microsoft/azure-devops-extension-sample` GitHub repo.
+**Primary (HIGH):**
+- npm registry (live `npm view` for tfx-cli, action versions) — research date 2026-05-04/05
+- GitHub Releases API (live) — `actions/checkout`, `actions/setup-node`, `git-auto-commit-action`
+- Microsoft Learn — Publish from CLI: https://learn.microsoft.com/en-us/azure/devops/extend/publish/command-line
+- microsoft/tfs-cli — extensions.md
+- GitHub Docs — GITHUB_TOKEN security (anti-loop guarantee)
+- GitHub Changelog — `[skip ci]` (2021-02-08, native parsing)
+- GitHub Docs — Concurrency (group + cancel-in-progress)
 
-**Secondary (MEDIUM):** Visual Studio Marketplace extension survey (training data); npm registry version floors (training data, not re-verified); Marketplace publisher portal docs.
-
-**Tertiary (LOW):** Specific install counts and star ratings for competing extensions — require re-verification at `marketplace.visualstudio.com` before publish.
-
----
-*Research completed: 2026-05-01*
-*Ready for roadmap: yes*
+**Secondary (MEDIUM):**
+- Azure DevOps Blog — PAT publishing issue resolved (Jul 2025)
+- Azure DevOps Blog — Global PAT retirement (2026-12-01 deadline)
+- microsoft/tfs-cli #455 (PAT caching), #262 (`--rev-version` semantics)

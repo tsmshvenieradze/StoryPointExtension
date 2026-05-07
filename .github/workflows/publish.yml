@@ -1,0 +1,123 @@
+name: Publish
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - '.planning/**'
+      - '.claude/**'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: publish-master
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Marketplace (dry-run in P6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test -- --run
+      - name: Build (production)
+        run: npm run build
+      - name: Bundle size gate (≤ 250 KB gzipped)
+        run: npm run check:size
+
+      - name: Verify all manifest assets exist on disk
+        run: |
+          set -euo pipefail
+          MISSING=0
+          while IFS= read -r path; do
+            if [ ! -e "$path" ]; then
+              echo "MISSING: $path"
+              MISSING=1
+            else
+              echo "  ok: $path"
+            fi
+          done < <(jq -r '.files[].path' vss-extension.json)
+          if [ "$MISSING" -ne 0 ]; then
+            echo ""
+            echo "FAIL: vss-extension.json files[] declares assets missing on disk."
+            exit 1
+          fi
+
+      - name: Verify TFX_PAT secret resolves
+        run: |
+          echo "tfx-pat-present=${{ secrets.TFX_PAT != '' }}"
+
+      - name: Probe master branch protection
+        id: protection
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          BODY=$(gh api repos/${{ github.repository }}/branches/master/protection 2>&1)
+          STATUS=$?
+          set -e
+
+          # Classify the response. The branches/protection endpoint requires
+          # repo-admin scope, which GITHUB_TOKEN cannot be granted via the
+          # workflow `permissions:` block (no `administration` scope exists
+          # there). So this probe is best-effort: it gives a definitive
+          # answer when the token is admin-scoped (e.g., via a custom PAT
+          # if ever added) or when the response shape is unambiguous; it
+          # honestly reports "unknown" when the token simply lacks scope.
+          # 06-03 Task 3 captures the developer-side probe as the durable
+          # source-of-truth artifact.
+          if [ "$STATUS" -eq 0 ]; then
+            STATE=protected
+            HEADLINE='master is **PROTECTED**. P7 commit-back must use App or PAT bypass.'
+            LOG_PREFIX='Master IS branch-protected:'
+          elif echo "$BODY" | grep -qi 'Branch not protected'; then
+            STATE=not_protected
+            HEADLINE='master is **NOT protected**. P7 commit-back can use `GITHUB_TOKEN`.'
+            LOG_PREFIX='Master is NOT branch-protected (HTTP 404):'
+          else
+            STATE=unknown
+            HEADLINE='Branch-protection state could not be determined (token permission or transient error). P7 must re-probe with an admin-scoped token before deciding commit-back strategy.'
+            LOG_PREFIX="::warning::Branch-protection probe inconclusive (gh api exit $STATUS, body did not match 'Branch not protected'):"
+          fi
+
+          echo "protected=${STATE}" >> "$GITHUB_OUTPUT"
+          echo "$LOG_PREFIX"
+          echo "$BODY"
+          {
+            echo "## Branch protection probe"
+            echo "$HEADLINE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry-run — compute next version (DOES NOT publish)
+        id: dryrun
+        run: |
+          set -euo pipefail
+          CURRENT=$(node -p "require('./package.json').version")
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "would publish v${NEXT}"
+          echo "next-version=v${NEXT}" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Dry-run result"
+            echo "Current: \`${CURRENT}\`"
+            echo "Would publish: \`v${NEXT}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
