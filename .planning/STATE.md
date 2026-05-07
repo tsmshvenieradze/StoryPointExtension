@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: Auto-Publish CI/CD
 status: executing
 stopped_at: "Phase 6 Wave 1 complete; Wave 2 (06-03) pending live PR merges"
-last_updated: "2026-05-05T00:00:00.000Z"
-last_activity: "2026-05-05 -- Phase 6 Wave 1 complete: 06-01 (ci.yml on:-block edit, push: trigger removed) + 06-02 (publish.yml scaffolded, 109 lines, all anti-pattern checks pass). Both worktrees merged. Post-merge gates green: typecheck OK, 398/398 tests pass, build OK, bundle 148.4 KB / 250 KB (101.6 KB headroom). Wave 2 (06-03) is non-autonomous and needs user to push branch + merge two no-op PRs to master."
+last_updated: "2026-05-07T00:00:00.000Z"
+last_activity: "2026-05-07 -- Phase 6 CONTEXT.md refined post-Wave-1: D-5 rewritten (binary → best-effort tri-state probe), D-5a added (P7 reads branch-protection-probe-result.md as source of truth, not CONTEXT or workflow step summary), D-5b added (workflow vs developer probe disagreement → developer wins). Anchored to PR #2 / commit 8e1d65f (administration: read is not a valid workflow permissions scope). Wave 2 (06-03) still pending live PR merges. 2026-05-05 -- Phase 6 Wave 1 complete: 06-01 (ci.yml on:-block edit, push: trigger removed) + 06-02 (publish.yml scaffolded, 109 lines, all anti-pattern checks pass). Both worktrees merged. Post-merge gates green: typecheck OK, 398/398 tests pass, build OK, bundle 148.4 KB / 250 KB (101.6 KB headroom). Wave 2 (06-03) is non-autonomous and needs user to push branch + merge two no-op PRs to master."
 progress:
   total_phases: 3
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 Phase: 6 — Workflow Scaffold & Pre-flight Gates (Wave 1 complete; Wave 2 pending)
 Plan: 2 of 3 complete (06-01 ✓, 06-02 ✓, 06-03 pending live PR merges)
 Status: Awaiting Wave 2 — user pushes `milestone1.1` branch and merges two no-op PRs to master so 06-03 can verify the trigger plumbing live
-Last activity: 2026-05-05 — Wave 1 worktrees merged (06-01 ci.yml on:-block edit, 06-02 publish.yml scaffold); post-merge build/test/typecheck/bundle gates all green
+Last activity: 2026-05-07 — Phase 6 CONTEXT.md refined (D-5 → tri-state, D-5a/D-5b added) post-PR #2 Copilot review; Wave 2 (06-03) still pending live PR merges
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
@@ -129,7 +129,7 @@ v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
 
 ## Session Continuity
 
-Last session: 2026-05-05T00:00:00.000Z
-Stopped at: v1.1 ROADMAP.md created; 3 phases (6/7/8) defined; phases not yet planned
-Resume file: `.planning/ROADMAP.md` (Phase 6 details + Cross-Phase Notes for plan-phase) + `.planning/REQUIREMENTS.md` (Traceability section)
-Next workflow: `/gsd-plan-phase 6` — decompose Phase 6 (Workflow Scaffold & Pre-flight Gates) into plans.
+Last session: 2026-05-07T00:00:00.000Z
+Stopped at: Phase 6 CONTEXT.md refined post-Wave-1 (D-5 tri-state, D-5a artifact location, D-5b disagreement rule); Wave 2 (06-03) still pending live PR merges
+Resume file: `.planning/phases/06-workflow-scaffold-and-gates/06-CONTEXT.md` (revised D-5 + new D-5a/D-5b) + `.planning/phases/06-workflow-scaffold-and-gates/06-03-PLAN.md` (verification dance — non-autonomous, needs user to merge two no-op PRs)
+Next workflow: user merges the two no-op PRs (chore/p6-verify-negative-case + chore/p6-verify-positive-case) per 06-03-PLAN.md, then `/gsd-execute-phase 6` finishes Plan 06-03 Task 3 (capture branch-protection-probe-result.md per the new D-5a/D-5b shape).
