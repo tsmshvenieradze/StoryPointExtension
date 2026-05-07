@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auto-Publish CI/CD
 status: executing
-stopped_at: "Phase 6 Wave 1 complete; Wave 2 (06-03) pending live PR merges"
+stopped_at: "Phase 6 complete (3/3 plans); next /gsd-plan-phase 7"
 last_updated: "2026-05-07T00:00:00.000Z"
-last_activity: "2026-05-07 -- Phase 6 CONTEXT.md refined post-Wave-1: D-5 rewritten (binary → best-effort tri-state probe), D-5a added (P7 reads branch-protection-probe-result.md as source of truth, not CONTEXT or workflow step summary), D-5b added (workflow vs developer probe disagreement → developer wins). Anchored to PR #2 / commit 8e1d65f (administration: read is not a valid workflow permissions scope). Wave 2 (06-03) still pending live PR merges. 2026-05-05 -- Phase 6 Wave 1 complete: 06-01 (ci.yml on:-block edit, push: trigger removed) + 06-02 (publish.yml scaffolded, 109 lines, all anti-pattern checks pass). Both worktrees merged. Post-merge gates green: typecheck OK, 398/398 tests pass, build OK, bundle 148.4 KB / 250 KB (101.6 KB headroom). Wave 2 (06-03) is non-autonomous and needs user to push branch + merge two no-op PRs to master."
+last_activity: "2026-05-07 -- Phase 6 CLOSED. Wave 2 (06-03) verification dance executed live on master: PR #3 (commit db633d5, webpack.config.cjs whitespace) fired Publish #1 green in 47s, dry-run echoed 'Would publish: v1.0.8', Marketplace stayed at v1.0.7 (positive case ✓). PR #4 (commit eb82031, README.md whitespace) fired NEITHER ci.yml NOR publish.yml on the master push (paths-ignore filter ✓ for negative case). Plan order reversed to positive-case-first because GitHub does not trigger workflows on the commit that creates them — PR #2 / 501ebae left publish.yml at zero runs, so a baseline was needed before testing the skip path. branch-protection-probe-result.md captured: master is NOT PROTECTED (gh api 404 verbatim body + Settings UI cross-check, both admin-scoped). Workflow probe correctly returned 'unknown' per tri-state D-5; developer probe wins per D-5b. Earlier 2026-05-07: CONTEXT.md refined post-Wave-1 with D-5 tri-state rewrite + D-5a/D-5b additions. Earlier 2026-05-05: Wave 1 complete (06-01 ci.yml on:-block edit, 06-02 publish.yml scaffold)."
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 
 ## Current Position
 
-Phase: 6 — Workflow Scaffold & Pre-flight Gates (Wave 1 complete; Wave 2 pending)
-Plan: 2 of 3 complete (06-01 ✓, 06-02 ✓, 06-03 pending live PR merges)
-Status: Awaiting Wave 2 — user pushes `milestone1.1` branch and merges two no-op PRs to master so 06-03 can verify the trigger plumbing live
-Last activity: 2026-05-07 — Phase 6 CONTEXT.md refined (D-5 → tri-state, D-5a/D-5b added) post-PR #2 Copilot review; Wave 2 (06-03) still pending live PR merges
+Phase: 6 — Workflow Scaffold & Pre-flight Gates ✓ COMPLETE (3/3 plans, 2026-05-07)
+Plan: 3 of 3 complete (06-01 ✓, 06-02 ✓, 06-03 ✓)
+Status: Phase 6 closed — `publish.yml` live-verified on master (positive + negative cases); branch-protection-probe-result.md captured (NOT PROTECTED) for Phase 7 commit-back design. Next phase: 7 (Bump, Publish, Tag) — needs `/gsd-plan-phase 7`.
+Last activity: 2026-05-07 — Phase 6 closed via Wave 2 live verification dance (PR #3 positive db633d5 / PR #4 negative eb82031); all 6 ROADMAP success criteria met; branch-protection probe = NOT PROTECTED
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
-Progress: [██████    ] 67% (2 of 3 plans complete in Phase 6; 0 of 3 phases complete)
+Progress: [█████████░] 33% (1 of 3 phases complete in v1.1; Phase 6 closed)
 
 ## Performance Metrics
 
@@ -46,7 +46,7 @@ Progress: [██████    ] 67% (2 of 3 plans complete in Phase 6; 0 of 3
 
 | Phase | Plans | Status | Completed |
 |-------|-------|--------|-----------|
-| 6. Workflow Scaffold & Pre-flight Gates | 2/3 | In progress (Wave 1 complete; Wave 2 pending live verification) | — |
+| 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
 | 7. Bump, Publish, Tag | 0/0 | Not started — phases not yet planned | — |
 | 8. Cleanup & Runbooks | 0/0 | Not started — phases not yet planned | — |
 
@@ -88,8 +88,8 @@ Already-locked v1.1 decisions (from research synthesis):
 
 | Item | Where | When |
 |------|-------|------|
-| Plan 06-03 live verification (negative + positive PR merges) | Phase 6 Wave 2 | Awaiting user-side merges on PR #2 + verification PRs |
 | Re-verify `tfx extension publish --help` flag spelling | Phase 7 plan task | Just-in-time at Phase 7 execution |
+| Bump `actions/setup-node` from @v4 to @v5 (Node 20 deprecation warning surfaced in Publish #1) | publish.yml + ci.yml | v1.2+ candidate, or quick task once @v5 stabilizes — non-blocking |
 
 ### Blockers/Concerns
 
@@ -130,6 +130,6 @@ v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
 ## Session Continuity
 
 Last session: 2026-05-07T00:00:00.000Z
-Stopped at: Phase 6 CONTEXT.md refined post-Wave-1 (D-5 tri-state, D-5a artifact location, D-5b disagreement rule); Wave 2 (06-03) still pending live PR merges
-Resume file: `.planning/phases/06-workflow-scaffold-and-gates/06-CONTEXT.md` (revised D-5 + new D-5a/D-5b) + `.planning/phases/06-workflow-scaffold-and-gates/06-03-PLAN.md` (verification dance — non-autonomous, needs user to merge two no-op PRs)
-Next workflow: user merges the two no-op PRs (chore/p6-verify-negative-case + chore/p6-verify-positive-case) per 06-03-PLAN.md, then `/gsd-execute-phase 6` finishes Plan 06-03 Task 3 (capture branch-protection-probe-result.md per the new D-5a/D-5b shape).
+Stopped at: Phase 6 closed (3/3 plans complete); Wave 2 verified live on master (PR #3 positive db633d5 + PR #4 negative eb82031); branch-protection-probe-result.md captured = NOT PROTECTED
+Resume file: `.planning/phases/06-workflow-scaffold-and-gates/06-03-SUMMARY.md` (cross-check of all 6 ROADMAP success criteria) + `.planning/phases/06-workflow-scaffold-and-gates/branch-protection-probe-result.md` (P7 source of truth per CONTEXT D-5a)
+Next workflow: `/gsd-discuss-phase 7` then `/gsd-plan-phase 7` to decompose Phase 7 (Bump, Publish, Tag) into plans. Phase 7 reads branch-protection-probe-result.md and finds NOT PROTECTED, so the commit-back can use default GITHUB_TOKEN with `permissions: contents: write` at job level (no App / RELEASE_PAT needed).
