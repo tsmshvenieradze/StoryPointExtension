@@ -1,7 +1,8 @@
 # Phase 6: Workflow Scaffold & Pre-flight Gates — Context
 
 **Gathered:** 2026-05-05
-**Status:** Ready for research/planning
+**Updated:** 2026-05-07 — Wave 1 retrospective refinements to D-5 (tri-state probe semantics, durable artifact location, probe-disagreement rule). Wave 1 (06-01 + 06-02) shipped; Wave 2 (06-03) pending live PR merges.
+**Status:** Wave 1 complete; Wave 2 pending live verification
 
 <domain>
 ## Phase Boundary
@@ -104,7 +105,17 @@
 
 ### Branch-protection probe
 
-- **D-5: Phase 6 plan includes a `gh api repos/<owner>/<repo>/branches/master/protection` task** that records the result in this CONTEXT.md (or a side note in the phase directory) for Phase 7's planner to consume. Determines whether P7's commit-back can use default `GITHUB_TOKEN` (current assumption — no protection) or must escalate to a GitHub App / `RELEASE_PAT` with bypass.
+- **D-5 (revised 2026-05-07): The branch-protection probe is two-layered — a best-effort workflow probe in publish.yml (for in-flight visibility) and an authoritative developer-side probe in 06-03 Task 3 (the source of truth P7 consumes).**
+  - **Workflow probe (publish.yml step `Probe master branch protection`):** runs `gh api repos/${{ github.repository }}/branches/master/protection` with `GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}`. Outputs a tri-state: `protected` (HTTP 200), `not_protected` (404 with body matching `Branch not protected`), `unknown` (any other non-zero exit — typically 401/403 from token-scope limits). The probe cannot be made definitive at workflow level: the protection endpoint requires repo-admin scope, and `GITHUB_TOKEN` cannot be granted that scope via the workflow `permissions:` block — there is no `administration:` key (verified via IDE diagnostic on PR #2; commit 8e1d65f). The earlier binary `protected` vs `not_protected` shape was a misclassification — it collapsed auth errors into "not protected" and would have let P7 use `GITHUB_TOKEN` against a protected branch.
+  - **Developer probe (06-03 Task 3):** local `gh api` invocation by an admin user, producing `.planning/phases/06-workflow-scaffold-and-gates/branch-protection-probe-result.md` as a durable phase artifact. This is the artifact P7's planner reads.
+  - Determines whether P7's commit-back can use default `GITHUB_TOKEN` (NOT PROTECTED — current assumption) or must escalate to a GitHub App / `RELEASE_PAT` with bypass (PROTECTED).
+
+- **D-5a: P7 reads `branch-protection-probe-result.md` — NOT CONTEXT.md or the workflow step summary alone — as the authoritative source for the commit-back token decision.** The workflow step's `$GITHUB_STEP_SUMMARY` is in-flight visibility for the human watching Actions; the durable artifact is the single source of truth for cross-phase consumption. Reconciles ROADMAP SC #6's older "recorded in CONTEXT" wording: the actual durable record lives in the phase-directory artifact, not embedded in CONTEXT.md.
+  - **Unknown handling:** if the workflow probe outputs `unknown`, P7 ignores it entirely and reads only the developer artifact. The artifact's `**State:**` field is always definitive (PROTECTED or NOT PROTECTED) by Task 3 construction — Task 3 runs `gh api` with admin scope, which cannot return `unknown` for scope reasons.
+
+- **D-5b: If the workflow probe and the developer probe disagree, the developer probe wins. Task 3 records BOTH values, flags the divergence in the artifact, and uses the developer State for the `Implication for Phase 7` paragraph. Task 3 does NOT fail on disagreement.**
+  - Rationale: the developer probe is admin-scoped and runs against the same endpoint with definitive auth; the workflow probe is best-effort and the only outcomes it can disagree on are `unknown` (token-scope) vs `not_protected`/`protected` (admin-scope). The dev probe's signal is strictly more informative.
+  - Artifact shape: when divergence occurs, add a `## Probe divergence` section above `## Raw API response` listing both values with a one-line explanation. Example: "Workflow probe: `unknown` (HTTP 401 — `GITHUB_TOKEN` lacks admin scope, expected). Developer probe: `not_protected` (HTTP 404). Resolution: developer probe wins per CONTEXT D-5b."
 
 ### Filter content (CI-03)
 
@@ -157,3 +168,5 @@ These implementation details are for the planner/researcher to decide based on b
 ---
 
 *Created: 2026-05-05 — `/gsd-discuss-phase 6`. 9 decisions captured (D-1 through D-9 plus 1a). 18 requirements scoped (CI 8 + GATE 7 + FAIL 3). Next: `/gsd-plan-phase 6`.*
+
+*Updated: 2026-05-07 — `/gsd-discuss-phase 6` (post-Wave-1 refinement). Revised D-5 (binary → best-effort tri-state); added D-5a (P7 reads `branch-protection-probe-result.md` as source of truth, not CONTEXT.md or step summary alone); added D-5b (workflow vs developer probe disagreement → developer wins). Anchored to PR #2 / commit 8e1d65f (`administration: read` is not a valid scope in workflow `permissions:` blocks).*
