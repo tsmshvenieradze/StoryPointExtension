@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: Auto-Publish CI/CD
-status: executing
-stopped_at: "Phase 6 complete (3/3 plans); next /gsd-plan-phase 7"
-last_updated: "2026-05-07T00:00:00.000Z"
-last_activity: "2026-05-07 -- Phase 6 CLOSED. Wave 2 (06-03) verification dance executed live on master: PR #3 (commit db633d5, webpack.config.cjs whitespace) fired Publish #1 green in 47s, dry-run echoed 'Would publish: v1.0.8', Marketplace stayed at v1.0.7 (positive case ✓). PR #4 (commit eb82031, README.md whitespace) fired NEITHER ci.yml NOR publish.yml on the master push (paths-ignore filter ✓ for negative case). Plan order reversed to positive-case-first because GitHub does not trigger workflows on the commit that creates them — PR #2 / 501ebae left publish.yml at zero runs, so a baseline was needed before testing the skip path. branch-protection-probe-result.md captured: master is NOT PROTECTED (gh api 404 verbatim body + Settings UI cross-check, both admin-scoped). Workflow probe correctly returned 'unknown' per tri-state D-5; developer probe wins per D-5b. Earlier 2026-05-07: CONTEXT.md refined post-Wave-1 with D-5 tri-state rewrite + D-5a/D-5b additions. Earlier 2026-05-05: Wave 1 complete (06-01 ci.yml on:-block edit, 06-02 publish.yml scaffold)."
+milestone_name: milestone
+status: verifying
+stopped_at: Phase 7 context gathered (4 areas, 13 decisions); ready for /gsd-plan-phase 7
+last_updated: "2026-05-08T06:30:01.049Z"
+last_activity: "2026-05-07 — Phase 6 closed via Wave 2 live verification dance (PR #3 positive db633d5 / PR #4 negative eb82031); all 6 ROADMAP success criteria met; branch-protection probe = NOT PROTECTED"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -129,7 +129,7 @@ v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
 
 ## Session Continuity
 
-Last session: 2026-05-07T00:00:00.000Z
-Stopped at: Phase 6 closed (3/3 plans complete); Wave 2 verified live on master (PR #3 positive db633d5 + PR #4 negative eb82031); branch-protection-probe-result.md captured = NOT PROTECTED
-Resume file: `.planning/phases/06-workflow-scaffold-and-gates/06-03-SUMMARY.md` (cross-check of all 6 ROADMAP success criteria) + `.planning/phases/06-workflow-scaffold-and-gates/branch-protection-probe-result.md` (P7 source of truth per CONTEXT D-5a)
+Last session: 2026-05-08T06:30:01.046Z
+Stopped at: Phase 7 context gathered (4 areas, 13 decisions); ready for /gsd-plan-phase 7
+Resume file: .planning/phases/07-bump-publish-tag/07-CONTEXT.md
 Next workflow: `/gsd-discuss-phase 7` then `/gsd-plan-phase 7` to decompose Phase 7 (Bump, Publish, Tag) into plans. Phase 7 reads branch-protection-probe-result.md and finds NOT PROTECTED, so the commit-back can use default GITHUB_TOKEN with `permissions: contents: write` at job level (no App / RELEASE_PAT needed).
