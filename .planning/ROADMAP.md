@@ -57,7 +57,10 @@ Plans:
   4. An annotated tag `v1.0.8` exists on origin pointing at the bump commit; if the tag step fails, the workflow stays green (Marketplace + commit are load-bearing; tag is best-effort/idempotent).
   5. Forcing the publish step to fail (e.g. revoked PAT) leaves master at v1.0.7, no bump commit, no tag, and Marketplace at v1.0.7 — re-running via `workflow_dispatch` recovers cleanly (Option B reversibility verified).
   6. The published `.vsix` is downloadable as a workflow artifact `vsix-1.0.8` for 90 days (`if-no-files-found: error` guard active), enabling post-mortem inspection without re-packaging.
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — Bump script + tests + publish.yml swap (BUMP-01..05, PUBLISH-01..05, TAG-01..04 — atomic implementation; merge IS first publish per D-5)
+- [ ] 07-02-PLAN.md — Pre-merge D-6 checks + post-merge per-SC evidence capture in 07-VERIFICATION.md (D-6, D-7, D-10)
 
 ### Phase 8: Cleanup & Runbooks
 **Goal:** Legacy manual-publish path is retired, operational runbooks for the auto-publish surface exist, and PROJECT.md reflects v1.1 as Validated — milestone closeable.
