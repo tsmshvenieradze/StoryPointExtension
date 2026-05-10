@@ -21,7 +21,7 @@
 
 ## Phases
 
-- [ ] **Phase 6: Workflow Scaffold & Pre-flight Gates** — Two-workflow split (`ci.yml` PR-only + new `publish.yml`), all pre-flight gates run end-to-end on push to master, dry-run final step (no Marketplace mutation)
+- [x] **Phase 6: Workflow Scaffold & Pre-flight Gates** — Two-workflow split (`ci.yml` PR-only + new `publish.yml`), all pre-flight gates run end-to-end on push to master, dry-run final step (no Marketplace mutation) ✓
 - [ ] **Phase 7: Bump, Publish, Tag** — `bump-version.mjs`, real `tfx extension publish` to Marketplace, `[skip ci]` commit-back, annotated tag — first green run ships v1.0.8
 - [ ] **Phase 8: Cleanup & Runbooks** — Archive legacy `publish-cezari.cjs`, remove npm scripts, write `OPERATIONS.md` (PAT rotation + emergency-publish runbook), promote v1.1 capabilities to PROJECT.md "Validated"
 
@@ -40,11 +40,11 @@
   4. Forcing any one gate to fail (typecheck / vitest / build / `check:size`) leaves the workflow red at the failed step, and the dry-run final step does NOT execute (gate ordering verified).
   5. The successful end-of-workflow dry-run step echoes the would-be next version (e.g. `would publish v1.0.8`) without invoking `tfx`, leaving Marketplace untouched at v1.0.7.
   6. The `TFX_PAT` repo secret is created and resolves in the workflow (`echo "${{ secrets.TFX_PAT != '' }}"` returns `true`); a `gh api repos/:owner/:repo/branches/master/protection` call confirms current branch-protection state and the result is recorded in CONTEXT for Phase 7.
-**Plans:** 3 plans (Wave 1 complete; Wave 2 pending live verification)
+**Plans:** 3 plans complete ✓
 Plans:
 - [x] 06-01-PLAN.md — Drop `push: master` from ci.yml (CI-02) ✓
 - [x] 06-02-PLAN.md — Scaffold publish.yml with gates, probes, and dry-run echo (CI-01, CI-03..08, GATE-01..07, FAIL-01..03) ✓
-- [ ] 06-03-PLAN.md — Verification dance (negative + positive merge cases) and capture branch-protection-probe-result.md (D-1, D-1a, D-5) — pending live PR merges
+- [x] 06-03-PLAN.md — Verification dance (positive + negative merge cases via PR #3 / PR #4) and capture branch-protection-probe-result.md = NOT PROTECTED (D-1, D-1a, D-5/D-5a/D-5b) ✓
 
 ### Phase 7: Bump, Publish, Tag
 **Goal:** A real merge to master automatically packages a new patch `.vsix`, publishes it to the Visual Studio Marketplace, commits the version bump back to master with `[skip ci]`, and pushes an annotated tag — the first run ships v1.0.8.
@@ -57,7 +57,10 @@ Plans:
   4. An annotated tag `v1.0.8` exists on origin pointing at the bump commit; if the tag step fails, the workflow stays green (Marketplace + commit are load-bearing; tag is best-effort/idempotent).
   5. Forcing the publish step to fail (e.g. revoked PAT) leaves master at v1.0.7, no bump commit, no tag, and Marketplace at v1.0.7 — re-running via `workflow_dispatch` recovers cleanly (Option B reversibility verified).
   6. The published `.vsix` is downloadable as a workflow artifact `vsix-1.0.8` for 90 days (`if-no-files-found: error` guard active), enabling post-mortem inspection without re-packaging.
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — Bump script + tests + publish.yml swap (BUMP-01..05, PUBLISH-01..05, TAG-01..04 — atomic implementation; merge IS first publish per D-5)
+- [ ] 07-02-PLAN.md — Pre-merge D-6 checks + post-merge per-SC evidence capture in 07-VERIFICATION.md (D-6, D-7, D-10)
 
 ### Phase 8: Cleanup & Runbooks
 **Goal:** Legacy manual-publish path is retired, operational runbooks for the auto-publish surface exist, and PROJECT.md reflects v1.1 as Validated — milestone closeable.
@@ -111,11 +114,11 @@ Every v1.1 requirement maps to exactly one phase. No orphans. No duplicates.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 6. Workflow Scaffold & Pre-flight Gates | 2/3 | In progress (Wave 1 complete; Wave 2 pending live verification) | — |
+| 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
 | 7. Bump, Publish, Tag | 0/0 | Not started — phases not yet planned | — |
 | 8. Cleanup & Runbooks | 0/0 | Not started — phases not yet planned | — |
 
-**Milestone progress:** 0/3 phases complete (0%) — phase planning pending (`/gsd-plan-phase 6` next).
+**Milestone progress:** 1/3 phases complete (33%) — Phase 6 closed; next `/gsd-plan-phase 7`.
 
 ---
 

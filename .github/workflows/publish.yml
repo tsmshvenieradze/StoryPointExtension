@@ -19,13 +19,17 @@ permissions:
 
 jobs:
   publish:
-    name: Publish to Marketplace (dry-run in P6)
+    name: Publish to Marketplace
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -107,17 +111,93 @@ jobs:
             echo "$HEADLINE"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Dry-run — compute next version (DOES NOT publish)
-        id: dryrun
+      - name: Bump version (in-memory only)
+        id: bump
+        run: node scripts/bump-version.mjs
+
+      - name: Package vsix
         run: |
           set -euo pipefail
-          CURRENT=$(node -p "require('./package.json').version")
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
-          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
-          echo "would publish v${NEXT}"
-          echo "next-version=v${NEXT}" >> "$GITHUB_OUTPUT"
+          npx tfx extension create --manifest-globs vss-extension.json --output-path dist/
+          VSIX=$(ls dist/*.vsix | head -1)
+          SIZE_KB=$(du -k "$VSIX" | cut -f1)
           {
-            echo "## Dry-run result"
-            echo "Current: \`${CURRENT}\`"
-            echo "Would publish: \`v${NEXT}\`"
+            echo "## Package"
+            echo "Created \`$(basename "$VSIX")\` (${SIZE_KB} KB)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload .vsix artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ steps.bump.outputs.next-version-bare }}
+          path: dist/*.vsix
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Publish to Marketplace
+        env:
+          TFX_PAT: ${{ secrets.TFX_PAT }}
+        run: |
+          set -euo pipefail
+          npx tfx extension publish --vsix dist/*.vsix --auth-type pat --token "$TFX_PAT" --no-prompt --no-wait-validation
+          {
+            echo "## Publish"
+            echo "Published \`v${{ steps.bump.outputs.next-version-bare }}\` to Marketplace"
+            echo "https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit version bump
+        id: commit
+        uses: stefanzweifel/git-auto-commit-action@v6
+        with:
+          commit_message: "chore(release): ${{ steps.bump.outputs.next-version }} [skip ci]"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          file_pattern: "package.json vss-extension.json"
+
+      - name: Surface commit-back result
+        run: |
+          {
+            echo "## Commit-back"
+            echo "Committed bump as \`${{ steps.commit.outputs.commit_hash }}\` ([skip ci])"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag release (best-effort, idempotent)
+        id: tag
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          V="${{ steps.bump.outputs.next-version }}"
+          if git rev-parse "$V" >/dev/null 2>&1; then
+            echo "Tag $V already exists locally — skipping"
+            {
+              echo "## Tag"
+              echo "Tag \`$V\` already exists — idempotent skip per TAG-04"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if git ls-remote --tags origin "$V" | grep -q "$V"; then
+            echo "Tag $V already exists on origin — skipping"
+            {
+              echo "## Tag"
+              echo "Tag \`$V\` already exists — idempotent skip per TAG-04"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git tag -a "$V" -m "Release $V"
+          git push origin "$V"
+          {
+            echo "## Tag"
+            echo "🏷️ Tagged \`$V\` (annotated, pushed to origin)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Surface tag failure (workflow stays green per TAG-04)
+        if: failure() && steps.tag.outcome == 'failure'
+        run: |
+          V_BARE="${{ steps.bump.outputs.next-version-bare }}"
+          {
+            echo "## Tag"
+            echo "⚠️ Tag step failed (workflow stays green per TAG-04 best-effort)."
+            echo "Recovery: \`git tag -a v${V_BARE} -m 'Release v${V_BARE}' && git push origin v${V_BARE}\`"
           } >> "$GITHUB_STEP_SUMMARY"
