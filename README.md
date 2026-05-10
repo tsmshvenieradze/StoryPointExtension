@@ -7,7 +7,7 @@ Azure DevOps work item extension for structured Story Point estimation. Replaces
 Works on Scrum, Agile, Basic, and CMMI processes. Single scope: `vso.work_write`. No telemetry; data stays in your Azure DevOps organization.
 
 ## Install
-
+ 
 Public listing on the Visual Studio Marketplace:
 
 > **[marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator)**
