@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: milestone
 status: executing
 stopped_at: "Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected"."
-last_updated: "2026-05-11T09:06:53.809Z"
-last_activity: 2026-05-11 -- Phase 08 planning complete
+last_updated: "2026-05-11T12:10:59.855Z"
+last_activity: 2026-05-11 -- Phase 08 execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** v1.1 milestone — Auto-Publish CI/CD. Phases 6 + 7 complete; v1.0.8 live on Marketplace. Next: Phase 8 (Cleanup & Runbooks) — and Phase 8 now also owns the ruleset / verified-commit-back decision surfaced in Phase 7.
+**Current focus:** Phase 08 — cleanup-and-runbooks
 
 ## Current Position
 
-Phase: 7 — Bump, Publish, Tag ✓ COMPLETE (2/2 plans, 2026-05-11)
-Plan: 2 of 2 complete (07-01 ✓ implementation, 07-02 ✓ verification)
-Status: Ready to execute
-Last activity: 2026-05-11 -- Phase 08 planning complete
+Phase: 08 (cleanup-and-runbooks) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 08
+Last activity: 2026-05-11 -- Phase 08 execution started
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
