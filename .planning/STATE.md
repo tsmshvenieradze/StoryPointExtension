@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 8 context gathered — 6 decisions across 4 areas. Phase 8 EXPANDED beyond CLEAN-01..03 + DOC-01..03: release-branch model (publish.yml triggers on push:[release], not master), GitHub App for verified commit-back, master ruleset re-tightened to full protection (App on bypass list), release→master back-merge PR, re-verification publish run, SC #5 broken-PAT exercise EXECUTED. Milestone-goal wording changes (DOC-03): 'every PR merge to master ships' → 'every promotion to release ships; master stays protected'. Next: /gsd-plan-phase 8 (expect ~4-6 plans; planner may propose an 8/8.1 split)."
-last_updated: "2026-05-11T10:00:00.000Z"
-last_activity: 2026-05-11 -- Phase 08 context gathered via /gsd-discuss-phase 8 (6 decisions; scope expanded with release-branch model + GitHub App + SC #5 exercise)
+stopped_at: "Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected"."
+last_updated: "2026-05-11T09:06:53.809Z"
+last_activity: 2026-05-11 -- Phase 08 planning complete
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 5
+  total_plans: 10
   completed_plans: 5
-  percent: 67
+  percent: 50
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 
 Phase: 7 — Bump, Publish, Tag ✓ COMPLETE (2/2 plans, 2026-05-11)
 Plan: 2 of 2 complete (07-01 ✓ implementation, 07-02 ✓ verification)
-Status: Phase 7 done — v1.0.8 live on Marketplace; master HEAD `eba84b3` at v1.0.8; annotated tag `v1.0.8`; artifact `vsix-1.0.8` (90-day retention). Ready for `/gsd-plan-phase 8`.
-Last activity: 2026-05-11 -- Phase 07 complete; first Marketplace auto-publish v1.0.8 (via workflow_dispatch + recovery PR)
+Status: Ready to execute
+Last activity: 2026-05-11 -- Phase 08 planning complete
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
