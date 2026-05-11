@@ -189,6 +189,11 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
+          # Annotated tags need a committer identity; the git-auto-commit-action
+          # step above sets its identity inline (-c user.*) and doesn't persist it,
+          # so configure one here explicitly (fixes "fatal: empty ident name").
+          git config user.name "story-point-release-bot[bot]"
+          git config user.email "story-point-release-bot[bot]@users.noreply.github.com"
           git tag -a "$V" -m "Release $V"
           git push origin "$V"
           {
