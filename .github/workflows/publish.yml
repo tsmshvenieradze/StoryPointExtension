@@ -1,7 +1,10 @@
 name: Publish
 
 on:
-  push:
+  # Publish only when a pull request is merged into `release` (the `merged == true`
+  # gate lives on the job `if:` below — `closed` also fires on non-merged closes).
+  pull_request:
+    types: [closed]
     branches: [release]
     paths-ignore:
       - '**.md'
@@ -22,7 +25,10 @@ jobs:
     name: Publish to Marketplace
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.actor != 'github-actions[bot]' && github.actor != 'story-point-release-bot[bot]'
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true)
+      && github.actor != 'github-actions[bot]'
+      && github.actor != 'story-point-release-bot[bot]'
     permissions:
       contents: write
       pull-requests: write
@@ -39,6 +45,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
+          # `pull_request: closed` defaults to the PR merge ref — we want the `release`
+          # branch tip (and `release` is the right target for `workflow_dispatch` too).
+          ref: release
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
