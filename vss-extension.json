@@ -1,15 +1,26 @@
 {
   "manifestVersion": 1,
   "id": "story-point-calculator",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "name": "Story Point Calculator",
   "publisher": "TsezariMshvenieradzeTfsAiReviewTask",
   "public": true,
   "targets": [
-    { "id": "Microsoft.VisualStudio.Services" }
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
   ],
-  "categories": ["Azure Boards"],
-  "tags": ["story points", "estimation", "scrum", "agile", "cmmi", "fibonacci"],
+  "categories": [
+    "Azure Boards"
+  ],
+  "tags": [
+    "story points",
+    "estimation",
+    "scrum",
+    "agile",
+    "cmmi",
+    "fibonacci"
+  ],
   "description": "Structured Story Point estimation using Complexity, Uncertainty, Effort.",
   "icons": {
     "default": "images/icon.png"
@@ -18,9 +29,18 @@
     "vso.work_write"
   ],
   "files": [
-    { "path": "dist", "addressable": true },
-    { "path": "images", "addressable": true },
-    { "path": "overview.md", "addressable": true }
+    {
+      "path": "dist",
+      "addressable": true
+    },
+    {
+      "path": "images",
+      "addressable": true
+    },
+    {
+      "path": "overview.md",
+      "addressable": true
+    }
   ],
   "content": {
     "details": {
@@ -50,7 +70,9 @@
       "id": "calc-sp-action",
       "type": "ms.vss-web.action",
       "description": "Toolbar action that opens the Story Point calculator modal.",
-      "targets": ["ms.vss-work-web.work-item-toolbar-menu"],
+      "targets": [
+        "ms.vss-work-web.work-item-toolbar-menu"
+      ],
       "properties": {
         "text": "Calculate Story Points",
         "title": "Open the Story Point calculator",
