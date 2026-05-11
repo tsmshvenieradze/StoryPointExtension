@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// ARCHIVED — superseded by .github/workflows/publish.yml (the release-branch auto-publish path).
+// Kept for reference only; do NOT re-wire this as an npm script. The canonical manual
+// emergency-publish tfx invocation is documented in .planning/OPERATIONS.md (section 2).
 // scripts/publish-cezari.cjs — Phase 5 canonical publish-to-cezari helper.
 //
 // Loads .env.local for TFX_PAT, then invokes:
