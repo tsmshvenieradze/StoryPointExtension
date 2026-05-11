@@ -1,7 +1,7 @@
 # Phase 5: Polish & Marketplace Publish — Context
 
 **Gathered:** 2026-05-02
-**Status:** Ready for research/planning
+**Status:** Closed — v1.0 shipped 2026-05-04; all open questions below resolved during execution (retro-closed at v1.1 milestone close 2026-05-11)
 
 <domain>
 ## Phase Boundary
@@ -141,15 +141,15 @@ These came up during discussion but are **not** in Phase 5 scope. They feed the 
 - **D-17 Scenario 3 (offline simulation), Scenario 5 (Stakeholder license), Scenario 7 (slow-3G overlay)** — deferred from Phase 4 (verifier marked PARTIAL with unit-test coverage as backstop). Planner decides whether to fold into Phase 5 verification or punt to v2 (recommendation: punt).
 </deferred>
 
-<open_questions>
-## Open Questions for Research / Planning
+<resolved_questions>
+## Questions Resolved During Execution
 
-These are items where the user's vision is clear but Claude needs to investigate before locking implementation:
+All open questions from this CONTEXT were answered during Phase 5 execution (and re-confirmed by the v1.1 Auto-Publish work). Recorded here for the record:
 
-1. **GitHub Actions runner choice.** Researcher: confirm `ubuntu-latest` is sufficient for `tfx-cli` packaging (no Windows-specific paths in webpack output).
-2. **Bundle size budget feasibility.** Researcher: estimate current production bundle gzipped size before Phase 5 starts. If already > 250 KB, planner needs a code-splitting plan for `azure-devops-ui` (likely the heaviest dep).
-3. **Marketplace listing markdown support.** Researcher: confirm what markdown subset the Marketplace listing description renders (headings, bullets, links — bold/italic? code blocks?). Affects D-9 + D-10 + D-11 phrasing.
-4. **Existing icon quality.** Researcher: inspect `images/icon.png` and `images/toolbar-icon.png`. If genuinely placeholder, plan an icon refinement task; if presentable, ship as-is.
-5. **package.json version drift policy.** Planner: recommend whether to sync 0.1.0 → 1.0.0 with manifest at the public-publish moment, or leave the internal version untouched.
-6. **dev-publish.cjs Windows retry-loop bug.** Researcher: read the script and reproduce the Windows failure. Planner: decide fix vs. replace with a `package.json` script + PowerShell one-liner documented in README.
-</open_questions>
+1. ~~**GitHub Actions runner choice.**~~ RESOLVED — `ubuntu-latest` is sufficient; the webpack output has no Windows-specific paths. Confirmed by every green `ci.yml` run and, later, by `publish.yml` packaging + publishing the `.vsix` on `ubuntu-latest` (runs through v1.0.10).
+2. ~~**Bundle size budget feasibility.**~~ RESOLVED — production bundle is ~148 KB gzipped (≈102 KB headroom under the 250 KB gate). No code-splitting needed. `scripts/check-bundle-size.cjs` enforces it in CI.
+3. ~~**Marketplace listing markdown support.**~~ RESOLVED — the listing renders headings, bullets, links, and bold/italic; the `overview.md` ships with that subset. Confirmed by the live public listing.
+4. ~~**Existing icon quality.**~~ RESOLVED — `images/icon.png` ships as the listing icon; `images/toolbar-icon.png` (16×16 PNG; SVG was rejected by Marketplace, commit 881efc6) is the toolbar icon. Shipped as-is for v1; refinement is a v1.x cosmetic backlog item if ever needed.
+5. ~~**package.json version drift policy.**~~ RESOLVED — versions are kept in sync; the first public publish was v1.0.0 and `scripts/bump-version.mjs` (v1.1) now does an atomic two-file bump of `package.json` + `vss-extension.json` on every release.
+6. ~~**dev-publish.cjs Windows retry-loop bug.**~~ RESOLVED — superseded; manual `dev-publish.cjs` / `publish-cezari.cjs` are archived to `scripts/.archive/` and the canonical publish path is the `publish.yml` GitHub Action (release-branch model). The manual emergency-publish runbook lives in `.planning/OPERATIONS.md` §2.
+</resolved_questions>
