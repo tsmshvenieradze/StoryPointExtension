@@ -193,6 +193,27 @@ signed-commits-protected branch — `master` is human-merged; `release` is kept 
 future change wants the App to push directly to a signed-commits-protected branch, **verify
 empirically first** (one test push).
 
+### Gotchas observed in practice
+
+- **Promoting docs-only changes to `release` still ships a no-op patch version.** `publish.yml`
+  has a `paths-ignore: ['**.md', '.planning/**', '.claude/**', 'docs/**']` filter, but it only
+  skips a *direct* push to `release` whose entire diff is ignored paths. A `master -> release`
+  promotion arrives as a **merge commit**, and GitHub Actions does not reliably apply
+  `paths-ignore` to merge commits — so the workflow runs anyway, bumps the version, and
+  publishes a Marketplace patch byte-identical to the previous one (this is exactly how
+  v1.0.11 shipped — it was the `/gsd-complete-milestone v1.1` docs commit promoted to
+  `release`). It's harmless (same code, just a version-number bump), but if you don't want
+  it: **don't promote a docs-only commit to `release` on its own** — let it ride along with
+  the next code release, or accept the no-op bump as the price of keeping `master` and
+  `release` in lockstep. (A code fix is possible — a guard step in `publish.yml` that diffs
+  against the last `vX.Y.Z` tag and `exit 0`s the publish job if only ignored paths changed —
+  but it's not currently implemented.)
+- **A `[skip ci]` on a back-merge-PR conflict-resolution commit also skips that PR's required
+  `ci.yml` check.** If you have to resolve conflicts on the `release -> master` back-merge PR
+  and the resolution commit carries `[skip ci]`, the `Build & verify` status check that
+  `master`'s ruleset requires won't run, and you'll have to merge via an owner bypass. Don't
+  put `[skip ci]` on a back-merge conflict-resolution commit.
+
 ## 4. Rulesets-aware branch-protection probe (Phase 6 correction)
 
 The Phase 6 probe — [`.planning/phases/06-workflow-scaffold-and-gates/branch-protection-probe-result.md`](phases/06-workflow-scaffold-and-gates/branch-protection-probe-result.md)
