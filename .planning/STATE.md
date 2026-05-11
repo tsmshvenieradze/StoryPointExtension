@@ -5,7 +5,7 @@ milestone_name: Auto-Publish CI/CD
 status: milestone_complete
 stopped_at: "v1.1 Auto-Publish CI/CD milestone closed 2026-05-11 (`/gsd-complete-milestone v1.1`). 3 phases (6, 7, 8), 10 plans, 38/38 requirements satisfied. Archived: milestones/v1.1-ROADMAP.md, milestones/v1.1-REQUIREMENTS.md, milestones/v1.1-MILESTONE-AUDIT.md, milestones/v1.1-phases/{06,07,08}. v1.0 phase artifacts retroactively moved to milestones/v1.0-phases/. ROADMAP.md reorganized to milestone-grouped form; PROJECT.md Current State + Key Decisions updated; RETROSPECTIVE.md created (v1.0 + v1.1 sections + cross-milestone trends); REQUIREMENTS.md removed (fresh one comes with the next milestone). Git tag v1.1 created. Marketplace at v1.0.10. NEXT: `/gsd-new-milestone` to scope v1.2+ (questioning → research → requirements → roadmap)."
 last_updated: "2026-05-11T17:30:00.000Z"
-last_activity: 2026-05-11 — v1.1 milestone completed and archived
+last_activity: 2026-05-11 — Completed quick task 260511-xu5 (publish.yml: merged-PR-only trigger)
 progress:
   total_phases: 3
   completed_phases: 3
@@ -29,7 +29,7 @@ No active milestone. v1.0 MVP (Phases 0–5, shipped 2026-05-04) and v1.1 Auto-P
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator — at v1.0.10 (released via the automated `publish.yml` pipeline)
 
-Shipped to date: 2 milestones, 9 phases, 29 plans, 2 quick tasks. 400/400 vitest pass; bundle 148.4 KB / 250 KB gzipped.
+Shipped to date: 2 milestones, 9 phases, 29 plans, 3 quick tasks. 400/400 vitest pass; bundle 148.4 KB / 250 KB gzipped.
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ None active. (v1.1 closed clean; tech-debt items above are tracked, not blocking
 |---|-------------|------|--------|-----------|
 | 260504-cl1 | Programmatic close spike + wire (Cancel + post-Saved auto-close + Esc keydown); 1.0.3 → 1.0.4 | 2026-05-04 | 7b4d00e | [260504-cl1-programmatic-close-spike](./quick/260504-cl1-programmatic-close-spike/) |
 | 260504-uk5 | Close out Phase 5: 3 SUMMARYs (05-01 MOOT, 05-04 DEFERRED, 05-05 PASS), commit 05-VERIFICATION.md, REQUIREMENTS PKG-02..07 [x], STATE rewrite, ROADMAP Phase 5 [x] | 2026-05-04 | 0996b14 | [260504-uk5-close-out-phase-5-write-summarys-for-05-](./quick/260504-uk5-close-out-phase-5-write-summarys-for-05-/) |
+| 260511-xu5 | `publish.yml`: trigger only on merged PRs into `release` (`pull_request: closed` + `merged==true`) + `workflow_dispatch`; checkout `ref: release` | 2026-05-11 | c940bb8 | [260511-xu5-release-merge-only-publish-trigger](./quick/260511-xu5-release-merge-only-publish-trigger/) |
 
 ## Deferred Items
 
