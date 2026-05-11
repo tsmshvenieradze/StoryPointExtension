@@ -23,7 +23,7 @@
 
 - [x] **Phase 6: Workflow Scaffold & Pre-flight Gates** — Two-workflow split (`ci.yml` PR-only + new `publish.yml`), all pre-flight gates run end-to-end on push to master, dry-run final step (no Marketplace mutation) ✓
 - [x] **Phase 7: Bump, Publish, Tag** — `bump-version.mjs`, real `tfx extension publish` to Marketplace, `[skip ci]` commit-back, annotated tag — v1.0.8 shipped 2026-05-11 (via `workflow_dispatch` after the organic trigger didn't fire; commit-back blocked by an undiscovered master ruleset → recovered via PR #7 + manual tag + ruleset relaxation; SC #1-4,6 PASS, SC #5 partial) ✓
-- [ ] **Phase 8: Cleanup & Runbooks** — Archive legacy `publish-cezari.cjs`, remove npm scripts, write `OPERATIONS.md` (PAT rotation + emergency-publish runbook + **verified-commit-back / ruleset migration** + **rulesets-aware branch-protection probe** + **SC #5 broken-PAT exercise** carried from Phase 7), promote v1.1 capabilities to PROJECT.md "Validated"
+- [x] **Phase 8: Cleanup & Runbooks** — Archive legacy `publish-cezari.cjs`, remove npm scripts, write `OPERATIONS.md` (PAT rotation + emergency-publish runbook + **verified-commit-back / ruleset migration** + **rulesets-aware branch-protection probe** + **SC #5 broken-PAT exercise** carried from Phase 7), promote v1.1 capabilities to PROJECT.md "Validated"
 
 ---
 
@@ -78,9 +78,9 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Workflow architecture refactor: publish.yml -> push:[release] + GitHub App token + back-merge PR; ci.yml -> PR on [master, release]; capture canonical tfx invocation into OPERATIONS.md before archive (DOC-02) [wave 1]
 - [x] 08-02-PLAN.md — Complete .planning/OPERATIONS.md: PAT rotation (DOC-01), release-branch model + ruleset config + GitHub App steps, rulesets-aware probe note, partial-failure recovery runbook (D-2), SC #5 procedure [wave 2]
-- [ ] 08-03-PLAN.md — User-action handoff (release branch, GitHub App, secrets, ruleset re-tighten) + re-verification run (v1.0.9 end-to-end) + SC #5 broken-PAT exercise -> 08-SC5-EXERCISE.md (D-3, D-4) [wave 3]
-- [ ] 08-04-PLAN.md — Legacy cleanup: git mv publish-cezari.cjs -> scripts/.archive/ + ARCHIVED header; remove publish:cezari/publish:public from package.json; verify git grep (CLEAN-01..03) [wave 4]
-- [ ] 08-05-PLAN.md — DOC-03: promote v1.1 to PROJECT.md "Validated" with the corrected release-branch-model wording; fix REQUIREMENTS.md 32->38 tally [wave 4]
+- [x] 08-03-PLAN.md — User-action handoff (release branch, GitHub App, secrets, ruleset re-tighten) + re-verification run (v1.0.9 end-to-end) + SC #5 broken-PAT exercise -> 08-SC5-EXERCISE.md (D-3, D-4) [wave 3]
+- [x] 08-04-PLAN.md — Legacy cleanup: git mv publish-cezari.cjs -> scripts/.archive/ + ARCHIVED header; remove publish:cezari/publish:public from package.json; verify git grep (CLEAN-01..03) [wave 4]
+- [x] 08-05-PLAN.md — DOC-03: promote v1.1 to PROJECT.md "Validated" with the corrected release-branch-model wording; fix REQUIREMENTS.md 32->38 tally [wave 4]
 
 ---
 

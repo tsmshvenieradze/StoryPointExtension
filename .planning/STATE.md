@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected"."
-last_updated: "2026-05-11T12:18:28.934Z"
-last_activity: 2026-05-11
+stopped_at: "Phase 8 (Cleanup & Runbooks) COMPLETE — all 5 plans done. publish.yml refactored to the release-branch model + GitHub App verified commit-back + release→master back-merge PR; ci.yml pull_request → [master, release]. OPERATIONS.md is the comprehensive 6-section ops doc (PAT rotation, emergency-publish runbook, release-branch model + ruleset config + App creation, rulesets-aware-probe correction, partial-failure recovery, SC #5 / Option B exercise). User created the `release` branch, the `story-point-release-bot` GitHub App (+ APP_ID/APP_PRIVATE_KEY secrets), re-tightened master's ruleset to full protection (PR + Build & verify + signed-commits + linear-history, App on bypass), kept `release` light. Re-verification run shipped v1.0.9 end-to-end via a master→release promotion PR (CONTEXT D-3); SC #5 broken-PAT exercise executed (CONTEXT D-4) — publish step failed SAFELY (Marketplace + release untouched, no orphan commit/tag/PR), restored-PAT re-run shipped v1.0.10 cleanly. Two workflow fixes along the way: App needed `pull-requests: write` (user fixed); publish.yml Tag-release step needed an explicit git identity (fixed — annotated tags now create cleanly). publish-cezari.cjs → scripts/.archive/ with ARCHIVED header; publish:cezari/publish:public npm scripts removed; README publish section refreshed. PROJECT.md: v1.1 promoted to 'Validated' with the corrected release-branch-model wording (DOC-03). Marketplace at v1.0.10; tags v1.0.8/v1.0.9/v1.0.10. NEXT: phase verification (gsd-verifier → 08-VERIFICATION.md), then PR phase-08-wrap → master, then `/gsd-complete-milestone` (v1.1 done — all 38 requirements covered)."
+last_updated: "2026-05-11T16:45:00.000Z"
+last_activity: 2026-05-11 — Phase 08 execution complete (all 5 plans + re-verification + SC #5 exercise)
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 7
-  percent: 70
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -21,18 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-05)
 
 **Core value:** A team member can produce a justified, reproducible Story Points value for any work item in under 30 seconds, without leaving the work item form.
-**Current focus:** Phase 08 — cleanup-and-runbooks
+**Current focus:** v1.1 milestone — Phase 8 (Cleanup & Runbooks) COMPLETE. Auto-Publish CI/CD shipped & validated in the wild (v1.0.8 → v1.0.9 → v1.0.10). Next: phase verification, PR `phase-08-wrap → master`, then `/gsd-complete-milestone`.
 
 ## Current Position
 
-Phase: 08 (cleanup-and-runbooks) — EXECUTING
-Plan: 3 of 5
-Status: Executing Phase 08 — Plans 08-01 + 08-02 complete (workflow refactor + GitHub App token; OPERATIONS.md complete with all 6 sections — DOC-01 + DOC-02 done)
-Last activity: 2026-05-11 — Plan 08-02 executed (OPERATIONS.md sections 1/3/4/5/6 added: PAT rotation, release-branch model + ruleset config + GitHub App creation steps, rulesets-aware probe correction, partial-failure recovery runbook, SC #5 / Option B exercise procedure)
+Phase: 08 (cleanup-and-runbooks) — COMPLETE ✓ (5/5 plans, 2026-05-11)
+Plan: 5 of 5 complete (08-01 workflow refactor + OPERATIONS.md seed · 08-02 OPERATIONS.md complete · 08-03 re-verification v1.0.9 + SC #5 exercise → v1.0.10 · 08-04 legacy cleanup · 08-05 PROJECT.md → Validated)
+Status: Phase 8 work landed on branch `phase-08-wrap` (off master); pending: gsd-verifier → 08-VERIFICATION.md, then PR `phase-08-wrap → master`, then `/gsd-complete-milestone`
+Last activity: 2026-05-11 — Phase 08 execution complete (release-branch model verified in the wild shipping v1.0.9; SC #5 broken-PAT exercise: safe failure then clean recovery shipping v1.0.10; legacy publish-cezari.cjs archived; PROJECT.md v1.1 promoted to Validated)
 
-Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
+Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator — at v1.0.10
 
-Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; Phases 6 + 7 closed; Phase 8 in progress — 2/5 plans)
+Progress: [██████████] 100% (3 of 3 phases complete in v1.1; Phases 6, 7, 8 all closed — milestone ready to close)
 
 ### Phase 7 outcome (read before Phase 8 planning)
 
@@ -51,13 +51,13 @@ Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; 
 - Phases shipped: 6 (v1.0 Phase 0 through Phase 5)
 - Total execution time: ~4 days calendar (v1.0: 2026-05-01 → 2026-05-04)
 
-**v1.1 milestone (in progress):**
+**v1.1 milestone (complete — ready to close):**
 
 | Phase | Plans | Status | Completed |
 |-------|-------|--------|-----------|
 | 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
 | 7. Bump, Publish, Tag | 2/2 | Complete ✓ (v1.0.8 live; SC #1-4,6 PASS, SC #5 partial) | 2026-05-11 |
-| 8. Cleanup & Runbooks | 2/5 | In progress (08-01: release-branch publish.yml + GitHub App token + ci.yml [master, release] + OPERATIONS.md §2; 08-02: OPERATIONS.md §§1,3,4,5,6 — DOC-01 + DOC-02 done) | — |
+| 8. Cleanup & Runbooks | 5/5 | Complete ✓ — release-branch model + GitHub App verified-commit-back; OPERATIONS.md (6 sections); re-verification shipped v1.0.9; SC #5 broken-PAT exercise (safe failure → clean recovery → v1.0.10); legacy publish-cezari.cjs archived + npm scripts removed; PROJECT.md v1.1 → Validated. SC #5 now FULLY verified in the wild. | 2026-05-11 |
 
 **v1.0 milestone (closed):**
 
