@@ -77,7 +77,7 @@ Plans:
 **Plans:** 5 plans in 4 waves
 Plans:
 - [x] 08-01-PLAN.md — Workflow architecture refactor: publish.yml -> push:[release] + GitHub App token + back-merge PR; ci.yml -> PR on [master, release]; capture canonical tfx invocation into OPERATIONS.md before archive (DOC-02) [wave 1]
-- [ ] 08-02-PLAN.md — Complete .planning/OPERATIONS.md: PAT rotation (DOC-01), release-branch model + ruleset config + GitHub App steps, rulesets-aware probe note, partial-failure recovery runbook (D-2), SC #5 procedure [wave 2]
+- [x] 08-02-PLAN.md — Complete .planning/OPERATIONS.md: PAT rotation (DOC-01), release-branch model + ruleset config + GitHub App steps, rulesets-aware probe note, partial-failure recovery runbook (D-2), SC #5 procedure [wave 2]
 - [ ] 08-03-PLAN.md — User-action handoff (release branch, GitHub App, secrets, ruleset re-tighten) + re-verification run (v1.0.9 end-to-end) + SC #5 broken-PAT exercise -> 08-SC5-EXERCISE.md (D-3, D-4) [wave 3]
 - [ ] 08-04-PLAN.md — Legacy cleanup: git mv publish-cezari.cjs -> scripts/.archive/ + ARCHIVED header; remove publish:cezari/publish:public from package.json; verify git grep (CLEAN-01..03) [wave 4]
 - [ ] 08-05-PLAN.md — DOC-03: promote v1.1 to PROJECT.md "Validated" with the corrected release-branch-model wording; fix REQUIREMENTS.md 32->38 tally [wave 4]
@@ -124,9 +124,9 @@ Every v1.1 requirement maps to exactly one phase. No orphans. No duplicates.
 |-------|----------------|--------|-----------|
 | 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
 | 7. Bump, Publish, Tag | 2/2 | Complete ✓ (v1.0.8 live; SC #1-4,6 PASS, SC #5 partial) | 2026-05-11 |
-| 8. Cleanup & Runbooks | 1/5 | In progress (08-01 done: release-branch publish.yml + GitHub App token; ci.yml [master, release]; OPERATIONS.md §2) | — |
+| 8. Cleanup & Runbooks | 2/5 | In progress (08-01: release-branch publish.yml + GitHub App token + ci.yml [master, release]; 08-02: OPERATIONS.md complete — §§1-6, DOC-01 + DOC-02 done) | — |
 
-**Milestone progress:** 2/3 phases complete (67%) — Phases 6 + 7 closed; Phase 8 in progress (1/5 plans).
+**Milestone progress:** 2/3 phases complete (67%) — Phases 6 + 7 closed; Phase 8 in progress (2/5 plans).
 
 ---
 

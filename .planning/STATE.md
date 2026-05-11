@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: milestone
 status: executing
 stopped_at: "Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected"."
-last_updated: "2026-05-11T12:14:47.521Z"
+last_updated: "2026-05-11T12:18:28.934Z"
 last_activity: 2026-05-11
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 6
-  percent: 60
+  completed_plans: 7
+  percent: 70
 ---
 
 # Project State
@@ -26,13 +26,13 @@ See: .planning/PROJECT.md (updated 2026-05-05)
 ## Current Position
 
 Phase: 08 (cleanup-and-runbooks) — EXECUTING
-Plan: 2 of 5
-Status: Executing Phase 08 — Plan 08-01 complete (workflow refactor + OPERATIONS.md §2)
-Last activity: 2026-05-11 — Plan 08-01 executed (publish.yml -> release-branch model + GitHub App token; ci.yml -> [master, release]; OPERATIONS.md created with DOC-02 section)
+Plan: 3 of 5
+Status: Executing Phase 08 — Plans 08-01 + 08-02 complete (workflow refactor + GitHub App token; OPERATIONS.md complete with all 6 sections — DOC-01 + DOC-02 done)
+Last activity: 2026-05-11 — Plan 08-02 executed (OPERATIONS.md sections 1/3/4/5/6 added: PAT rotation, release-branch model + ruleset config + GitHub App creation steps, rulesets-aware probe correction, partial-failure recovery runbook, SC #5 / Option B exercise procedure)
 
 Listing URL: https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator
 
-Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; Phases 6 + 7 closed)
+Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; Phases 6 + 7 closed; Phase 8 in progress — 2/5 plans)
 
 ### Phase 7 outcome (read before Phase 8 planning)
 
@@ -57,7 +57,7 @@ Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; 
 |-------|-------|--------|-----------|
 | 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
 | 7. Bump, Publish, Tag | 2/2 | Complete ✓ (v1.0.8 live; SC #1-4,6 PASS, SC #5 partial) | 2026-05-11 |
-| 8. Cleanup & Runbooks | 1/5 | In progress (08-01 done: release-branch publish.yml + GitHub App token; ci.yml [master, release]; OPERATIONS.md §2) | — |
+| 8. Cleanup & Runbooks | 2/5 | In progress (08-01: release-branch publish.yml + GitHub App token + ci.yml [master, release] + OPERATIONS.md §2; 08-02: OPERATIONS.md §§1,3,4,5,6 — DOC-01 + DOC-02 done) | — |
 
 **v1.0 milestone (closed):**
 
@@ -79,6 +79,7 @@ Progress: [███████░░░] 67% (2 of 3 phases complete in v1.1; 
 - Bundle: 148.4 KB / 250 KB gzipped (CI run on the v1.0.8 publish). 400/400 vitest pass.
 
 | Phase 08 P01 | ~5min | 3 tasks | 3 files |
+| Phase 08 P02 | ~4min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,7 @@ Already-locked v1.1 decisions (from research synthesis):
 - **Concurrency:** `group: publish-master, cancel-in-progress: false` (queue, never cancel mid-publish).
 - **Bump tooling:** `scripts/bump-version.mjs` (ESM, ~30 lines, atomic two-file write of `package.json` + `vss-extension.json`). Reject `tfx --rev-version` (manifest-only) and `release-please` / `semantic-release` / `changesets` (assume conventional-commits which v1.1 does not adopt).
 - **Runner:** `ubuntu-latest` (matches existing CI; sidesteps Windows `tfx-cli spawnSync({shell})` quirks burned in `publish-cezari.cjs`).
+- [Phase 8]: OPERATIONS.md is the single comprehensive 6-section auto-publish ops doc (CONTEXT D-1): PAT rotation (DOC-01), emergency-publish runbook (DOC-02), release-branch model + ruleset config + GitHub App creation steps, rulesets-aware branch-protection probe correction, partial-failure recovery runbook, SC #5 / Option B controlled-exercise procedure
 
 ### Pending Todos
 
@@ -147,7 +149,7 @@ v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
 
 ## Session Continuity
 
-Last session: 2026-05-11T12:14:44.250Z
+Last session: 2026-05-11T12:18:20.864Z
 Stopped at: Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected".
 Resume file: None
 Next workflow: `/gsd-plan-phase 8` — expect a large phase (~4–6 plans). The planner may propose splitting into 8 + 8.1 (e.g. 8 = the architecture refactor + App + ruleset re-tighten + re-verification + SC #5; 8.1 = CLEAN + DOC). Also still on the table: a docs-only PR `milestone1.1 → master` to sync the Phase 7 close-out commits (`9fcd418`) to master before Phase 8 starts.

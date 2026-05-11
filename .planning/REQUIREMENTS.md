@@ -67,7 +67,7 @@
 
 ### DOC — Documentation
 
-- [ ] **DOC-01**: `.planning/OPERATIONS.md` documents the PAT rotation procedure (1-year cadence + step-by-step on aex.dev.azure.com)
+- [x] **DOC-01**: `.planning/OPERATIONS.md` documents the PAT rotation procedure (1-year cadence + step-by-step on aex.dev.azure.com)
 - [x] **DOC-02**: `.planning/OPERATIONS.md` documents the manual emergency-publish runbook (the exact `tfx` invocation captured BEFORE the legacy script is archived)
 - [ ] **DOC-03**: `.planning/PROJECT.md` "Validated" section updated post-milestone (v1.1 capabilities promoted from Active to Validated)
 
@@ -149,7 +149,7 @@ Filled by gsd-roadmapper on 2026-05-05 after producing `.planning/ROADMAP.md`. E
 | CLEAN-01 | Phase 8 — Cleanup & Runbooks | Pending |
 | CLEAN-02 | Phase 8 — Cleanup & Runbooks | Pending |
 | CLEAN-03 | Phase 8 — Cleanup & Runbooks | Pending |
-| DOC-01 | Phase 8 — Cleanup & Runbooks | Pending |
+| DOC-01 | Phase 8 — Cleanup & Runbooks | Complete |
 | DOC-02 | Phase 8 — Cleanup & Runbooks | Complete |
 | DOC-03 | Phase 8 — Cleanup & Runbooks | Pending |
 
