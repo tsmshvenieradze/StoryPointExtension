@@ -2,7 +2,7 @@ name: Publish
 
 on:
   push:
-    branches: [master]
+    branches: [release]
     paths-ignore:
       - '**.md'
       - '.planning/**'
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: publish-master
+  group: publish-release
   cancel-in-progress: false
 
 permissions:
@@ -22,14 +22,25 @@ jobs:
     name: Publish to Marketplace
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && github.actor != 'story-point-release-bot[bot]'
     permissions:
       contents: write
+      pull-requests: write
     steps:
+      - name: Mint release-bot token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -70,37 +81,28 @@ jobs:
         run: |
           echo "tfx-pat-present=${{ secrets.TFX_PAT != '' }}"
 
-      - name: Probe master branch protection
+      - name: Probe release branch protection
         id: protection
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
-          BODY=$(gh api repos/${{ github.repository }}/branches/master/protection 2>&1)
+          BODY=$(gh api repos/${{ github.repository }}/branches/release/protection 2>&1)
           STATUS=$?
           set -e
 
-          # Classify the response. The branches/protection endpoint requires
-          # repo-admin scope, which GITHUB_TOKEN cannot be granted via the
-          # workflow `permissions:` block (no `administration` scope exists
-          # there). So this probe is best-effort: it gives a definitive
-          # answer when the token is admin-scoped (e.g., via a custom PAT
-          # if ever added) or when the response shape is unambiguous; it
-          # honestly reports "unknown" when the token simply lacks scope.
-          # 06-03 Task 3 captures the developer-side probe as the durable
-          # source-of-truth artifact.
           if [ "$STATUS" -eq 0 ]; then
             STATE=protected
-            HEADLINE='master is **PROTECTED**. P7 commit-back must use App or PAT bypass.'
-            LOG_PREFIX='Master IS branch-protected:'
+            HEADLINE='release is **PROTECTED**. Commit-back/tag push relies on the App being on the bypass list.'
+            LOG_PREFIX='Release IS branch-protected:'
           elif echo "$BODY" | grep -qi 'Branch not protected'; then
             STATE=not_protected
-            HEADLINE='master is **NOT protected**. P7 commit-back can use `GITHUB_TOKEN`.'
-            LOG_PREFIX='Master is NOT branch-protected (HTTP 404):'
+            HEADLINE='release is **NOT protected**. App-token `git push` (commit-back, tag) goes through directly.'
+            LOG_PREFIX='Release is NOT branch-protected (HTTP 404):'
           else
             STATE=unknown
-            HEADLINE='Branch-protection state could not be determined (token permission or transient error). P7 must re-probe with an admin-scoped token before deciding commit-back strategy.'
-            LOG_PREFIX="::warning::Branch-protection probe inconclusive (gh api exit $STATUS, body did not match 'Branch not protected'):"
+            HEADLINE='release branch-protection state could not be determined (token permission or transient error).'
+            LOG_PREFIX="::warning::Release branch-protection probe inconclusive (gh api exit $STATUS, body did not match 'Branch not protected'):"
           fi
 
           echo "protected=${STATE}" >> "$GITHUB_OUTPUT"
@@ -146,26 +148,28 @@ jobs:
             echo "https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit version bump
+      - name: Commit version bump to release
         id: commit
         uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "chore(release): ${{ steps.bump.outputs.next-version }} [skip ci]"
-          commit_user_name: "github-actions[bot]"
-          commit_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
-          commit_author: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          commit_user_name: "story-point-release-bot[bot]"
+          commit_user_email: "story-point-release-bot[bot]@users.noreply.github.com"
+          commit_author: "story-point-release-bot[bot] <story-point-release-bot[bot]@users.noreply.github.com>"
           file_pattern: "package.json vss-extension.json"
 
       - name: Surface commit-back result
         run: |
           {
             echo "## Commit-back"
-            echo "Committed bump as \`${{ steps.commit.outputs.commit_hash }}\` ([skip ci])"
+            echo "Committed bump to release as \`${{ steps.commit.outputs.commit_hash }}\` ([skip ci])"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Tag release (best-effort, idempotent)
         id: tag
         continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           V="${{ steps.bump.outputs.next-version }}"
@@ -200,4 +204,27 @@ jobs:
             echo "## Tag"
             echo "⚠️ Tag step failed (workflow stays green per TAG-04 best-effort)."
             echo "Recovery: \`git tag -a v${V_BARE} -m 'Release v${V_BARE}' && git push origin v${V_BARE}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open release -> master back-merge PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          V="${{ steps.bump.outputs.next-version }}"
+          OPEN=$(gh pr list --base master --head release --state open --json number --jq 'length')
+          if [ "$OPEN" != "0" ]; then
+            echo "A release -> master PR is already open — skipping (it auto-updates with the new bump)."
+            {
+              echo "## Back-merge PR"
+              echo "An existing \`release -> master\` PR auto-updated to carry \`$V\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh pr create --base master --head release \
+            --title "chore(release): $V" \
+            --body "Automated back-merge of the version bump from the publish workflow. Merge this via the GitHub Web UI — the merge commit's verified signature satisfies master's signed-commits rule. See .planning/OPERATIONS.md section 3."
+          {
+            echo "## Back-merge PR"
+            echo "Opened \`release -> master\` PR carrying \`$V\` — merge it via the Web UI."
           } >> "$GITHUB_STEP_SUMMARY"
