@@ -109,6 +109,11 @@ None for this plan. The GitHub App creation, the `APP_ID` / `APP_PRIVATE_KEY` re
 - Plan 08-03 has the workflow side of the release-branch model wired and waiting for the App + secrets + `release` branch + ruleset re-tighten, then the v1.0.9 re-verification run.
 - Note for 08-03: the workflow references `secrets.APP_ID` / `secrets.APP_PRIVATE_KEY` and a `release` branch — none of which exist yet; 08-03's user-handoff must create all three before the first `release` push.
 
+## Self-Check: PASSED
+
+- Files: `.planning/OPERATIONS.md`, `.github/workflows/publish.yml`, `.github/workflows/ci.yml`, `.planning/phases/08-cleanup-and-runbooks/08-01-SUMMARY.md` — all present.
+- Commits: `70dd969` (Task 1), `431a68d` (Task 2), `cade56d` (Task 3), `420caa9` (SUMMARY) — all in git history.
+
 ---
 *Phase: 08-cleanup-and-runbooks*
 *Completed: 2026-05-11*
