@@ -216,3 +216,84 @@ gh api repos/tsmshvenieradze/StoryPointExtension/branches/master/protection || e
 gh api repos/tsmshvenieradze/StoryPointExtension/rules/branches/master   # <- the one Phase 6 missed
 gh api repos/tsmshvenieradze/StoryPointExtension/rules/branches/release
 ```
+
+## 5. Recovery: publish OK, commit-back failed
+
+### When this happens
+
+`publish.yml` published the `.vsix` to the Marketplace successfully, but a later step
+failed:
+
+- the App-token commit-back to `release` was rejected (e.g. a misconfigured `release`
+  ruleset -> `GH013`), or
+- the tag push failed (the tag step is best-effort so the workflow stays green, but
+  `release`'s `version` field is now behind the published Marketplace version).
+
+> **If the PUBLISH step itself failed**, there is NOTHING to recover — per Option B the
+> bump is in-memory only, `release` is untouched, no orphan commit/tag. This is the SC #5
+> happy-failure case (section 6); just re-run via `workflow_dispatch`.
+
+### The recovery procedure (generalizes Phase 7's recovery)
+
+1. Confirm the published version on the Marketplace listing's **Versions** table (call it
+   `vX.Y.Z`).
+2. On a branch off `release` (or `master`): hand-edit **`package.json` `version` AND
+   `vss-extension.json` `version`** to `X.Y.Z` — both files, atomic.
+3. Commit with `chore(release): vX.Y.Z [skip ci]` — the `[skip ci]` is **mandatory** so
+   the recovery PR's merge doesn't re-fire `publish.yml`.
+4. Open a PR (`-> release` if `release` is behind; `-> master` if you're syncing master).
+   **Merge it via the GitHub Web UI** (verified-signature merge commit).
+5. Push the annotated tag manually if it's missing:
+   `git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`.
+6. If `release` and `master` `version` fields diverged, also open a `release -> master` PR
+   so the bump propagates (the workflow normally does this automatically — see section 3).
+
+### Worked example
+
+For the concrete Phase 7 instance (v1.0.8 — commit-back blocked by the master ruleset,
+recovered via PR #7 + a manual annotated tag), see
+[`.planning/phases/07-bump-publish-tag/07-VERIFICATION.md`](phases/07-bump-publish-tag/07-VERIFICATION.md).
+
+### Never hand-edit `version` outside this runbook
+
+The workflow's `bump-version.mjs` owns the `version` field on `release` (max-wins);
+`master` receives it via the back-merge PR. A `## Drift reconciled` block in a run summary
+signals divergence — reconcile it via this runbook, not by editing `version` directly.
+
+## 6. SC #5 / Option B reversibility — controlled exercise
+
+### Purpose
+
+Prove that a failed publish leaves the Marketplace + `release` **untouched** (no orphan
+bump commit, no orphan tag) and that re-running after fixing the cause recovers cleanly.
+This is ROADMAP Phase 7 SC #5. Phase 7 only observed the recoverable-state half (a
+*post-publish* commit-back failure left the repo clean) — this exercise covers the
+*publish-step-failure* variant deliberately.
+
+### The procedure (the user revokes/restores the PAT — Claude can't)
+
+1. Azure DevOps -> User settings -> Personal access tokens -> **revoke** the `TFX_PAT`
+   token (or temporarily set the `TFX_PAT` repo secret to an obviously-invalid value —
+   revoking is more realistic).
+2. GitHub -> Actions -> `Publish` workflow -> **Run workflow** -> branch `release`
+   (`workflow_dispatch`).
+3. Confirm: the `Publish to Marketplace` step **FAILS**; the Marketplace listing's
+   Versions table is **UNCHANGED** (still the prior version); `release` has **NO new bump
+   commit**; **NO new tag** was pushed. (The bump ran in-memory only — Option B — so
+   nothing leaked.)
+4. Mint a fresh `TFX_PAT` per **section 1**; update the `TFX_PAT` repo secret.
+5. **Re-run** the `Publish` workflow on `release` (`workflow_dispatch`). Confirm: publish
+   succeeds, the bump commit lands on `release`, the tag is pushed, the `release -> master`
+   PR is opened. Merge the back-merge PR via the Web UI.
+
+### Cost note
+
+The re-run in step 5 ships a real patch version. If a separate re-verification run already
+shipped one (e.g. v1.0.9), the SC #5 re-run ships the next (v1.0.10). The exercise's clean
+re-run can double as a re-verification of the new model.
+
+### Where the evidence goes
+
+Capture the failure-then-recovery in
+`.planning/phases/08-cleanup-and-runbooks/08-SC5-EXERCISE.md` (this is evidence-of-event;
+this OPERATIONS.md section is the how-to procedure). Plan 08-03 produces that artifact.
