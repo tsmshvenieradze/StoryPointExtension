@@ -91,20 +91,11 @@ npm run build     # webpack production
 npm run check:size # 250 KB gzipped budget gate
 ```
 
-## Publishing to cezari (private dev test org)
+## Publishing
 
-One-time setup: create `.env.local` at the repo root with `TFX_PAT=<your Marketplace PAT>`. Generate a PAT at the publisher manage page with **Marketplace (Manage)** scope. The file is gitignored.
+Publishing to the Marketplace is automated (v1.1, GitHub Actions). Feature PRs merge to `master` (fully protected); a maintainer then opens a **`master → release` promotion PR** — merging it pushes to the long-lived `release` branch, which fires [`.github/workflows/publish.yml`](.github/workflows/publish.yml): pre-flight gates (typecheck / `vitest run` / webpack production build / 250 KB gzipped budget) → `scripts/bump-version.mjs` (atomic patch bump) → `tfx extension create` + upload-artifact → `tfx extension publish` (using the `TFX_PAT` repo secret) → the `story-point-release-bot` GitHub App commits `chore(release): vX.Y.Z [skip ci]` back to `release` → annotated tag → a `release → master` back-merge PR the maintainer merges via the Web UI. Every promotion ships a new patch automatically; `master` stays fully protected.
 
-```bash
-# Bump the version in vss-extension.json, commit, then:
-npm run publish:cezari
-```
-
-This packages the `.vsix` and publishes it to the `cezari` org via `--share-with`. The version is committed explicitly (no auto-bump retry loop — that proved fragile on Windows in earlier phases). If the publish fails with `Version number must increase`, bump `vss-extension.json` again and commit before retrying.
-
-## Publishing to the public Marketplace
-
-`npm run publish:public` — only valid after Plan 05-05 has flipped `public: true` in `vss-extension.json` and the publisher has been verified by Microsoft. The script aborts if the manifest's `public` field is not `true`.
+Operations runbook — Marketplace PAT rotation, the manual emergency-publish path, the release-branch model, ruleset configuration, partial-failure recovery, and the Option B reversibility exercise — is in [`.planning/OPERATIONS.md`](.planning/OPERATIONS.md). The legacy `scripts/publish-cezari.cjs` helper is retained for reference only at [`scripts/.archive/publish-cezari.cjs`](scripts/.archive/publish-cezari.cjs) (no longer wired to any npm script).
 
 ## Project structure
 
@@ -121,13 +112,16 @@ tests/
   apply/  ado/  audit/  calc/   # vitest unit tests (398 total)
 
 scripts/
+  bump-version.mjs        # atomic patch bump of package.json + vss-extension.json (used by publish.yml)
   check-bundle-size.cjs   # post-build 250 KB gzipped gate
-  publish-cezari.cjs      # tfx publish wrapper (Windows-fix; --public flag for public publish)
+  .archive/
+    publish-cezari.cjs    # ARCHIVED — legacy manual tfx publish wrapper; superseded by publish.yml
 
-.planning/                # GSD workflow artifacts (phases, requirements, decisions)
+.planning/                # GSD workflow artifacts (phases, requirements, decisions, OPERATIONS.md)
 
 .github/workflows/
-  ci.yml                  # typecheck + test + build + size gate
+  ci.yml                  # PR gate: typecheck + test + build + size gate (on PRs to master & release)
+  publish.yml             # release-branch auto-publish to the Marketplace
 
 vss-extension.json        # Azure DevOps extension manifest
 webpack.config.cjs        # bundler config (toolbar + modal HTML entries)
