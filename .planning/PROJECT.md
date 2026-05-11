@@ -2,29 +2,32 @@
 
 ## Current State
 
-**Status:** ✅ v1.0 SHIPPED 2026-05-04 — public on Visual Studio Marketplace as [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) at v1.0.7.
+**Status:** ✅ v1.1 SHIPPED 2026-05-11 — public on Visual Studio Marketplace as [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) at **v1.0.10**, now released via a fully automated CI/CD pipeline.
 
-40/40 v1 requirements satisfied (3 PARTIAL with documented v1.0.1+ deferrals; 1 satisfied-with-caveat tracked for v1.1+). Bundle 147.9 KB / 250 KB gzipped. 398/398 unit tests passing. Programmatic close (Cancel / post-Saved auto-close / iframe Esc) live since v1.0.5 via the addDialog swap.
+- **v1.0 MVP** (2026-05-04, Phases 0–5) — the calculator itself: 40/40 v1 requirements satisfied (3 PARTIAL with documented v1.0.1+ deferrals; 1 satisfied-with-caveat). Bundle 148.4 KB / 250 KB gzipped. 400/400 unit tests passing. Programmatic close (Cancel / post-Saved auto-close / iframe Esc) live since v1.0.5.
+- **v1.1 Auto-Publish CI/CD** (2026-05-11, Phases 6–8) — 38/38 requirements satisfied. Promotion (PR `master → release`) auto-ships a new patch to Marketplace; `master` stays fully protected. First auto-publish v1.0.8 → re-verification v1.0.9 → SC #5 broken-PAT recovery v1.0.10. See **Requirements → Validated** for the full delivered architecture; ops runbook at [.planning/OPERATIONS.md](OPERATIONS.md).
 
-For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). For tech-debt carry-overs see [.planning/milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md).
+For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). Tech-debt carry-overs: [milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md) and [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md).
 
-## Current Milestone: v1.1 Auto-Publish CI/CD
+<details>
+<summary>v1.1 milestone context (archived 2026-05-11)</summary>
 
-**Goal:** Every PR merge to master ships a new patch version of the extension to Marketplace automatically, with no manual steps.
+**Goal:** Every promotion (PR `master → release`) ships a new patch version of the extension to Marketplace automatically; `master` stays fully protected — there is no automatic publish on a plain `master` merge.
 
-**Target features:**
-- GitHub Actions workflow triggered on push to master, with pre-flight gates (typecheck → unit tests → webpack build → bundle ≤ 250 KB gzipped)
-- Auto-bump patch in `package.json` + `vss-extension.json` and commit back to master with `[skip ci]` guard to prevent CI loops
-- Package via `tfx extension create` and publish via `tfx extension publish` to existing publisher `TsezariMshvenieradzeTfsAiReviewTask`, using a Marketplace PAT stored as a GitHub Secret
-- Push a git tag (vX.Y.Z) on each successful publish
-- Remove the legacy `publish:cezari` npm script (v1.0 carry-over) so the GH Action becomes the canonical publish path
-- Fail-fast on errors with manual re-run; no auto-retry, no notification surface
+**Delivered features:**
+- GitHub Actions `publish.yml` triggered on push to the long-lived `release` branch, with pre-flight gates (typecheck → `vitest run` → webpack production build → bundle ≤ 250 KB gzipped) + asset audit + `TFX_PAT`-presence + rulesets-aware branch-protection probe
+- `scripts/bump-version.mjs` does an atomic patch bump of `package.json` + `vss-extension.json` in-memory (Option B); the `story-point-release-bot` GitHub App commits `chore(release): vX.Y.Z [skip ci]` back to `release` after a successful publish (`[skip ci]` + actor-guard prevent CI loops)
+- Package via `tfx extension create` (+ `vsix-X.Y.Z` artifact, 90-day) and publish via `tfx extension publish` to publisher `TsezariMshvenieradzeTfsAiReviewTask`, using the `TFX_PAT` repo secret (App credentials in `APP_ID` / `APP_PRIVATE_KEY`)
+- Annotated git tag `vX.Y.Z` on each successful publish (best-effort, idempotent); a `release → master` back-merge PR a maintainer merges via the Web UI
+- Legacy `publish:cezari` / `publish:public` npm scripts removed (`publish-cezari.cjs` archived to `scripts/.archive/`); the GH Action is the canonical publish path; `.planning/OPERATIONS.md` is the operations runbook
+- Fail-fast on errors with manual re-run; no auto-retry, no notification surface — verified in the wild by the SC #5 broken-PAT exercise
 
 **Key context:**
 - Repo lives on GitHub; extension publishes to Visual Studio Marketplace
-- Existing publisher + listing already public (`TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator`); no publisher work needed
-- Within-milestone extension versions will be v1.0.8 → v1.0.N patch bumps; "v1.1" is a planning marker, not the shipped extension version
-- Bundle ceiling 250 KB gzipped inherited from v1.0 Phase 5
+- Existing publisher + listing already public; no publisher work needed
+- Within-milestone extension versions: v1.0.8 (first auto-publish) → v1.0.9 (re-verification) → v1.0.10 (SC #5 recovery); "v1.1" is a planning marker, not the shipped extension version
+
+</details>
 
 ## Next Milestone Goals (post-v1.1)
 
@@ -61,15 +64,11 @@ If everything else fails, this must work: open work item → click button → an
 - ✓ **Write path + edge cases (APPLY-04..09)** — confirm-overwrite panel ("Current X / New Y"); two-leg apply orchestrator with comment-first → field-write atomicity per Phase 0 D-01; isDirty no-op skip; CommentFailBanner / FieldFailBanner with retry handlers; SavingOverlay + Pitfall 7 immutability guard; reactive read-only UX via FieldFailBanner per spike A3 LAZY-FALLBACK-ONLY — Phase 4
 - ✓ **Marketplace ship (PKG-01..07)** — `.vsix` via `tfx-cli` with multi-entry webpack build; CI bundle gate at 250 KB gzipped (current 147.9 KB; 102.1 KB headroom); marketplace listing with overview.md (description, privacy, formula, limitations); v1.0.0 shipped public 2026-05-02 under publisher swap to `TsezariMshvenieradzeTfsAiReviewTask` (original `TsezariMshvenieradzeExtensions` was stuck-private); patch sequence v1.0.1..v1.0.7 — Phase 5 + Quick task 260504-cl1. *(PARTIAL: PKG-04 Contributor non-admin smoke skipped, PKG-05 screenshots deferred, PKG-07 cross-process Agile + CMMI smoke deferred — all carry-over to v1.0.1+.)*
 - ✓ **Programmatic close (Cancel / post-Saved auto-close / Esc)** — closeProgrammatically helper at SDK boundary calling IGlobalMessagesService.closeDialog(); paired with addDialog opening primitive (matched-pair contract); 600ms post-Saved timer; iframe-local Esc keydown listener with saving-state guard via document.body.dataset.spcSaving — Quick task 260504-cl1 (v1.0.5..v1.0.7)
+- ✓ **v1.1 Auto-Publish CI/CD (CI / GATE / BUMP / PUBLISH / TAG / FAIL / CLEAN / DOC — 38 requirements)** — GitHub Actions [`publish.yml`](../.github/workflows/publish.yml) triggered by a push to the long-lived `release` branch (minus a `paths-ignore` list): mints a `story-point-release-bot` GitHub App installation token (`actions/create-github-app-token@v2`) as step 1 → pre-flight gates (`tsc --noEmit` → `vitest run` → `webpack --mode production` → bundle ≤ 250 KB gzipped) + asset audit + `TFX_PAT`-presence + rulesets-aware branch-protection probe → `scripts/bump-version.mjs` (atomic two-file patch bump of `package.json` + `vss-extension.json`, in-memory — Option B: bump, publish FIRST, commit LAST) → `tfx extension create` + `actions/upload-artifact` (`vsix-X.Y.Z`, 90-day) → `tfx extension publish` to publisher `TsezariMshvenieradzeTfsAiReviewTask` using the `TFX_PAT` repo secret → the App commits `chore(release): vX.Y.Z [skip ci]` back to `release` → annotated git tag `vX.Y.Z` (best-effort, idempotent — TAG-04) → a `release → master` back-merge PR a maintainer merges via the GitHub Web UI (the verified-signature merge/squash commit satisfies `master`'s "require signed commits" rule). `ci.yml`'s `pull_request` gate covers `[master, release]`. Loop-guard triple defense: token anti-loop + `[skip ci]` token + actor-guard excluding `github-actions[bot]` / `story-point-release-bot[bot]`. **Shipped model: every promotion (PR `master → release`) ships a new patch version automatically; `master` stays fully protected (require-PR + `Build & verify` status check + signed commits + linear history, with the `story-point-release-bot` App on the ruleset bypass list) — there is no automatic publish on a plain `master` merge.** Legacy `publish:cezari` / `publish:public` npm scripts removed; `publish-cezari.cjs` archived to `scripts/.archive/`; comprehensive operations runbook (Marketplace PAT rotation · manual emergency-publish · release-branch model + ruleset config + GitHub App creation · rulesets-aware probe correction · partial-failure recovery · Option B reversibility exercise) at [`.planning/OPERATIONS.md`](OPERATIONS.md). First auto-publish **v1.0.8** (2026-05-11, Phase 7); release-branch model re-verified shipping **v1.0.9**; SC #5 broken-PAT reversibility verified in the wild — the publish step failed safely (Marketplace + `release` untouched, no orphan commit/tag/PR) and a restored-PAT re-run shipped **v1.0.10** cleanly (Phase 8 — evidence in `.planning/phases/08-cleanup-and-runbooks/08-SC5-EXERCISE.md`). — Phases 6-8
 
 ### Active
 
-v1.1 Auto-Publish CI/CD requirements will be enumerated in `.planning/REQUIREMENTS.md` (this milestone). High-level groupings:
-- CI workflow (trigger, pre-flight gates, environment)
-- Version bump (manifest + package.json, commit-back, `[skip ci]` guard)
-- Publish (tfx-cli package + publish, PAT secret, fail-fast)
-- Release tagging (push v1.0.N tag on success)
-- Cleanup (remove legacy `publish:cezari` npm script)
+*(none — v1.1 Auto-Publish CI/CD is shipped and validated above; v1.2+ themes are in "Next Milestone Goals (post-v1.1)" below.)*
 
 ### Out of Scope
 
@@ -134,6 +133,11 @@ v1.1 Auto-Publish CI/CD requirements will be enumerated in `.planning/REQUIREMEN
 | **Phase 4 D-02: STRIPPED-FALLBACK** (audit comment plain-text only) | Plan 04-01 spike A1 falsified D-01 sentinel preservation: ADO storage strips `<!-- -->` regardless of `format:1` flag, api-version, or carrier shape. | ✓ Good for v1 ship; ⚠️ Revisit — neuters APPLY-03 in production; tracked for v1.1+ |
 | **Phase 4 D-07: LAZY-FALLBACK-ONLY** (no eager isReadOnly probe) | Plan 04-01 spike A3 falsified four probe candidates: `formService.isReadOnly()` undefined; `getFieldValue('System.AuthorizedAs')` returns identity not permission; self-`setFieldValue` causes dirty side-effects; `SDK.getUser()` lacks license-tier discriminators. | ✓ Good — reactive UX via FieldFailBanner is the production baseline; PermissionWarnBanner slot retained for a future probe-validated path |
 | **`addDialog` over `openCustomDialog`** (Quick task 260504-cl1, v1.0.5) | The matched-pair primitive contract: `closeDialog()` only manages the dialog stack populated by `addDialog`. To enable programmatic close, the open-side primitive had to swap too. | ✓ Good — all three close surfaces live in v1.0.5+; visual chrome differs (24px gutter moved inside iframe via `body { padding: 0 24px !important }` in v1.0.7) |
+| **v1.1: Two-workflow split** — `ci.yml` PR-only; new `publish.yml` for releases | Defense-in-depth — a PR run physically cannot reach the publish step; gates re-run on the release tip | ✓ Good — Phases 6–8; `ci.yml` ↔ `publish.yml` triggers disjoint, verified in the wild |
+| **v1.1: Release-branch promotion model + GitHub App verified commit-back** (Phase 8 — evolved from "publish on push to master") | A `master` ruleset (require-PR + require-signed-commits + status checks) rejected the default-token bot push (`GH013` in Phase 7). Promoting `master → release` via PR and auto-shipping the `release` push keeps `master` fully protected; the `story-point-release-bot` GitHub App (on the ruleset bypass list) commits the bump back to `release` with an auto-signed/verified commit | ✓ Good — supersedes CI-01/TAG-02 as written; verified shipping v1.0.9 + v1.0.10; documented in OPERATIONS.md + the v1.1 Validated entry |
+| **v1.1: Option B state-flow** — bump in-memory → publish FIRST → commit + tag LAST | Marketplace is less reliable than a git push; put the unreliable side first so a publish failure leaves `release`/`master` untouched (self-healing) | ✓ Good — SC #5 broken-PAT exercise: publish failed safely (no orphan commit/tag/PR), restored-PAT re-run recovered cleanly |
+| **v1.1: `scripts/bump-version.mjs` for version bumps** (reject `tfx --rev-version`, `release-please`/`semantic-release`/`changesets`) | Need an atomic two-file bump of `package.json` + `vss-extension.json`; `--rev-version` is manifest-only; the release-bot frameworks assume conventional-commits, which v1.1 deliberately does not adopt (patch-only policy) | ✓ Good — 2 vitest cases; max-wins drift handling; in 400/400 suite |
+| **v1.1: `ubuntu-latest` runner** | Matches existing `ci.yml`; sidesteps Windows `tfx-cli spawnSync({shell})` quirks burned in `publish-cezari.cjs` | ✓ Good — every publish run green on `ubuntu-latest` |
 
 **Open questions / risks:**
 
@@ -165,4 +169,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-05 — v1.1 milestone (Auto-Publish CI/CD) bootstrapped via `/gsd-new-milestone`. v1.0 milestone closed 2026-05-04 (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat).*
+*Last updated: 2026-05-11 after v1.1 milestone close (`/gsd-complete-milestone v1.1`) — v1.1 Auto-Publish CI/CD archived to `milestones/v1.1-ROADMAP.md` + `milestones/v1.1-REQUIREMENTS.md`; 38/38 requirements satisfied; Current State + Key Decisions updated; v1.1 milestone-context summary collapsed; phase artifacts moved to `milestones/v1.1-phases/` (v1.0 phases retroactively moved to `milestones/v1.0-phases/`). Prior: v1.0 milestone closed 2026-05-04 (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat).*

@@ -1,8 +1,10 @@
 ---
 phase: 02-manifest-shell-sdk-integration
 verified: 2026-05-02T12:00:00Z
-status: human_needed
-score: 7/8 must-haves verified
+status: passed
+closed: 2026-05-11
+closure_note: "Retroactively closed at v1.1 milestone close. The four live-org confirmation items below were recorded as manual PASS in 02-SUMMARY.md (cezari org, User Story #2, console-log evidence) and have since been validated in production — the extension has shipped publicly on the Visual Studio Marketplace through v1.0.0..v1.0.10 with the toolbar entry visible, the dialog opening with the correct workItemId, theme inheritance working, and no duplicate registration. No outstanding human action."
+score: 8/8 must-haves verified (4 automated + 4 live-org confirmed via SUMMARY and production)
 overrides_applied: 0
 human_verification:
   - test: "Confirm toolbar entry 'Calculate Story Points' appears in work item form"
@@ -23,8 +25,8 @@ human_verification:
 
 **Phase Goal:** Prove the iframe + contribution + dialog + theme integration end-to-end on a real ADO dev org with a "Hello" payload, so the highest-risk step fails fast before any React UI investment
 **Verified:** 2026-05-02T12:00:00Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Status:** passed (retro-closed 2026-05-11 at v1.1 milestone close — see closure_note in frontmatter)
+**Re-verification:** No — initial verification; live-org items confirmed by SUMMARY + 9 days of public Marketplace operation (v1.0.0..v1.0.10)
 
 ## Goal Achievement
 

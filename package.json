@@ -19,9 +19,7 @@
     "build:dev": "webpack --mode development",
     "dev": "webpack --mode development --watch",
     "package": "tfx extension create --manifest-globs vss-extension.json --output-path dist/",
-    "check:size": "node scripts/check-bundle-size.cjs",
-    "publish:cezari": "node scripts/publish-cezari.cjs",
-    "publish:public": "node scripts/publish-cezari.cjs --public"
+    "check:size": "node scripts/check-bundle-size.cjs"
   },
   "dependencies": {
     "azure-devops-extension-api": "4.270.0",
