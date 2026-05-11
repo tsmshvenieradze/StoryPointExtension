@@ -1,3 +1,4 @@
+// Phase 8 re-verification trigger — exercises the master -> release promotion -> publish.yml path (v1.0.9). Harmless no-op comment.
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
