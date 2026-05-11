@@ -1,170 +1,73 @@
-# Roadmap — Milestone v1.1: Auto-Publish CI/CD
+# Roadmap — Story Point Calculator (Azure DevOps Extension)
 
 **Project:** Story Point Calculator (Azure DevOps Extension)
-**Milestone:** v1.1 — Auto-Publish CI/CD
-**Created:** 2026-05-05
-**Granularity:** coarse (per `.planning/config.json`)
-**Phase numbering:** continued from v1.0 (Phases 0–5 archived); v1.1 starts at Phase 6
-**Phase naming:** `sequential` (per config) — `06-workflow-scaffold-and-gates`, `07-bump-publish-tag`, `08-cleanup-and-runbooks`
-
-> **Goal:** Every PR-merge to master ships a new patch of `TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator` to the Visual Studio Marketplace automatically, with no manual steps. The first auto-publish ships v1.0.8.
+**Public listing:** [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) — at v1.0.10
+**Phase numbering:** continuous across milestones (never restarts)
 
 ---
 
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 0–5 (shipped 2026-05-04) — see [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
-- 🟢 **v1.1 Auto-Publish CI/CD** — Phases 6–8 (this document)
-- 📋 **v1.2+** — to be defined (candidate themes captured in PROJECT.md "Next Milestone Goals")
+- ✅ **v1.1 Auto-Publish CI/CD** — Phases 6–8 (shipped 2026-05-11) — see [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
+- 📋 **v1.2+** — not yet defined (candidate themes in [PROJECT.md](PROJECT.md) "Next Milestone Goals")
 
 ---
 
 ## Phases
 
-- [x] **Phase 6: Workflow Scaffold & Pre-flight Gates** — Two-workflow split (`ci.yml` PR-only + new `publish.yml`), all pre-flight gates run end-to-end on push to master, dry-run final step (no Marketplace mutation) ✓
-- [x] **Phase 7: Bump, Publish, Tag** — `bump-version.mjs`, real `tfx extension publish` to Marketplace, `[skip ci]` commit-back, annotated tag — v1.0.8 shipped 2026-05-11 (via `workflow_dispatch` after the organic trigger didn't fire; commit-back blocked by an undiscovered master ruleset → recovered via PR #7 + manual tag + ruleset relaxation; SC #1-4,6 PASS, SC #5 partial) ✓
-- [x] **Phase 8: Cleanup & Runbooks** — Archive legacy `publish-cezari.cjs`, remove npm scripts, write `OPERATIONS.md` (PAT rotation + emergency-publish runbook + **verified-commit-back / ruleset migration** + **rulesets-aware branch-protection probe** + **SC #5 broken-PAT exercise** carried from Phase 7), promote v1.1 capabilities to PROJECT.md "Validated"
+<details>
+<summary>✅ v1.0 MVP (Phases 0–5) — SHIPPED 2026-05-04</summary>
 
----
+- [x] Phase 0: Bootstrap & Prerequisites (1/1 plans) — completed 2026-05-01
+- [x] Phase 1: Calc Engine & Audit Parser (2/2 plans) — completed 2026-05-01
+- [x] Phase 2: Manifest Shell & SDK Integration (1/1 plans) — completed 2026-05-02
+- [x] Phase 3: Modal UI & Read Path (4/4 plans) — completed 2026-05-02
+- [x] Phase 4: Write Path & Edge Cases (6/6 plans) — completed 2026-05-02
+- [x] Phase 5: Polish & Marketplace Publish (5/5 plans) — completed 2026-05-04
 
-## Phase Details
+Full detail + post-publish patch sequence v1.0.1..v1.0.7: [milestones/v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md). Phase artifacts archived under [milestones/v1.0-phases/](milestones/v1.0-phases/).
 
-### Phase 6: Workflow Scaffold & Pre-flight Gates
-**Goal:** End-to-end CI plumbing for auto-publish is in place — gates and triggers verified — but no Marketplace state changes yet.
-**Depends on:** Nothing (this milestone's first phase)
-**Requirements:** CI-01, CI-02, CI-03, CI-04, CI-05, CI-06, CI-07, CI-08, GATE-01, GATE-02, GATE-03, GATE-04, GATE-05, GATE-06, GATE-07, FAIL-01, FAIL-02, FAIL-03
-**Success Criteria** (what must be TRUE):
-  1. Pushing a feature branch and opening a PR triggers `ci.yml` (gates run); the same PR push does NOT trigger `publish.yml`.
-  2. Merging a PR to master triggers `publish.yml` (gates re-run on master tip) and does NOT trigger `ci.yml` (the `push: [master]` line is gone).
-  3. A docs-only commit (touching only `**.md`, `.planning/**`, `.claude/**`, or `docs/**`) merged to master is filtered by `paths-ignore` and does NOT start `publish.yml`.
-  4. Forcing any one gate to fail (typecheck / vitest / build / `check:size`) leaves the workflow red at the failed step, and the dry-run final step does NOT execute (gate ordering verified).
-  5. The successful end-of-workflow dry-run step echoes the would-be next version (e.g. `would publish v1.0.8`) without invoking `tfx`, leaving Marketplace untouched at v1.0.7.
-  6. The `TFX_PAT` repo secret is created and resolves in the workflow (`echo "${{ secrets.TFX_PAT != '' }}"` returns `true`); a `gh api repos/:owner/:repo/branches/master/protection` call confirms current branch-protection state and the result is recorded in CONTEXT for Phase 7.
-**Plans:** 3 plans complete ✓
-Plans:
-- [x] 06-01-PLAN.md — Drop `push: master` from ci.yml (CI-02) ✓
-- [x] 06-02-PLAN.md — Scaffold publish.yml with gates, probes, and dry-run echo (CI-01, CI-03..08, GATE-01..07, FAIL-01..03) ✓
-- [x] 06-03-PLAN.md — Verification dance (positive + negative merge cases via PR #3 / PR #4) and capture branch-protection-probe-result.md = NOT PROTECTED (D-1, D-1a, D-5/D-5a/D-5b) ✓
+</details>
 
-### Phase 7: Bump, Publish, Tag
-**Goal:** A real merge to master automatically packages a new patch `.vsix`, publishes it to the Visual Studio Marketplace, commits the version bump back to master with `[skip ci]`, and pushes an annotated tag — the first run ships v1.0.8.
-**Depends on:** Phase 6
-**Requirements:** BUMP-01, BUMP-02, BUMP-03, BUMP-04, BUMP-05, PUBLISH-01, PUBLISH-02, PUBLISH-03, PUBLISH-04, PUBLISH-05, TAG-01, TAG-02, TAG-03, TAG-04
-**Success Criteria** (what must be TRUE):
-  1. After a merge to master, the Marketplace listing for `TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator` advances to v1.0.8 (verifiable in the public listing's Versions table within the workflow runtime).
-  2. Master gains exactly one new commit authored by `github-actions[bot]` with subject `chore(release): v1.0.8 [skip ci]` that updates BOTH `package.json` and `vss-extension.json` to `1.0.8` (atomic two-file diff).
-  3. The bump commit does NOT re-trigger `publish.yml` — the Actions tab shows the run terminating, no second iteration appears (triple-defense: `GITHUB_TOKEN` anti-loop + `[skip ci]` + actor-guard `if: github.actor != 'github-actions[bot]'`).
-  4. An annotated tag `v1.0.8` exists on origin pointing at the bump commit; if the tag step fails, the workflow stays green (Marketplace + commit are load-bearing; tag is best-effort/idempotent).
-  5. Forcing the publish step to fail (e.g. revoked PAT) leaves master at v1.0.7, no bump commit, no tag, and Marketplace at v1.0.7 — re-running via `workflow_dispatch` recovers cleanly (Option B reversibility verified).
-  6. The published `.vsix` is downloadable as a workflow artifact `vsix-1.0.8` for 90 days (`if-no-files-found: error` guard active), enabling post-mortem inspection without re-packaging.
-**Plans:** 2 plans complete ✓
-Plans:
-- [x] 07-01-PLAN.md — Bump script + tests + publish.yml swap (BUMP-01..05, PUBLISH-01..05, TAG-01..04 — atomic implementation) ✓
-- [x] 07-02-PLAN.md — Pre-merge D-6 checks (satisfied empirically by the run) + per-SC evidence capture in 07-VERIFICATION.md (D-6, D-7, D-10) ✓
+<details>
+<summary>✅ v1.1 Auto-Publish CI/CD (Phases 6–8) — SHIPPED 2026-05-11</summary>
 
-**Outcome (2026-05-11):** v1.0.8 live on Marketplace. Shipped via `workflow_dispatch` run #25641329824 — the PR #5 merge to master did not fire `publish.yml` (cause undiagnosed). The run published v1.0.8 + uploaded `vsix-1.0.8`, then the commit-back step failed: a master *ruleset* (require-PR + require-signed-commits + 2 status checks) rejected the bot's push (`GH013`). 06-03's `branch-protection-probe-result.md` checked *legacy* branch protection only, not rulesets — a Phase 6 verification gap. Recovered: master ruleset relaxed (signed-commits + require-PR removed) → recovery PR #7 (`chore(release): v1.0.8 [skip ci]`) squash-merged → commit `eba84b3` on master → annotated tag `v1.0.8` pushed manually. SC tally: #1 ✓ (Marketplace v1.0.8) · #2 ✓ (bump commit on master, atomic 2-file, `[skip ci]` — via recovery PR not bot) · #3 ✓ (no re-trigger) · #4 ✓ (annotated tag → `eba84b3`) · #6 ✓ (artifact `vsix-1.0.8`, 90-day) · #5 PARTIAL (post-publish commit-back failure left master at v1.0.7 with no orphan commit/tag — verified in the wild; the "force publish to fail → Marketplace stays at v1.0.7" variant deferred to a controlled broken-PAT exercise in Phase 8/v1.2+). Full evidence: `07-VERIFICATION.md`. Phase 8 inherits the verified-commit-back / ruleset decision, the rulesets-aware-probe note, the SC #5 exercise, and the organic-trigger investigation.
+- [x] Phase 6: Workflow Scaffold & Pre-flight Gates (3/3 plans) — completed 2026-05-07
+- [x] Phase 7: Bump, Publish, Tag (2/2 plans) — completed 2026-05-11 (first auto-publish v1.0.8)
+- [x] Phase 8: Cleanup & Runbooks (5/5 plans) — completed 2026-05-11 (release-branch model + GitHub App verified commit-back; OPERATIONS.md; re-verification v1.0.9; SC #5 broken-PAT recovery v1.0.10)
 
-### Phase 8: Cleanup & Runbooks
-**Goal:** Legacy manual-publish path is retired, operational runbooks for the auto-publish surface exist, and PROJECT.md reflects v1.1 as Validated — milestone closeable.
-**Depends on:** Phase 7 (must observe at least one green auto-publish before deleting the manual escape hatch)
-**Requirements:** CLEAN-01, CLEAN-02, CLEAN-03, DOC-01, DOC-02, DOC-03
-**Success Criteria** (what must be TRUE):
-  1. `scripts/publish-cezari.cjs` is no longer at its original path — it has been moved to `scripts/.archive/publish-cezari.cjs` (preserved as institutional memory + grep-discoverable).
-  2. `package.json` no longer contains the `publish:cezari` or `publish:public` script entries (`jq -r '.scripts | keys' package.json` shows neither key).
-  3. `git grep -F 'publish:cezari'` returns 0 hits in non-archive paths (`scripts/.archive/` and `.planning/` allowed; `src/`, `package.json`, `.github/`, `README.md` clean).
-  4. `.planning/OPERATIONS.md` exists and documents (a) the Marketplace-PAT-rotation procedure with concrete steps on `aex.dev.azure.com` and a 1-year cadence, and (b) the manual emergency-publish runbook capturing the exact `tfx extension publish` invocation copied from `publish-cezari.cjs` BEFORE archive.
-  5. `.planning/PROJECT.md` "Validated" section names v1.1 Auto-Publish CI/CD as shipped, with a one-line summary of the workflow + secret + commit-back loop, mirroring the v1.0 entries.
-**Plans:** 5 plans in 4 waves
-Plans:
-- [x] 08-01-PLAN.md — Workflow architecture refactor: publish.yml -> push:[release] + GitHub App token + back-merge PR; ci.yml -> PR on [master, release]; capture canonical tfx invocation into OPERATIONS.md before archive (DOC-02) [wave 1]
-- [x] 08-02-PLAN.md — Complete .planning/OPERATIONS.md: PAT rotation (DOC-01), release-branch model + ruleset config + GitHub App steps, rulesets-aware probe note, partial-failure recovery runbook (D-2), SC #5 procedure [wave 2]
-- [x] 08-03-PLAN.md — User-action handoff (release branch, GitHub App, secrets, ruleset re-tighten) + re-verification run (v1.0.9 end-to-end) + SC #5 broken-PAT exercise -> 08-SC5-EXERCISE.md (D-3, D-4) [wave 3]
-- [x] 08-04-PLAN.md — Legacy cleanup: git mv publish-cezari.cjs -> scripts/.archive/ + ARCHIVED header; remove publish:cezari/publish:public from package.json; verify git grep (CLEAN-01..03) [wave 4]
-- [x] 08-05-PLAN.md — DOC-03: promote v1.1 to PROJECT.md "Validated" with the corrected release-branch-model wording; fix REQUIREMENTS.md 32->38 tally [wave 4]
+38/38 requirements satisfied (CI-01 + TAG-02 satisfied via the deliberate Phase-8 architecture evolution to the release-branch model). Full detail: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md) · audit: [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md). Phase artifacts archived under [milestones/v1.1-phases/](milestones/v1.1-phases/).
 
----
+</details>
 
-## Coverage Map
+### 📋 v1.2+ (not yet planned)
 
-Every v1.1 requirement maps to exactly one phase. No orphans. No duplicates.
-
-| Category | Requirement IDs | Phase |
-|----------|-----------------|-------|
-| CI | CI-01, CI-02, CI-03, CI-04, CI-05, CI-06, CI-07, CI-08 | Phase 6 |
-| GATE | GATE-01, GATE-02, GATE-03, GATE-04, GATE-05, GATE-06, GATE-07 | Phase 6 |
-| FAIL | FAIL-01, FAIL-02, FAIL-03 | Phase 6 |
-| BUMP | BUMP-01, BUMP-02, BUMP-03, BUMP-04, BUMP-05 | Phase 7 |
-| PUBLISH | PUBLISH-01, PUBLISH-02, PUBLISH-03, PUBLISH-04, PUBLISH-05 | Phase 7 |
-| TAG | TAG-01, TAG-02, TAG-03, TAG-04 | Phase 7 |
-| CLEAN | CLEAN-01, CLEAN-02, CLEAN-03 | Phase 8 |
-| DOC | DOC-01, DOC-02, DOC-03 | Phase 8 |
-
-**Coverage:** 38/38 v1.1 requirements mapped.
-
-**Phase distribution:**
-- Phase 6: 18 requirements (CI 8 + GATE 7 + FAIL 3) — workflow plumbing + gates + failure-policy YAML
-- Phase 7: 14 requirements (BUMP 5 + PUBLISH 5 + TAG 4) — Marketplace state mutation
-- Phase 8: 6 requirements (CLEAN 3 + DOC 3) — retire legacy path + runbooks
-
----
-
-## FAIL Category Phase Assignment — Rationale
-
-`FAIL-01` (workflow fail-fast), `FAIL-02` (no Slack/Teams/Discord; only the GH default failure email), and `FAIL-03` (`workflow_dispatch` enables manual re-run) are policy decisions baked into the workflow YAML at scaffold time. They are observable from Phase 6's dry-run shape (`workflow_dispatch:` is present in `on:`; no notification step exists; `continue-on-error` is absent on every gate step). Assigning them to Phase 6 keeps the failure surface defined before any Marketplace mutation is wired in. They could also fit in Phase 7 (since their first real exercise happens against publish failures), but locking the policy at scaffold prevents drift between Phases 6 and 7.
-
-## TAG-04 (Best-Effort) — Phase 7 Note
-
-`TAG-04` makes the tag step `continue-on-error: true` and idempotent (skip if local or origin tag exists), so a tag-push failure leaves the workflow green. This is essential for Option B's recoverability: Marketplace + commit are load-bearing; the tag is human-audit nice-to-have. Phase 7's success criteria explicitly verify the workflow stays green when tag-push fails AND the manual recovery path is documented (forwarded to Phase 8's `OPERATIONS.md`).
+Run `/gsd-new-milestone` to scope the next milestone. Candidate themes (from the v1.0 audit + listing limitations, see [PROJECT.md](PROJECT.md) "Next Milestone Goals"):
+- Pre-fill APPLY-03 production fix (widen `src/audit/parse.ts` or strip the orphaned `serialize` re-export)
+- Node-20 → Node-24 action bump in `publish.yml` / `ci.yml` (GitHub deprecation deadline 2026-06-02)
+- Phase 5 carry-overs: light + dark listing screenshots, Contributor non-admin smoke, cross-process Agile + CMMI smoke
+- Cross-phase integration debt: `closeProgrammatically` defense-in-depth + shared `SAVING_DATASET_KEY` constant; strip dead `PermissionWarnBanner`
+- v2 customization placeholder: Settings hub, configurable weights/dimensions/levels
 
 ---
 
 ## Progress
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 6. Workflow Scaffold & Pre-flight Gates | 3/3 | Complete ✓ | 2026-05-07 |
-| 7. Bump, Publish, Tag | 2/2 | Complete ✓ (v1.0.8 live; SC #1-4,6 PASS, SC #5 partial) | 2026-05-11 |
-| 8. Cleanup & Runbooks | 2/5 | In progress (08-01: release-branch publish.yml + GitHub App token + ci.yml [master, release]; 08-02: OPERATIONS.md complete — §§1-6, DOC-01 + DOC-02 done) | — |
+| Phase | Milestone | Plans Complete | Status | Completed |
+| ----- | --------- | -------------- | ------ | --------- |
+| 0. Bootstrap & Prerequisites | v1.0 | 1/1 | Complete | 2026-05-01 |
+| 1. Calc Engine & Audit Parser | v1.0 | 2/2 | Complete | 2026-05-01 |
+| 2. Manifest Shell & SDK Integration | v1.0 | 1/1 | Complete | 2026-05-02 |
+| 3. Modal UI & Read Path | v1.0 | 4/4 | Complete | 2026-05-02 |
+| 4. Write Path & Edge Cases | v1.0 | 6/6 | Complete | 2026-05-02 |
+| 5. Polish & Marketplace Publish | v1.0 | 5/5 | Complete | 2026-05-04 |
+| 6. Workflow Scaffold & Pre-flight Gates | v1.1 | 3/3 | Complete | 2026-05-07 |
+| 7. Bump, Publish, Tag | v1.1 | 2/2 | Complete | 2026-05-11 |
+| 8. Cleanup & Runbooks | v1.1 | 5/5 | Complete | 2026-05-11 |
 
-**Milestone progress:** 2/3 phases complete (67%) — Phases 6 + 7 closed; Phase 8 in progress (2/5 plans).
-
----
-
-## Cross-Phase Notes for plan-phase
-
-These items inform `/gsd-plan-phase` when it decomposes each phase into plans:
-
-1. **`master` branch protection state — UNKNOWN at roadmap time.** No protection is visible in commit history, but this must be verified explicitly. Phase 6's plan should include a `gh api repos/tsmshvenieradze/StoryPointExtension/branches/master/protection` task; the result determines whether Phase 7's commit-back uses default `GITHUB_TOKEN` (no protection — current assumption) or escalates to a GitHub App / `RELEASE_PAT` (protection blocks bot pushes).
-
-2. **`tfx extension publish --help` flag re-verification.** The Phase 7 publish invocation `npx tfx extension publish --vsix dist/*.vsix --auth-type pat --token "$TFX_PAT" --no-prompt --no-wait-validation` is research-derived and HIGH-confidence on shape, MEDIUM-confidence on exact flag spelling. Phase 7's plan must run `npx tfx extension publish --help` once at execution time and reconcile against the line above before committing the workflow file.
-
-3. **Inherited publisher.** v1.0 Phase 5 swapped from the stuck-private `TsezariMshvenieradzeExtensions` to `TsezariMshvenieradzeTfsAiReviewTask`. v1.1 inherits this publisher unchanged — no publisher work is in scope. The first auto-publish targets the same listing already at v1.0.7.
-
-4. **Bundle-size gate is v1.0 carry-over.** `GATE-05` (`npm run check:size` ≤ 250 KB gzipped) reuses `scripts/check-bundle-size.cjs` as-is. Current bundle is 147.9 KB / 250 KB (102.1 KB headroom). Phase 6's plan can wire it verbatim from the existing `ci.yml` step — no new tooling.
-
-5. **Phase 8 ordering safety.** Per FEATURES.md and PITFALLS.md: archive `publish-cezari.cjs` only AFTER Phase 7's first green auto-publish AND after the `tfx` invocation has been captured in `OPERATIONS.md`. The "don't delete-and-pray" rule is encoded in Phase 8's dependency on Phase 7 + DOC-02's "captured BEFORE the legacy script is archived" wording.
-
-6. **Stale REQ tally.** REQUIREMENTS.md states "Total v1.1 requirements: 32" but enumeration yields 38. Phase 8's `DOC-03` (PROJECT.md update) is a natural moment to also fix the REQUIREMENTS.md tally line; alternatively the orchestrator can patch it directly. No coverage impact — all 38 are mapped.
+**Shipped:** 2 milestones, 9 phases, 29 plans. Next: `/gsd-new-milestone`.
 
 ---
 
-## Out of Scope (mirrored from REQUIREMENTS.md)
-
-Not in v1.1, not in v1.2, not on the roadmap unless requirements change:
-
-- GitHub Releases auto-creation (Marketplace listing IS the user-facing release surface)
-- Conventional-commits-driven semver (patch-only is the explicit v1.1 policy)
-- Slack / Teams / email notifications beyond the GH default failure email
-- Auto-retry on transient Marketplace 5xx (fail-fast is the chosen philosophy)
-- Microsoft Entra / OIDC publishing (documented for Azure Pipelines, not GH Actions)
-- GitHub App / `RELEASE_PAT` for commit-back (deferred until master gains branch protection)
-- Marketplace screenshot regeneration (PKG-05 v1.0 carry-over — orthogonal milestone)
-- Pre-fill APPLY-03 production fix (separate v1.0 carry-over milestone)
-- E2E / Playwright tests (per CLAUDE.md — manual QA does UI testing)
-- Codecov / coverage upload (vitest already enforces 100% threshold)
-
-Full anti-feature list with rationale: see [REQUIREMENTS.md § Out of Scope](REQUIREMENTS.md#out-of-scope-explicit-anti-features).
-
----
-
-*Created: 2026-05-05 — gsd-roadmapper. 3 phases (6, 7, 8); 38 requirements mapped 100%; coarse granularity. Next: `/gsd-plan-phase 6`.*
+*v1.0 archived 2026-05-04 · v1.1 archived 2026-05-11 (gsd-complete-milestone). Per-milestone roadmaps under `.planning/milestones/`.*

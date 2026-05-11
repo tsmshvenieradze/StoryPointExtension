@@ -2,15 +2,15 @@
 
 ## Current State
 
-**Status:** ✅ v1.0 SHIPPED 2026-05-04 — public on Visual Studio Marketplace as [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) at v1.0.7.
+**Status:** ✅ v1.1 SHIPPED 2026-05-11 — public on Visual Studio Marketplace as [TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator](https://marketplace.visualstudio.com/items?itemName=TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator) at **v1.0.10**, now released via a fully automated CI/CD pipeline.
 
-40/40 v1 requirements satisfied (3 PARTIAL with documented v1.0.1+ deferrals; 1 satisfied-with-caveat tracked for v1.1+). Bundle 147.9 KB / 250 KB gzipped. 398/398 unit tests passing. Programmatic close (Cancel / post-Saved auto-close / iframe Esc) live since v1.0.5 via the addDialog swap.
+- **v1.0 MVP** (2026-05-04, Phases 0–5) — the calculator itself: 40/40 v1 requirements satisfied (3 PARTIAL with documented v1.0.1+ deferrals; 1 satisfied-with-caveat). Bundle 148.4 KB / 250 KB gzipped. 400/400 unit tests passing. Programmatic close (Cancel / post-Saved auto-close / iframe Esc) live since v1.0.5.
+- **v1.1 Auto-Publish CI/CD** (2026-05-11, Phases 6–8) — 38/38 requirements satisfied. Promotion (PR `master → release`) auto-ships a new patch to Marketplace; `master` stays fully protected. First auto-publish v1.0.8 → re-verification v1.0.9 → SC #5 broken-PAT recovery v1.0.10. See **Requirements → Validated** for the full delivered architecture; ops runbook at [.planning/OPERATIONS.md](OPERATIONS.md).
 
-For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). For tech-debt carry-overs see [.planning/milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md).
+For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). Tech-debt carry-overs: [milestones/v1.0-MILESTONE-AUDIT.md](milestones/v1.0-MILESTONE-AUDIT.md) and [milestones/v1.1-MILESTONE-AUDIT.md](milestones/v1.1-MILESTONE-AUDIT.md).
 
-## Current Milestone: v1.1 Auto-Publish CI/CD
-
-**Status:** ✅ SHIPPED & VALIDATED (Phases 6–8 complete, 2026-05-11). See the v1.1 entry under **Requirements → Validated** for the full delivered architecture. Summary below kept for milestone context; `/gsd-complete-milestone` will archive it.
+<details>
+<summary>v1.1 milestone context (archived 2026-05-11)</summary>
 
 **Goal:** Every promotion (PR `master → release`) ships a new patch version of the extension to Marketplace automatically; `master` stays fully protected — there is no automatic publish on a plain `master` merge.
 
@@ -24,9 +24,10 @@ For full milestone history see [.planning/MILESTONES.md](MILESTONES.md). For tec
 
 **Key context:**
 - Repo lives on GitHub; extension publishes to Visual Studio Marketplace
-- Existing publisher + listing already public (`TsezariMshvenieradzeTfsAiReviewTask.story-point-calculator`); no publisher work needed
+- Existing publisher + listing already public; no publisher work needed
 - Within-milestone extension versions: v1.0.8 (first auto-publish) → v1.0.9 (re-verification) → v1.0.10 (SC #5 recovery); "v1.1" is a planning marker, not the shipped extension version
-- Bundle ceiling 250 KB gzipped inherited from v1.0 Phase 5 (current 148.4 KB)
+
+</details>
 
 ## Next Milestone Goals (post-v1.1)
 
@@ -132,6 +133,11 @@ If everything else fails, this must work: open work item → click button → an
 | **Phase 4 D-02: STRIPPED-FALLBACK** (audit comment plain-text only) | Plan 04-01 spike A1 falsified D-01 sentinel preservation: ADO storage strips `<!-- -->` regardless of `format:1` flag, api-version, or carrier shape. | ✓ Good for v1 ship; ⚠️ Revisit — neuters APPLY-03 in production; tracked for v1.1+ |
 | **Phase 4 D-07: LAZY-FALLBACK-ONLY** (no eager isReadOnly probe) | Plan 04-01 spike A3 falsified four probe candidates: `formService.isReadOnly()` undefined; `getFieldValue('System.AuthorizedAs')` returns identity not permission; self-`setFieldValue` causes dirty side-effects; `SDK.getUser()` lacks license-tier discriminators. | ✓ Good — reactive UX via FieldFailBanner is the production baseline; PermissionWarnBanner slot retained for a future probe-validated path |
 | **`addDialog` over `openCustomDialog`** (Quick task 260504-cl1, v1.0.5) | The matched-pair primitive contract: `closeDialog()` only manages the dialog stack populated by `addDialog`. To enable programmatic close, the open-side primitive had to swap too. | ✓ Good — all three close surfaces live in v1.0.5+; visual chrome differs (24px gutter moved inside iframe via `body { padding: 0 24px !important }` in v1.0.7) |
+| **v1.1: Two-workflow split** — `ci.yml` PR-only; new `publish.yml` for releases | Defense-in-depth — a PR run physically cannot reach the publish step; gates re-run on the release tip | ✓ Good — Phases 6–8; `ci.yml` ↔ `publish.yml` triggers disjoint, verified in the wild |
+| **v1.1: Release-branch promotion model + GitHub App verified commit-back** (Phase 8 — evolved from "publish on push to master") | A `master` ruleset (require-PR + require-signed-commits + status checks) rejected the default-token bot push (`GH013` in Phase 7). Promoting `master → release` via PR and auto-shipping the `release` push keeps `master` fully protected; the `story-point-release-bot` GitHub App (on the ruleset bypass list) commits the bump back to `release` with an auto-signed/verified commit | ✓ Good — supersedes CI-01/TAG-02 as written; verified shipping v1.0.9 + v1.0.10; documented in OPERATIONS.md + the v1.1 Validated entry |
+| **v1.1: Option B state-flow** — bump in-memory → publish FIRST → commit + tag LAST | Marketplace is less reliable than a git push; put the unreliable side first so a publish failure leaves `release`/`master` untouched (self-healing) | ✓ Good — SC #5 broken-PAT exercise: publish failed safely (no orphan commit/tag/PR), restored-PAT re-run recovered cleanly |
+| **v1.1: `scripts/bump-version.mjs` for version bumps** (reject `tfx --rev-version`, `release-please`/`semantic-release`/`changesets`) | Need an atomic two-file bump of `package.json` + `vss-extension.json`; `--rev-version` is manifest-only; the release-bot frameworks assume conventional-commits, which v1.1 deliberately does not adopt (patch-only policy) | ✓ Good — 2 vitest cases; max-wins drift handling; in 400/400 suite |
+| **v1.1: `ubuntu-latest` runner** | Matches existing `ci.yml`; sidesteps Windows `tfx-cli spawnSync({shell})` quirks burned in `publish-cezari.cjs` | ✓ Good — every publish run green on `ubuntu-latest` |
 
 **Open questions / risks:**
 
@@ -163,4 +169,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-11 — v1.1 Auto-Publish CI/CD promoted to "Validated" (Phases 6–8 complete; first auto-publish v1.0.8, re-verification v1.0.9, SC #5 broken-PAT recovery v1.0.10; release-branch model + `story-point-release-bot` App + comprehensive `OPERATIONS.md`; legacy `publish:cezari` retired). Plan 08-05 / DOC-03. v1.0 milestone closed 2026-05-04 (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat).*
+*Last updated: 2026-05-11 after v1.1 milestone close (`/gsd-complete-milestone v1.1`) — v1.1 Auto-Publish CI/CD archived to `milestones/v1.1-ROADMAP.md` + `milestones/v1.1-REQUIREMENTS.md`; 38/38 requirements satisfied; Current State + Key Decisions updated; v1.1 milestone-context summary collapsed; phase artifacts moved to `milestones/v1.1-phases/` (v1.0 phases retroactively moved to `milestones/v1.0-phases/`). Prior: v1.0 milestone closed 2026-05-04 (public Marketplace ship; 19 plans across 6 phases; 40/40 v1 requirements satisfied with 3 PARTIAL deferrals + 1 satisfied-with-caveat).*
