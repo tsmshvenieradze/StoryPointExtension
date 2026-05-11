@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
 status: executing
-stopped_at: "Phase 7 complete — v1.0.8 live on Marketplace (via workflow_dispatch run #25641329824 after the organic merge trigger didn't fire); commit-back blocked by an undiscovered master ruleset, recovered via PR #7 + manual tag + ruleset relaxation. SC #1/#2/#3/#4/#6 PASS; SC #5 partially verified + publish-fail variant deferred. Next: /gsd-plan-phase 8."
-last_updated: "2026-05-11T08:30:00.000Z"
-last_activity: 2026-05-11 -- Phase 07 complete (07-01 implementation + 07-02 verification); first Marketplace auto-publish v1.0.8 shipped + recovered from a ruleset-blocked commit-back
+stopped_at: "Phase 8 context gathered — 6 decisions across 4 areas. Phase 8 EXPANDED beyond CLEAN-01..03 + DOC-01..03: release-branch model (publish.yml triggers on push:[release], not master), GitHub App for verified commit-back, master ruleset re-tightened to full protection (App on bypass list), release→master back-merge PR, re-verification publish run, SC #5 broken-PAT exercise EXECUTED. Milestone-goal wording changes (DOC-03): 'every PR merge to master ships' → 'every promotion to release ships; master stays protected'. Next: /gsd-plan-phase 8 (expect ~4-6 plans; planner may propose an 8/8.1 split)."
+last_updated: "2026-05-11T10:00:00.000Z"
+last_activity: 2026-05-11 -- Phase 08 context gathered via /gsd-discuss-phase 8 (6 decisions; scope expanded with release-branch model + GitHub App + SC #5 exercise)
 progress:
   total_phases: 3
   completed_phases: 2
@@ -145,7 +145,7 @@ v1.2+ items (deferred from v1.1 — explicit anti-features for this milestone):
 
 ## Session Continuity
 
-Last session: 2026-05-11T08:30:00.000Z
-Stopped at: Phase 7 complete — v1.0.8 live on Marketplace (via `workflow_dispatch` run #25641329824); master HEAD `eba84b3` at v1.0.8; annotated tag `v1.0.8`; artifact `vsix-1.0.8`. Commit-back was blocked by an undiscovered master ruleset; recovered via PR #7 + manual tag + ruleset relaxation. SC #1/#2/#3/#4/#6 PASS; SC #5 partial.
-Resume file: `.planning/phases/07-bump-publish-tag/07-VERIFICATION.md` (per-SC evidence + critical finding + recovery log) + `07-02-SUMMARY.md`.
-Next workflow: `/gsd-plan-phase 8` to decompose Phase 8 (Cleanup & Runbooks). Phase 8 now also owns: the verified-commit-back decision (GitHub App if the master ruleset is re-tightened), the probe-gap note (future probes must check rulesets too), the SC #5 broken-PAT controlled exercise, and the organic-trigger investigation. Note for Phase 8 planning: the `branch-protection-probe-result.md` conclusion ("NOT PROTECTED") was correct for *legacy* protection but a master *ruleset* exists (now relaxed) — don't treat the probe artifact as the full picture.
+Last session: 2026-05-11T10:00:00.000Z
+Stopped at: Phase 8 context gathered (`/gsd-discuss-phase 8` — 6 decisions, 4 areas). Phase 8 scope EXPANDED: original CLEAN-01..03 + DOC-01..03 PLUS a release-branch model (publish.yml: `push:[master]` → `push:[release]`; feature PRs merge to master → a `master → release` promotion PR fires the publish), a GitHub App for verified commit-back (App on master's ruleset bypass list), master ruleset re-tightened to FULL protection (PR + status-checks + signed-commits), a `release → master` back-merge PR step, a re-verification publish run (ships v1.0.9 end-to-end through the new model), and the SC #5 broken-PAT controlled exercise EXECUTED (not just documented). OPERATIONS.md is comprehensive (PAT rotation + emergency-publish runbook + release-branch model + ruleset config + rulesets-aware-probe note + partial-failure recovery + SC #5 procedure). `publish-cezari.cjs` → `scripts/.archive/` frozen reference; `publish:cezari`/`publish:public` npm scripts removed; the `tfx` invocation captured into OPERATIONS.md before the move. Milestone-goal wording change for DOC-03: "every PR merge to master ships" → "every promotion to release ships; master stays protected".
+Resume file: `.planning/phases/08-cleanup-and-runbooks/08-CONTEXT.md` (6 decisions D-1..D-6 + canonical refs + Claude's-discretion list).
+Next workflow: `/gsd-plan-phase 8` — expect a large phase (~4–6 plans). The planner may propose splitting into 8 + 8.1 (e.g. 8 = the architecture refactor + App + ruleset re-tighten + re-verification + SC #5; 8.1 = CLEAN + DOC). Also still on the table: a docs-only PR `milestone1.1 → master` to sync the Phase 7 close-out commits (`9fcd418`) to master before Phase 8 starts.
