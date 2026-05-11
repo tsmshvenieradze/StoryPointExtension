@@ -74,7 +74,13 @@ Plans:
   3. `git grep -F 'publish:cezari'` returns 0 hits in non-archive paths (`scripts/.archive/` and `.planning/` allowed; `src/`, `package.json`, `.github/`, `README.md` clean).
   4. `.planning/OPERATIONS.md` exists and documents (a) the Marketplace-PAT-rotation procedure with concrete steps on `aex.dev.azure.com` and a 1-year cadence, and (b) the manual emergency-publish runbook capturing the exact `tfx extension publish` invocation copied from `publish-cezari.cjs` BEFORE archive.
   5. `.planning/PROJECT.md` "Validated" section names v1.1 Auto-Publish CI/CD as shipped, with a one-line summary of the workflow + secret + commit-back loop, mirroring the v1.0 entries.
-**Plans:** TBD
+**Plans:** 5 plans in 3 waves
+Plans:
+- [ ] 08-01-PLAN.md — Workflow architecture refactor: publish.yml -> push:[release] + GitHub App token + back-merge PR; ci.yml -> PR on [master, release]; capture canonical tfx invocation into OPERATIONS.md before archive (DOC-02) [wave 1]
+- [ ] 08-02-PLAN.md — Complete .planning/OPERATIONS.md: PAT rotation (DOC-01), release-branch model + ruleset config + GitHub App steps, rulesets-aware probe note, partial-failure recovery runbook (D-2), SC #5 procedure [wave 2]
+- [ ] 08-03-PLAN.md — User-action handoff (release branch, GitHub App, secrets, ruleset re-tighten) + re-verification run (v1.0.9 end-to-end) + SC #5 broken-PAT exercise -> 08-SC5-EXERCISE.md (D-3, D-4) [wave 2]
+- [ ] 08-04-PLAN.md — Legacy cleanup: git mv publish-cezari.cjs -> scripts/.archive/ + ARCHIVED header; remove publish:cezari/publish:public from package.json; verify git grep (CLEAN-01..03) [wave 3]
+- [ ] 08-05-PLAN.md — DOC-03: promote v1.1 to PROJECT.md "Validated" with the corrected release-branch-model wording; fix REQUIREMENTS.md 32->38 tally [wave 3]
 
 ---
 
